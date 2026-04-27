@@ -147,7 +147,7 @@ imputar_personas <- function(
   }
 
   # Devolver -----------------------------------------------------------------
-  attr(.datos, "Imputada") <- TRUE
+  attr(.datos, "imputada") <- TRUE
 
   return(.datos)
 }
