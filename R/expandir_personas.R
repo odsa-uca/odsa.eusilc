@@ -34,7 +34,7 @@ expandir_personas <- function(
   bloques <- c(
     D = !is.null(.D),
     R = !is.null(.R),
-    LMH = all(c("PL130", "PL230") %in% names(.datos))
+    LMH = "PL230" %in% names(.datos)
   )
 
   if (anio <= 2021) {
@@ -86,7 +86,10 @@ expandir_personas <- function(
     rlang::warn("No se proporciono el conjunto D. Se pierden: `pi03`.")
   }
 
-  if (!bloques["LMH"]) {
+  if (anio < 2021 & !bloques["LMH"]) {
+    .datos <- dplyr::mutate(.datos, PL230 = NA_integer_)
+    rlang::warn("No se encontro `PL230`. Se pierden: `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`.")
+  } else if (!bloques["LMH"]) {
     .datos <- dplyr::mutate(.datos, PL130 = NA_integer_, PL230 = NA_integer_)
     rlang::warn("No se encontro `PL130` o `PL230`. Se pierden: `pl06a`, `pl06b`, `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`.")
   }
@@ -99,6 +102,25 @@ expandir_personas <- function(
       man = PL075 + PL076
     )
   } else {
+    .datos <- .datos |>
+    dplyr::mutate(
+      maa = dplyr::case_when(
+        .f_maa == -1 ~ maa_imp,
+        .default = maa
+      ),
+      man = dplyr::case_when(
+        .f_man == -1 ~ man_imp,
+        .default = man
+      ),
+      PL060 = dplyr::case_when(
+        .f_PL060 == -1 ~ PL060_imp,
+        .default = PL060,
+      ),
+      PL040A = dplyr::case_when(
+        .f_PL040A == -1 ~ PL040A_imp,
+        .default = PL040A
+      )
+    )
     rlang::warn("El conjunto de datos fue imputado...")
   }
 
@@ -167,8 +189,8 @@ calc_personas <- function(
       pl05b = dplyr::recode_values(PL111B, from = tabla_pl05$PL111,
                                    to = tabla_pl05$pl05, default = NA_integer_),
       pl05c = dplyr::case_when(
-        PL032 == 1 & PY010N + PY050N != 0 ~ pl05a,
-        PL032 != 1 & PY010N + PY050N != 0 ~ pl05b,
+        PL032 == 1 ~ pl05a,
+        PL032 != 1 ~ pl05b,
         .default = NA_integer_
       ),
       pl06a = calc_testablecimiento(PL130, "a", .lmh),

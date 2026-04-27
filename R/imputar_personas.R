@@ -31,20 +31,23 @@ imputar_personas <- function(
     .f_PL060 = PL060_F,
     .f_PL040A = PL040A_F,
     .f_PL040B = dplyr::case_when(
-      PY010N != 0 & PL040B_F == -1 ~ -1,
-      PY010N != 0 & PL040B_F == 1 ~ 1,
+      PL040B_F == -1 ~ -1,
+      PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL040B_F == -2 ~ -1,
+      PY010N + PY050N != 0 & PL040B_F == 1 ~ 1,
       .default = 0
     ),
     .f_PL051A = PL051A_F,
     .f_PL051B = dplyr::case_when(
-      PY010N != 0 & PL051B_F == -1 ~ -1,
-      PY010N != 0 & PL051B_F == 1 ~ 1,
+      PL051B_F == -1 ~ -1,
+      PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL051B_F == -2 ~ -1,
+      PY010N + PY050N != 0 & PL051B_F == 1 ~ 1,
       .default = 0
     ),
     .f_PL111A = PL111A_F,
     .f_PL111B = dplyr::case_when(
-      PY010N != 0 & PL111B_F == -1 ~ -1,
-      PY010N != 0 & PL111B_F == 1 ~ 1,
+      PL111B_F == -1 ~ -1,
+      PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL111B_F == -2 ~ -1,
+      PY010N + PY050N != 0 & PL111B_F == 1 ~ 1,
       .default = 0
     ),
     .f_PL130 = dplyr::case_when(
@@ -108,6 +111,18 @@ imputar_personas <- function(
     pmm.k = 10
   )
 
+  # Categoria ocupacional --------------------
+  datos_imp_PL040A <- .datos |>
+    dplyr::select(PB010, PB020, PB030, PY010N, PY050N, PL040A, .f_PL040A) |>
+    dplyr::filter(.f_PL040A %in% c(-1, 1))
+
+  imp_PL040A <- missRanger::missRanger(
+    data = datos_imp_PL040A,
+    formula = PL040A ~ PY010N + PY050N,
+    num.trees = 100,
+    pmm.k = 10
+  )
+
   # Datos finales ------------------------------------------------------------
   imps <- list(
     imp_maa = imp_maa |>
@@ -118,7 +133,10 @@ imputar_personas <- function(
       dplyr::select(PB010, PB020, PB030, man),
     imp_PL060 = imp_PL060 |>
       dplyr::filter(.f_PL060 == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL060)
+      dplyr::select(PB010, PB020, PB030, PL060),
+    imp_PL040A = imp_PL040A |>
+      dplyr::filter(.f_PL040A == -1) |>
+      dplyr::select(PB010, PB020, PB030, PL040A)
   )
 
   for (.imp in imps) {
@@ -127,22 +145,6 @@ imputar_personas <- function(
         .imp, by = dplyr::join_by(PB010, PB020, PB030), suffix = c("", "_imp")
       )
   }
-
-  .datos <- .datos |>
-    dplyr::mutate(
-      maa = dplyr::case_when(
-        .f_maa == -1 ~ maa_imp,
-        .default = maa
-      ),
-      man = dplyr::case_when(
-        .f_man == -1 ~ man_imp,
-        .default = man
-      ),
-      PL060 = dplyr::case_when(
-        .f_PL060 == -1 ~ PL060_imp,
-        .default = PL060
-      )
-    )
 
   # Devolver -----------------------------------------------------------------
   attr(.datos, "Imputada") <- TRUE
