@@ -16,18 +16,22 @@ expandir_personas <- function(
     .expandir = FALSE
 ) {
   # Chequeos args ------------------------------------------------------------
+  errores <- NULL
+
   if (!is.data.frame(.datos)) {
-    rlang::abort("`.datos` debe ser un data.frame o tibble.")
+    errores <- c(errores, "*" = "`.datos` debe ser un data.frame o tibble.")
   }
   if (!is.null(.D) & !is.data.frame(.D)) {
-    rlang::abort("`.D` debe ser un data.frame o tibble.")
+    errores <- c(errores, "*" = "`.D` debe ser un data.frame o tibble.")
   }
   if (!is.null(.R) & !is.data.frame(.R)) {
-    rlang::abort("`.R` debe ser un data.frame o tibble.")
+    errores <- c(errores, "*" = "`.R` debe ser un data.frame o tibble.")
   }
   if (!is.logical(.expandir)) {
-    rlang::abort("`.expandir` debe ser `TRUE` o `FALSE`.")
+    errores <- c(errores, "*" = "`.expandir` debe ser `TRUE` o `FALSE`.")
   }
+
+  if(!is.null(errores)) rlang::abort(c("Problemas en los argumentos:", errores))
 
   # Arreglos bloques ---------------------------------------------------------
   anio <- unique(.datos$PB010)
@@ -36,29 +40,64 @@ expandir_personas <- function(
     R   = !is.null(.R),
     LMH = "PL230" %in% names(.datos)
   )
-  .datos <- estandarizar_personas(.datos, anio, bloques, .D, .R)
+  datos_estandar <- estandarizar_personas(.datos, anio, bloques, .D, .R)
+  .datos <- datos_estandar$datos
+  mensajes <- datos_estandar$mensajes
 
   # Lookup tables ------------------------------------------------------------
-  .datos <- dplyr::left_join(x  = .datos, y  = tabla_ppa,
+  .datos <- dplyr::left_join(x  = .datos,
+                             y  = tabla_ppa,
                              by = dplyr::join_by(PB010, PB020))
   .datos <- dplyr::mutate(
     .datos,
-    pd03  = dplyr::recode_values(PE041, from = tabla_pd03$PE041,
-                                 to = tabla_pd03$pd03, default = NA_integer_),
-    pl02  = dplyr::recode_values(PL032, from = tabla_pl02$PL032,
-                                 to = tabla_pl02$pl02, default = NA_integer_),
-    pl05a = dplyr::recode_values(PL111A, from = tabla_pl05$PL111,
-                                 to = tabla_pl05$pl05, default = NA_integer_),
-    pl05b = dplyr::recode_values(PL111B, from = tabla_pl05$PL111,
-                                 to = tabla_pl05$pl05, default = NA_integer_),
-    pl06a = dplyr::recode_values(PL130, from = tabla_pl06$PL130,
-                                 to = tabla_pl06$pl06a, default = NA_integer_),
-    pl06b = dplyr::recode_values(PL130, from = tabla_pl06$PL130,
-                                 to = tabla_pl06$pl06b, default = NA_integer_),
-    pl08a = dplyr::recode_values(PL051A, from = tabla_isco$PL051,
-                                 to = tabla_isco$pl08a, default = NA_integer_),
-    pl08b = dplyr::recode_values(PL051B, from = tabla_isco$PL051,
-                                 to = tabla_isco$pl08b, default = NA_integer_),
+    pd03  = dplyr::recode_values(
+      PE041,
+      from = tabla_pd03$PE041,
+      to = tabla_pd03$pd03,
+      default = NA_integer_
+    ),
+    pl02  = dplyr::recode_values(
+      PL032,
+      from = tabla_pl02$PL032,
+      to = tabla_pl02$pl02,
+      default = NA_integer_
+    ),
+    pl05a = dplyr::recode_values(
+      PL111A,
+      from = tabla_pl05$PL111,
+      to = tabla_pl05$pl05,
+      default = NA_integer_
+    ),
+    pl05b = dplyr::recode_values(
+      PL111B,
+      from = tabla_pl05$PL111,
+      to = tabla_pl05$pl05,
+      default = NA_integer_
+    ),
+    pl06a = dplyr::recode_values(
+      PL130,
+      from = tabla_pl06$PL130,
+      to = tabla_pl06$pl06a,
+      default = NA_integer_
+    ),
+    pl06b = dplyr::recode_values(
+      PL130,
+      from = tabla_pl06$PL130,
+      to = tabla_pl06$pl06b,
+      default = NA_integer_
+    ),
+    pl08a = dplyr::recode_values(
+      PL051A,
+      from = tabla_isco$PL051,
+      to = tabla_isco$pl08a,
+      default = NA_integer_
+    ),
+    pl08b = dplyr::recode_values(
+      PL051B,
+      from = tabla_isco$PL051,
+      to = tabla_isco$pl08b,
+      default = NA_integer_
+    ),
   )
 
   # Arreglos imputaciones ----------------------------------------------------
@@ -88,7 +127,7 @@ expandir_personas <- function(
         .default = PL040A
       )
     )
-    rlang::warn("El conjunto de datos fue imputado...")
+    mensajes <- c(mensajes, "i" = "El conjunto de datos fue imputado...")
   }
 
   # Calcular vbles -----------------------------------------------------------
@@ -105,6 +144,8 @@ expandir_personas <- function(
   attr(.datos, "bloques") <- bloques
   attr(.datos, "expandida") <- .expandir
   attr(.datos, "imputada") <- !is.null(attr(.datos, "imputada"))
+
+  if (!is.null(mensajes)) rlang::warn(c("Ojo!", mensajes))
 
   return(.datos)
 }
@@ -179,11 +220,7 @@ estandarizar_personas <- function(.datos, .anio, .bloques, .D, .R) {
     mensajes <- c(mensajes, "i" = "No se encontro `PL130` o `PL230`. Se pierden: `pl06a`, `pl06b`, `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`.")
   }
 
-  if (!is.null(mensajes)) {
-    rlang::warn(c("Ojo!", mensajes))
-  }
-
-  return(.datos)
+  return(list(datos = .datos, mensajes = mensajes))
 }
 
 # ============================================================================

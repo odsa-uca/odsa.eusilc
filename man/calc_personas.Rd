@@ -9,7 +9,7 @@ calc_personas(.datos, .lmh = FALSE, ...)
 \arguments{
 \item{.datos}{Conjunto P de la EU-SILC.}
 
-\item{.lmh}{Si el conjunto de datos tiene el módulo LMH.}
+\item{.lmh}{Si el conjunto de datos tiene el modulo LMH.}
 
 \item{...}{...}
 }
