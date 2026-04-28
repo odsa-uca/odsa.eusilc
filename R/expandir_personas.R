@@ -33,14 +33,11 @@ expandir_personas <- function(
 
   if(!is.null(errores)) rlang::abort(c("Problemas en los argumentos:", errores))
 
-  # Arreglos bloques ---------------------------------------------------------
+  # Estandarizacion ----------------------------------------------------------
   anio <- unique(.datos$PB010)
-  bloques <- c(
-    D   = !is.null(.D),
-    R   = !is.null(.R),
-    LMH = "PL230" %in% names(.datos)
-  )
-  datos_estandar <- estandarizar_personas(.datos, anio, bloques, .D, .R)
+  lmh <- "PL230" %in% names(.datos)
+
+  datos_estandar <- estandarizar_personas(.datos, anio, .D, .R, lmh)
   .datos <- datos_estandar$datos
   mensajes <- datos_estandar$mensajes
 
@@ -101,7 +98,7 @@ expandir_personas <- function(
   )
 
   # Arreglos imputaciones ----------------------------------------------------
-  if (is.null(attr(.datos, "Imputada"))) {
+  if (is.null(attr(.datos, "imputada"))) {
     .datos <- dplyr::mutate(
       .datos,
       maa = PL073 + PL074,
@@ -131,7 +128,7 @@ expandir_personas <- function(
   }
 
   # Calcular vbles -----------------------------------------------------------
-  .datos <- calc_personas(.datos, .lmh = bloques["LMH"])
+  .datos <- calc_personas(.datos, .lmh = lmh)
 
   # Arreglos y devolver ------------------------------------------------------
   if (!.expandir) {
@@ -140,10 +137,13 @@ expandir_personas <- function(
     .datos <- dplyr::relocate(.datos, dplyr::all_of(names(etq$P$variables)))
   }
 
-  attr(.datos, "base") <- "P"
-  attr(.datos, "bloques") <- bloques
-  attr(.datos, "expandida") <- .expandir
-  attr(.datos, "imputada") <- !is.null(attr(.datos, "imputada"))
+  attr(.datos, "base")       <- "P"
+  attr(.datos, "pre. 2021")  <- anio < 2021
+  attr(.datos, "vbles. D")   <- !is.null(.D)
+  attr(.datos, "vbles. R")   <- !is.null(.R)
+  attr(.datos, "vbles. LMH") <- lmh
+  attr(.datos, "expandida")  <- .expandir
+  attr(.datos, "imputada")   <- !is.null(attr(.datos, "imputada"))
 
   if (!is.null(mensajes)) rlang::warn(c("Ojo!", mensajes))
 
@@ -155,12 +155,12 @@ expandir_personas <- function(
 #'
 #' @param .datos .datos
 #' @param .anio .anio
-#' @param .bloques .bloques
 #' @param .D .D
 #' @param .R .R
+#' @param .lmh lmh
 #'
 #' @returns conjunto de datos estandarizado para [calc_personas()].
-estandarizar_personas <- function(.datos, .anio, .bloques, .D, .R) {
+estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
   mensajes <- NULL
 
   if (.anio <= 2021) {
@@ -183,13 +183,7 @@ estandarizar_personas <- function(.datos, .anio, .bloques, .D, .R) {
       PL111A = PL111
     )
     mensajes <- c(mensajes, "i" = "La base es anterior a 2021.")
-  } else if (.bloques["R"]) {
-    .datos <- dplyr::left_join(
-      x  = .datos,
-      y  = dplyr::select(.R, RB010, RB020, RB030, RB080, RB081, RB082, RB280, RB290),
-      by = dplyr::join_by(PB010 == RB010, PB020 == RB020, PB030 == RB030)
-    )
-  } else {
+  } else if (is.null(.R)) {
     .datos <- dplyr::mutate(
       .datos,
       RB080 = PB010 - PX020 - 1,
@@ -199,23 +193,29 @@ estandarizar_personas <- function(.datos, .anio, .bloques, .D, .R) {
       RB290 = NA_integer_
     )
     mensajes <- c(mensajes, "i" = "No se proporciono el conjunto R. Se pierden: `pd01a`, `pd04`, `pd05`.")
+  } else {
+    .datos <- dplyr::left_join(
+      x  = .datos,
+      y  = dplyr::select(.R, RB010, RB020, RB030, RB080, RB081, RB082, RB280, RB290),
+      by = dplyr::join_by(PB010 == RB010, PB020 == RB020, PB030 == RB030)
+    )
   }
 
-  if (.bloques["D"]) {
-    .datos <- dplyr::left_join(
-      x = .datos,
-      y = dplyr::select(.D, DB010, DB020, DB030, DB040),
-      by = dplyr::join_by(PB010 == DB010, PB020 == DB020, PX030 == DB030)
-    )
-  } else {
+  if (is.null(.D)) {
     .datos <- dplyr::mutate(.datos, DB040 = NA_character_)
     mensajes <- c(mensajes, "i" = "No se proporciono el conjunto D. Se pierden: `pi03`.")
+  } else {
+    .datos <- dplyr::left_join(
+      x  = .datos,
+      y  = dplyr::select(.D, DB010, DB020, DB030, DB040),
+      by = dplyr::join_by(PB010 == DB010, PB020 == DB020, PX030 == DB030)
+    )
   }
 
-  if (.anio < 2021 & !.bloques["LMH"]) {
+  if (.anio < 2021 & !.lmh) {
     .datos <- dplyr::mutate(.datos, PL230 = NA_integer_)
     mensajes <- c(mensajes, "i" = "No se encontro `PL230`. Se pierden: `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`.")
-  } else if (!.bloques["LMH"]) {
+  } else if (!.lmh) {
     .datos <- dplyr::mutate(.datos, PL130 = NA_integer_, PL230 = NA_integer_)
     mensajes <- c(mensajes, "i" = "No se encontro `PL130` o `PL230`. Se pierden: `pl06a`, `pl06b`, `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`.")
   }
@@ -298,10 +298,10 @@ calc_personas <- function(
       py25 = PY110N + PY120N + PY130N + PY140N,
       haa  = dplyr::if_else(pl02 == 1 & py11 != 0, maa * PL060 * 4.2, NA_real_),
       han  = dplyr::if_else(pl02 == 1 & py12 != 0, man * PL060 * 4.2, NA_real_),
-      py11h = dplyr::if_else(py11 != 0, py11 / haa, 0),
-      py12h = dplyr::if_else(py12 != 0, py12 / han, 0),
+      py11h = dplyr::if_else(py11 != 0, (py11 * PX010) / haa, 0),
+      py12h = dplyr::if_else(py12 != 0, (py12 * PX010) / han, 0),
       dplyr::across(py00:py25, \(y) (y * PX010) / 12),
-      dplyr::across(py00:py12h, \(y) y / ppa, .names = "{.col}ppa"),
+      dplyr::across(c(py00:py25, py11h, py12h), \(y) y / ppa, .names = "{.col}ppa"),
       .keep = "all"
     )
 
