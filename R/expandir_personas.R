@@ -105,25 +105,7 @@ expandir_personas <- function(
       man = PL075 + PL076
     )
   } else {
-    .datos <- .datos |>
-    dplyr::mutate(
-      maa = dplyr::case_when(
-        .f_maa == -1 ~ maa_imp,
-        .default = maa
-      ),
-      man = dplyr::case_when(
-        .f_man == -1 ~ man_imp,
-        .default = man
-      ),
-      PL060 = dplyr::case_when(
-        .f_PL060 == -1 ~ PL060_imp,
-        .default = PL060,
-      ),
-      PL040A = dplyr::case_when(
-        .f_PL040A == -1 ~ PL040A_imp,
-        .default = PL040A
-      )
-    )
+    .datos <- aplicar_imputaciones(.datos)
     mensajes <- c(mensajes, "i" = "El conjunto de datos fue imputado...")
   }
 
@@ -221,6 +203,36 @@ estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
   }
 
   return(list(datos = .datos, mensajes = mensajes))
+}
+
+# ============================================================================
+#' Title
+#'
+#' @param .datos .datos
+#'
+#' @returns Conjunto de datos estandarizado con imputaciones aplicadas
+aplicar_imputaciones <- function(.datos) {
+  .datos <- dplyr::mutate(
+    .datos,
+    maa = dplyr::case_when(
+      .f_maa == -1 ~ maa_imp,
+      .default = maa
+    ),
+    man = dplyr::case_when(
+      .f_man == -1 ~ man_imp,
+      .default = man
+    ),
+    PL060 = dplyr::case_when(
+      .f_PL060 == -1 ~ PL060_imp,
+      .default = PL060,
+    ),
+    PL040A = dplyr::case_when(
+      .f_PL040A == -1 ~ PL040A_imp,
+      .default = PL040A
+    )
+  )
+
+  return(.datos)
 }
 
 # ============================================================================

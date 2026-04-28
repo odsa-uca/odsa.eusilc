@@ -28,25 +28,22 @@ imputar_personas <- function(
       PY050N != 0 & !is.na(PL075 + PL076) & PL075 + PL076 != 0 ~ 1,
       .default = 0
     ),
-    .f_PL060 = PL060_F,
-    .f_PL040A = PL040A_F,
+    .f_PL060 = dplyr::if_else(PL060_F %in% c(-1, 1), PL060_F, 0),
+    .f_PL040A = dplyr::if_else(PL040A_F %in% c(-1, 1), PL040A_F, 0),
+    .f_PL051A = dplyr::if_else(PL051A_F %in% c(-1, 1), PL051A_F, 0),
+    .f_PL111A = dplyr::if_else(PL111A_F %in% c(-1, 1), PL111A_F, 0),
     .f_PL040B = dplyr::case_when(
-      PL040B_F == -1 ~ -1,
-      PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL040B_F == -2 ~ -1,
+      PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL040B_F %in% c(-1, -2) ~ -1,
       PY010N + PY050N != 0 & PL040B_F == 1 ~ 1,
       .default = 0
     ),
-    .f_PL051A = PL051A_F,
     .f_PL051B = dplyr::case_when(
-      PL051B_F == -1 ~ -1,
-      PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL051B_F == -2 ~ -1,
+      PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL051B_F %in% c(-1, -2) ~ -1,
       PY010N + PY050N != 0 & PL051B_F == 1 ~ 1,
       .default = 0
     ),
-    .f_PL111A = PL111A_F,
     .f_PL111B = dplyr::case_when(
-      PL111B_F == -1 ~ -1,
-      PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL111B_F == -2 ~ -1,
+      PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL111B_F %in% c(-1, -2) ~ -1,
       PY010N + PY050N != 0 & PL111B_F == 1 ~ 1,
       .default = 0
     ),
@@ -55,6 +52,11 @@ imputar_personas <- function(
       PL130 < 10 ~ 1,
       PL130 == 15 ~ -2,
       PL130 >= 10 ~ 2,
+      .default = 0
+    ),
+    .f_PL230 = dplyr::case_when(
+      PL032 == 1 & PL040A == 3 & PL230 == 99 ~ -1,
+      PL230_F %in% c(-1, 1) ~ PL230_F,
       .default = 0
     )
   )
@@ -82,7 +84,7 @@ imputar_personas <- function(
 
   imp_maa <- missRanger::missRanger(
     data = datos_imp_maa,
-    formula = maa ~ PY010N + PY050N + PB140 + PB150 + PE041,
+    formula = maa + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
     num.trees = 100,
     pmm.k = 10
   )
@@ -94,7 +96,7 @@ imputar_personas <- function(
 
   imp_man <- missRanger::missRanger(
     data = datos_imp_man,
-    formula = man ~ PY010N + PY050N + PB140 + PB150 + PE041,
+    formula = man + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
     num.trees = 100,
     pmm.k = 10
   )
@@ -111,17 +113,37 @@ imputar_personas <- function(
     pmm.k = 10
   )
 
-  # Categoria ocupacional --------------------
-  datos_imp_PL040A <- .datos |>
-    dplyr::select(PB010, PB020, PB030, PY010N, PY050N, PL040A, .f_PL040A) |>
-    dplyr::filter(.f_PL040A %in% c(-1, 1))
+  # Categoria, ocupacion y rama A ------------
+  datos_imp_corA <- .datos |>
+    dplyr::select(PB010, PB020, PB030, PL040A, PL051A, PL111A, PY010N, PY050N,
+                  PB140, PB150, PE041, .f_PL040A, .f_PL051A, .f_PL111A) |>
+    dplyr::filter(.f_PL040A %in% c(-1, 1)) |>
+    dplyr::mutate(PL040A = factor(PL040A), PL051A = factor(PL051A), PE041 = factor(PE041))
 
-  imp_PL040A <- missRanger::missRanger(
-    data = datos_imp_PL040A,
-    formula = PL040A ~ PY010N + PY050N,
+  imp_corA <- missRanger::missRanger(
+    data = datos_imp_corA,
+    formula = PL040A + PL051A + PL111A + PE041 ~ PY010N + PY050N + PB140 + PB150 + PL040A + PL051A + PL111A + PE041,
     num.trees = 100,
     pmm.k = 10
   )
+
+  # Categoria, ocupacion y rama B ------------
+  datos_imp_corB <- .datos |>
+    dplyr::select(PB010, PB020, PB030, PL040B, PL051B, PL111B, PY010N, PY050N,
+                  PB140, PB150, PE041, .f_PL040B, .f_PL051B, .f_PL111B) |>
+    dplyr::filter(.f_PL040B %in% c(-1, 1)) |>
+    dplyr::mutate(PL040B = factor(PL040B), PL051B = factor(PL051B), PE041 = factor(PE041))
+
+  imp_corB <- missRanger::missRanger(
+    data = datos_imp_corB,
+    formula = PL040B + PL051B + PL111B + PE041 ~ PY010N + PY050N + PB140 + PB150 + PL040B + PL051B + PL111B + PE041,
+    num.trees = 100,
+    pmm.k = 10
+  )
+
+  # Tamaño del establecimiento ---------------
+
+  # Sector publico-privado -------------------
 
   # Datos finales ------------------------------------------------------------
   imps <- list(
@@ -134,16 +156,37 @@ imputar_personas <- function(
     imp_PL060 = imp_PL060 |>
       dplyr::filter(.f_PL060 == -1) |>
       dplyr::select(PB010, PB020, PB030, PL060),
-    imp_PL040A = imp_PL040A |>
+    imp_PL040A = imp_corA |>
       dplyr::filter(.f_PL040A == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL040A)
+      dplyr::select(PB010, PB020, PB030, PL040A) |>
+      dplyr::mutate(PL040A = as.numeric(as.character(PL040A))),
+    imp_PL051A = imp_corA |>
+      dplyr::filter(.f_PL051A == -1) |>
+      dplyr::select(PB010, PB020, PB030, PL051A) |>
+      dplyr::mutate(PL051A = as.numeric(as.character(PL051A))),
+    imp_PL111A = imp_corA |>
+      dplyr::filter(.f_PL111A == -1) |>
+      dplyr::select(PB010, PB020, PB030, PL111A),
+    imp_PL040B = imp_corB |>
+      dplyr::filter(.f_PL040B == -1) |>
+      dplyr::select(PB010, PB020, PB030, PL040B) |>
+      dplyr::mutate(PL040B = as.numeric(as.character(PL040B))),
+    imp_PL051B = imp_corB |>
+      dplyr::filter(.f_PL051B == -1) |>
+      dplyr::select(PB010, PB020, PB030, PL051B) |>
+      dplyr::mutate(PL051B = as.numeric(as.character(PL051B))),
+    imp_PL111B = imp_corB |>
+      dplyr::filter(.f_PL111B == -1) |>
+      dplyr::select(PB010, PB020, PB030, PL111B)
   )
 
   for (.imp in imps) {
-    .datos <- .datos |>
-      dplyr::left_join(
-        .imp, by = dplyr::join_by(PB010, PB020, PB030), suffix = c("", "_imp")
-      )
+    .datos <- dplyr::left_join(
+      x = .datos,
+      y = .imp,
+      by = dplyr::join_by(PB010, PB020, PB030),
+      suffix = c("", "_imp")
+    )
   }
 
   # Devolver -----------------------------------------------------------------

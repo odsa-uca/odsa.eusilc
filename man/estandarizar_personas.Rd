@@ -4,18 +4,18 @@
 \alias{estandarizar_personas}
 \title{Title}
 \usage{
-estandarizar_personas(.datos, .anio, .bloques, .D, .R)
+estandarizar_personas(.datos, .anio, .D, .R, .lmh)
 }
 \arguments{
 \item{.datos}{.datos}
 
 \item{.anio}{.anio}
 
-\item{.bloques}{.bloques}
-
 \item{.D}{.D}
 
 \item{.R}{.R}
+
+\item{.lmh}{lmh}
 }
 \value{
 conjunto de datos estandarizado para \code{\link[=calc_personas]{calc_personas()}}.
