@@ -1,21 +1,230 @@
 #' Title
 #'
 #' @param .datos Conjunto de datos P a imputar.
-#' @param .variables Grupo de variables a imputar.
+#' @param .anio anio
+#' @param .lmh lmh
 #' @param ... ...
 #'
 #' @returns Conjunto de datos P con variables imputadas.
 #' @export
 imputar_personas <- function(
   .datos,
-  .variables,
+  .anio,
+  .lmh,
   ...
 ) {
-  # Chequeos args ------------------------------------------------------------
-
   # Construccion flags -------------------------------------------------------
   # Numero negativo indica grupo a imputar, mismo numero positivo indica grupo
   # de referencia para entrenamiento
+  .datos <- calc_flags_imputacion(.datos, .lmh)
+
+  # Construccion vbles -------------------------------------------------------
+  .datos <- dplyr::mutate(
+    .datos,
+    maa = dplyr::case_when(
+      .f_maa == -1 ~ NA_integer_,
+      .default = PL073 + PL074
+    ),
+    man = dplyr::case_when(
+      .f_man == -1 ~ NA_integer_,
+      .default = PL075 + PL076
+    )
+  )
+
+  #datos_imp <- imputaciones |>
+  #  purrr::pmap(function(imputada, predictoras_na, predictoras_full, flag, ...) {
+  #    if (any(is.na(predictoras_na))) predictoras_na <- NULL
+  #    dplyr::select(.datos, dplyr::all_of(c(imputada, predictoras_na, predictoras_full, flag)))
+  #})
+
+  #return(datos_imp)
+
+  # Imputacion ---------------------------------------------------------------
+  # Random Forests para lidiar con la distribución atípica de los meses
+  # TODO: Selección de hiperparámetros
+  # Meses asalariados ------------------------
+  datos_imp_maa <- armar_imputables(
+    .datos,
+    .imputadas   = "maa",
+    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+    .flag        = ".f_maa"
+  )
+
+  imp_maa <- missRanger::missRanger(
+    data = datos_imp_maa,
+    formula = maa + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
+    num.trees = 100,
+    pmm.k = 10
+  )
+
+  imp_maa <- imp_maa |>
+    dplyr::filter(.f_maa == -1) |>
+    dplyr::select(PB010, PB020, PB030, maa)
+
+  # Meses no asalariados ---------------------
+  datos_imp_man <- armar_imputables(
+    .datos,
+    .imputadas   = "man",
+    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+    .flag        = ".f_man"
+  )
+
+  imp_man <- missRanger::missRanger(
+    data = datos_imp_man,
+    formula = man + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
+    num.trees = 100,
+    pmm.k = 10
+  )
+
+  imp_man <- imp_man |>
+    dplyr::filter(.f_man == -1) |>
+    dplyr::select(PB010, PB020, PB030, man)
+
+  # Horas habituales semanales ---------------
+  datos_imp_PL060 <- armar_imputables(
+    .datos,
+    .imputadas   = "PL060",
+    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "maa", "man"),
+    .flag        = ".f_PL060"
+  )
+
+  imp_PL060 <- missRanger::missRanger(
+    data = datos_imp_PL060,
+    formula = PL060 ~ PY010N + PY050N + PB140 + PB150 + maa + man,
+    num.trees = 100,
+    pmm.k = 10
+  )
+
+  imp_PL060 <- imp_PL060 |>
+    dplyr::filter(.f_PL060 == -1) |>
+    dplyr::select(PB010, PB020, PB030, PL060)
+
+  # Categoria, ocupacion y rama A ------------
+  datos_imp_corA <- armar_imputables(
+    .datos,
+    .imputadas   = c("PL040A", "PL051A", "PL111A"),
+    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+    .flags       = c(".f_PL040A", ".f_PL051A", ".f_PL111A"),
+    .factores    = c("PL040A", "PL051A", "PE041")
+  )
+
+  imp_corA <- missRanger::missRanger(
+    data = datos_imp_corA,
+    formula = PL040A + PL051A + PL111A + PE041 ~ PY010N + PY050N + PB140 + PB150 + PL040A + PL051A + PL111A + PE041,
+    num.trees = 100,
+    pmm.k = 10
+  )
+
+  imp_PL040A <- imp_corA |>
+    dplyr::filter(.f_PL040A == -1) |>
+    dplyr::select(PB010, PB020, PB030, PL040A) |>
+    dplyr::mutate(PL040A = as.numeric(as.character(PL040A)))
+  imp_PL051A <- imp_corA |>
+    dplyr::filter(.f_PL051A == -1) |>
+    dplyr::select(PB010, PB020, PB030, PL051A) |>
+    dplyr::mutate(PL051A = as.numeric(as.character(PL051A)))
+  imp_PL111A <- imp_corA |>
+    dplyr::filter(.f_PL111A == -1) |>
+    dplyr::select(PB010, PB020, PB030, PL111A)
+
+  # Categoria, ocupacion y rama B ------------
+  if (.anio < 2021) {
+    datos_imp_corB <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL040B", "PL051B"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+      .flags       = c(".f_PL040B", ".f_PL051B"),
+      .factores    = c("PL040B", "PL051B", "PE041")
+    )
+
+    imp_corB <- missRanger::missRanger(
+      data = datos_imp_corB,
+      formula = PL040B + PL051B + PE041 ~ PY010N + PY050N + PB140 + PB150 + PL040B + PL051B + PE041,
+      num.trees = 100,
+      pmm.k = 10
+    )
+  } else {
+    datos_imp_corB <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL040B", "PL051B", "PL111B"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+      .flags       = c(".f_PL040B", ".f_PL051B", ".f_PL111B"),
+      .factores    = c("PL040B", "PL051B", "PE041")
+    )
+
+    imp_corB <- missRanger::missRanger(
+      data = datos_imp_corB,
+      formula = PL040B + PL051B + PL111B + PE041 ~ PY010N + PY050N + PB140 + PB150 + PL040B + PL051B + PL111B + PE041,
+      num.trees = 100,
+      pmm.k = 10
+    )
+  }
+
+  imp_PL040B <- imp_corB |>
+    dplyr::filter(.f_PL040B == -1) |>
+    dplyr::select(PB010, PB020, PB030, PL040B) |>
+    dplyr::mutate(PL040B = as.numeric(as.character(PL040B)))
+  imp_PL051B <- imp_corB |>
+    dplyr::filter(.f_PL051B == -1) |>
+    dplyr::select(PB010, PB020, PB030, PL051B) |>
+    dplyr::mutate(PL051B = as.numeric(as.character(PL051B)))
+
+  if (.lmh) {
+    # Tamaño del establecimiento ---------------
+
+    # Sector publico-privado -------------------
+
+  }
+
+  # Datos finales ------------------------------------------------------------
+  imps <- list(
+    imp_maa = imp_maa,
+    imp_man = imp_man,
+    imp_PL060 = imp_PL060,
+    imp_PL040A = imp_PL040A,
+    imp_PL051A = imp_PL051A,
+    imp_PL111A = imp_PL111A,
+    imp_PL040B = imp_PL040B,
+    imp_PL051B = imp_PL051B
+  )
+
+  if (.anio >= 2021) {
+    imps <- c(
+      imps,
+      imp_PL111B = imp_corB |>
+        dplyr::filter(.f_PL111B == -1) |>
+        dplyr::select(PB010, PB020, PB030, PL111B)
+    )
+  }
+
+  if (.lmh) {
+
+  }
+
+  for (.imp in imps) {
+    .datos <- dplyr::left_join(
+      x = .datos,
+      y = .imp,
+      by = dplyr::join_by(PB010, PB020, PB030),
+      suffix = c("", "_imp")
+    )
+  }
+
+  # Devolver -----------------------------------------------------------------
+  attr(.datos, "imputada") <- TRUE
+
+  return(.datos)
+}
+
+# ============================================================================
+#' Title
+#'
+#' @param .datos .datos
+#' @param .lmh lmh
+#' @param ... ...
+#'
+#' @returns .datos con flags de imputacion
+calc_flags_imputacion <- function(.datos, .lmh, ...) {
   .datos <- dplyr::mutate(
     .datos,
     .f_maa = dplyr::case_when(
@@ -46,151 +255,51 @@ imputar_personas <- function(
       PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL111B_F %in% c(-1, -2) ~ -1,
       PY010N + PY050N != 0 & PL111B_F == 1 ~ 1,
       .default = 0
-    ),
-    .f_PL130 = dplyr::case_when(
-      PL130 == 14 ~ -1,
-      PL130 < 10 ~ 1,
-      PL130 == 15 ~ -2,
-      PL130 >= 10 ~ 2,
-      .default = 0
-    ),
-    .f_PL230 = dplyr::case_when(
-      PL032 == 1 & PL040A == 3 & PL230 == 99 ~ -1,
-      PL230_F %in% c(-1, 1) ~ PL230_F,
-      .default = 0
     )
   )
 
-  # Construccion vbles -------------------------------------------------------
-  .datos <- dplyr::mutate(
-    .datos,
-    maa = dplyr::case_when(
-      .f_maa == -1 ~ NA_integer_,
-      .default = PL073 + PL074
-    ),
-    man = dplyr::case_when(
-      .f_man == -1 ~ NA_integer_,
-      .default = PL075 + PL076
-    )
-  )
-
-  # Imputacion ---------------------------------------------------------------
-  # Random Forests para lidiar con la distribución atípica de los meses
-  # TODO: Selección de hiperparámetros
-  # Meses asalariados ------------------------
-  datos_imp_maa <- .datos |>
-    dplyr::select(PB010, PB020, PB030, PY010N, PY050N, PB140, PB150, PE041, maa, .f_maa) |>
-    dplyr::filter(.f_maa %in% c(-1, 1))
-
-  imp_maa <- missRanger::missRanger(
-    data = datos_imp_maa,
-    formula = maa + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
-    num.trees = 100,
-    pmm.k = 10
-  )
-
-  # Meses no asalariados ---------------------
-  datos_imp_man <- .datos |>
-    dplyr::select(PB010, PB020, PB030, PY010N, PY050N, PB140, PB150, PE041, man, .f_man) |>
-    dplyr::filter(.f_man %in% c(-1, 1))
-
-  imp_man <- missRanger::missRanger(
-    data = datos_imp_man,
-    formula = man + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
-    num.trees = 100,
-    pmm.k = 10
-  )
-
-  # Horas habituales semanales ---------------
-  datos_imp_PL060 <- .datos |>
-    dplyr::select(PB010, PB020, PB030, PY010N, PY050N, maa, man, PB140, PB150, PL060, .f_PL060) |>
-    dplyr::filter(.f_PL060 %in% c(-1, 1))
-
-  imp_PL060 <- missRanger::missRanger(
-    data = datos_imp_PL060,
-    formula = PL060 ~ PY010N + PY050N + PB140 + PB150 + maa + man,
-    num.trees = 100,
-    pmm.k = 10
-  )
-
-  # Categoria, ocupacion y rama A ------------
-  datos_imp_corA <- .datos |>
-    dplyr::select(PB010, PB020, PB030, PL040A, PL051A, PL111A, PY010N, PY050N,
-                  PB140, PB150, PE041, .f_PL040A, .f_PL051A, .f_PL111A) |>
-    dplyr::filter(.f_PL040A %in% c(-1, 1)) |>
-    dplyr::mutate(PL040A = factor(PL040A), PL051A = factor(PL051A), PE041 = factor(PE041))
-
-  imp_corA <- missRanger::missRanger(
-    data = datos_imp_corA,
-    formula = PL040A + PL051A + PL111A + PE041 ~ PY010N + PY050N + PB140 + PB150 + PL040A + PL051A + PL111A + PE041,
-    num.trees = 100,
-    pmm.k = 10
-  )
-
-  # Categoria, ocupacion y rama B ------------
-  datos_imp_corB <- .datos |>
-    dplyr::select(PB010, PB020, PB030, PL040B, PL051B, PL111B, PY010N, PY050N,
-                  PB140, PB150, PE041, .f_PL040B, .f_PL051B, .f_PL111B) |>
-    dplyr::filter(.f_PL040B %in% c(-1, 1)) |>
-    dplyr::mutate(PL040B = factor(PL040B), PL051B = factor(PL051B), PE041 = factor(PE041))
-
-  imp_corB <- missRanger::missRanger(
-    data = datos_imp_corB,
-    formula = PL040B + PL051B + PL111B + PE041 ~ PY010N + PY050N + PB140 + PB150 + PL040B + PL051B + PL111B + PE041,
-    num.trees = 100,
-    pmm.k = 10
-  )
-
-  # Tamaño del establecimiento ---------------
-
-  # Sector publico-privado -------------------
-
-  # Datos finales ------------------------------------------------------------
-  imps <- list(
-    imp_maa = imp_maa |>
-      dplyr::filter(.f_maa == -1) |>
-      dplyr::select(PB010, PB020, PB030, maa),
-    imp_man = imp_man |>
-      dplyr::filter(.f_man == -1) |>
-      dplyr::select(PB010, PB020, PB030, man),
-    imp_PL060 = imp_PL060 |>
-      dplyr::filter(.f_PL060 == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL060),
-    imp_PL040A = imp_corA |>
-      dplyr::filter(.f_PL040A == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL040A) |>
-      dplyr::mutate(PL040A = as.numeric(as.character(PL040A))),
-    imp_PL051A = imp_corA |>
-      dplyr::filter(.f_PL051A == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL051A) |>
-      dplyr::mutate(PL051A = as.numeric(as.character(PL051A))),
-    imp_PL111A = imp_corA |>
-      dplyr::filter(.f_PL111A == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL111A),
-    imp_PL040B = imp_corB |>
-      dplyr::filter(.f_PL040B == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL040B) |>
-      dplyr::mutate(PL040B = as.numeric(as.character(PL040B))),
-    imp_PL051B = imp_corB |>
-      dplyr::filter(.f_PL051B == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL051B) |>
-      dplyr::mutate(PL051B = as.numeric(as.character(PL051B))),
-    imp_PL111B = imp_corB |>
-      dplyr::filter(.f_PL111B == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL111B)
-  )
-
-  for (.imp in imps) {
-    .datos <- dplyr::left_join(
-      x = .datos,
-      y = .imp,
-      by = dplyr::join_by(PB010, PB020, PB030),
-      suffix = c("", "_imp")
+  if (.lmh) {
+    .datos <- dplyr::mutate(
+      .datos,
+      .f_PL130 = dplyr::case_when(
+        PL130 == 14 ~ -1,
+        PL130 < 10 ~ 1,
+        PL130 == 15 ~ -2,
+        PL130 >= 10 ~ 2,
+        .default = 0
+      ),
+      .f_PL230 = dplyr::case_when(
+        PL032 == 1 & PL040A == 3 & PL230 == 99 ~ -1,
+        PL230_F %in% c(-1, 1) ~ PL230_F,
+        .default = 0
+      )
     )
   }
 
-  # Devolver -----------------------------------------------------------------
-  attr(.datos, "imputada") <- TRUE
-
   return(.datos)
+}
+
+# ============================================================================
+#' Title
+#'
+#' @param .datos .datos
+#' @param .imputadas .imputadas
+#' @param .predictoras .predictoras
+#' @param .flags .flags
+#' @param .factores .factores
+#'
+#' @returns conjunto de datos para imputar
+armar_imputables <- function(
+  .datos,
+  .imputadas,
+  .predictoras,
+  .flags,
+  .factores = NULL
+) {
+  datos_imp <- .datos |>
+    dplyr::select(dplyr::all_of(c("PB010", "PB020", "PB030", .predictoras, .imputadas, .flags))) |>
+    dplyr::filter(!!rlang::sym(.flags[1]) %in% c(-1, 1)) |>
+    dplyr::mutate(dplyr::across(dplyr::all_of(.factores), factor))
+
+  return(datos_imp)
 }

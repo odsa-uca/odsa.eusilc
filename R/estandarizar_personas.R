@@ -1,4 +1,3 @@
-# ============================================================================
 #' Title
 #'
 #' @param .datos .datos
@@ -31,7 +30,14 @@ estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
       PL111A = dplyr::if_else(PL032 == 1, PL111, NA),
       PL040B = dplyr::if_else(PL032 != 1 | is.na(PL032), PL040, NA),
       PL051B = dplyr::if_else(PL032 != 1 | is.na(PL032), PL051, NA),
-      PL111B = dplyr::if_else(PL032 != 1 | is.na(PL032), PL111, NA),
+      PL111B = NA_character_,
+      # Los flags hacen falta si después se imputa
+      PL040A_F = dplyr::if_else(PL032 == 1, PL040_F, -2),
+      PL051A_F = dplyr::if_else(PL032 == 1, PL051_F, -2),
+      PL111A_F = dplyr::if_else(PL032 == 1, PL111_F, -2),
+      PL040B_F = dplyr::if_else(PL032 != 1 | is.na(PL032), PL040_F, -2),
+      PL051B_F = dplyr::if_else(PL032 != 1 | is.na(PL032), PL051_F, -2),
+      PL111B_F = -2,
     )
     mensajes <- c(mensajes, "i" = "La base es anterior a 2021.")
   } else if (is.null(.R)) {

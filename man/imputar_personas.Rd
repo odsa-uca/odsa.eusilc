@@ -4,12 +4,14 @@
 \alias{imputar_personas}
 \title{Title}
 \usage{
-imputar_personas(.datos, .variables, ...)
+imputar_personas(.datos, .anio, .lmh, ...)
 }
 \arguments{
 \item{.datos}{Conjunto de datos P a imputar.}
 
-\item{.variables}{Grupo de variables a imputar.}
+\item{.anio}{anio}
+
+\item{.lmh}{lmh}
 
 \item{...}{...}
 }

@@ -56,7 +56,7 @@ expandir_personas <- function(
 
   # Calcular vbles -----------------------------------------------------------
   .datos <- lookup_personas(.datos, lmh)
-  .datos <- calcular_personas(.datos, .lmh = lmh)
+  .datos <- calcular_personas(.datos, lmh)
 
   # Arreglos y devolver ------------------------------------------------------
   if (!.expandir) {

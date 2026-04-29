@@ -17,7 +17,9 @@ Imports:
     labelled,
     missRanger,
     purrr,
-    rlang
+    rlang,
+    tibble,
+    tidyr
 Depends: 
     R (>= 3.5)
 LazyData: true
