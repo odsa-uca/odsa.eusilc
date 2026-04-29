@@ -1,19 +1,19 @@
 #' Construir variables adicionales en los conjuntos de datos H de la EU-SILC
 #'
 #' @param .datos Conjunto de datos H de la EU-SILC.
-#' @param .P Conjunto de datos P de la EU-SILC expandido por `expandir_eusilc()`.
-#' @param ... ...
+#' @param .P Conjunto de datos P de la EU-SILC expandido por [expandir_personas()].
 #' @param .D Conjunto de datos D de la EU-SILC.
 #' @param .expandir Conservar las variables originales en el conjunto de datos final o eliminarlas.
+#' @param ... ...
 #'
 #' @returns Conjunto de datos de la EU-SILC con variables adicionales de uso habitual
 #' @export
 expandir_hogares <- function(
     .datos,
     .P,
-    ...,
     .D = NULL,
-    .expandir = FALSE
+    .expandir = FALSE,
+    ...
 ) {
   # Chequeos args ------------------------------------------------------------
   if (!is.data.frame(.datos)) {
@@ -61,7 +61,7 @@ expandir_hogares <- function(
     y = tabla_ppa,
     by = dplyr::join_by(HB010 == PB010, HB020 == PB020)
   )
-  .datos <- calc_hogares(.datos)
+  .datos <- calcular_hogares(.datos)
 
   # Arreglos y devolver ------------------------------------------------------
   if (!.expandir) {
@@ -80,7 +80,7 @@ expandir_hogares <- function(
 # ============================================================================
 #' Agrega variables de ingreso de la base P de la EU-SILC a nivel hogar.
 #'
-#' @param .personas Conjunto P de la EU-SILC expandido con [calc_personas()].
+#' @param .personas Conjunto P de la EU-SILC expandido con [calcular_personas()].
 #'
 #' @returns Conjunto de datos con ingresos individuales agregados a nivel hogar.
 agregar_personas <- function(.personas) {
@@ -103,7 +103,7 @@ agregar_personas <- function(.personas) {
 # ============================================================================
 #' Agrega variables de ingreso de la base P de la EU-SILC a nivel hogar. (Optimizda)
 #'
-#' @param .personas Conjunto P de la EU-SILC expandido con [calc_personas()].
+#' @param .personas Conjunto P de la EU-SILC expandido con [calcular_personas()].
 #'
 #' @returns Conjunto de datos con ingresos individuales agregados a nivel hogar.
 f_agregar_personas <- function(.personas) {
@@ -129,7 +129,7 @@ f_agregar_personas <- function(.personas) {
 #' @param ... ...
 #'
 #' @returns Conjunto H de la EU-SILC con variables adicionales.
-calc_hogares <- function(
+calcular_hogares <- function(
     .datos,
     ...
 ) {

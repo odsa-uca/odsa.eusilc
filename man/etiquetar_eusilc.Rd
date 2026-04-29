@@ -4,10 +4,12 @@
 \alias{etiquetar_eusilc}
 \title{Title}
 \usage{
-etiquetar_eusilc(.datos, ...)
+etiquetar_eusilc(.datos, .base = NULL, ...)
 }
 \arguments{
 \item{.datos}{datos}
+
+\item{.base}{base}
 
 \item{...}{...}
 }
