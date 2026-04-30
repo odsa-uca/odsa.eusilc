@@ -13,10 +13,11 @@ imputar_personas <- function(
   .lmh,
   ...
 ) {
+  # TODO: Reorganizar esta función!! Es una monstruosidad!!
   # Construccion flags -------------------------------------------------------
   # Numero negativo indica grupo a imputar, mismo numero positivo indica grupo
   # de referencia para entrenamiento
-  .datos <- calc_flags_imputacion(.datos, .lmh)
+  .datos <- calc_flags_imputacion(.datos, .anio, .lmh)
 
   # Construccion vbles -------------------------------------------------------
   .datos <- dplyr::mutate(
@@ -31,13 +32,12 @@ imputar_personas <- function(
     )
   )
 
-  #datos_imp <- imputaciones |>
-  #  purrr::pmap(function(imputada, predictoras_na, predictoras_full, flag, ...) {
-  #    if (any(is.na(predictoras_na))) predictoras_na <- NULL
-  #    dplyr::select(.datos, dplyr::all_of(c(imputada, predictoras_na, predictoras_full, flag)))
-  #})
-
-  #return(datos_imp)
+  if (.lmh) {
+    .datos <- dplyr::mutate(
+      .datos,
+      PL130_ = dplyr::if_else(PL130 %in% 14:15, NA_integer_, PL130)
+    )
+  }
 
   # Imputacion ---------------------------------------------------------------
   # Random Forests para lidiar con la distribución atípica de los meses
@@ -158,6 +158,10 @@ imputar_personas <- function(
       num.trees = 100,
       pmm.k = 10
     )
+
+    imp_PL111B <- imp_corB |>
+      dplyr::filter(.f_PL111B == -1) |>
+      dplyr::select(PB010, PB020, PB030, PL111B)
   }
 
   imp_PL040B <- imp_corB |>
@@ -171,35 +175,99 @@ imputar_personas <- function(
 
   if (.lmh) {
     # Tamaño del establecimiento ---------------
+    datos_imp_PL130a <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL130_", "PE041", "PL111A"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
+      .flags       = ".fa_PL130"
+    )
+    datos_imp_PL130b <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL130_", "PE041", "PL111A"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
+      .flags       = ".fb_PL130",
+      .factores    = c("PL130_", "PE041")
+    )
+    datos_imp_PL130c <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL130", "PE041", "PL111A"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
+      .flags       = ".fc_PL130",
+      .factores    = c("PL130", "PE041")
+    )
+
+    imp_PL130a <- missRanger::missRanger(
+      data = datos_imp_PL130a,
+      formula = PL130_ + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
+      num.trees = 100,
+      pmm.k = 10
+    )
+    imp_PL130b <- missRanger::missRanger(
+      data = datos_imp_PL130b,
+      formula = PL130_ + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
+      num.trees = 100,
+      pmm.k = 10
+    )
+    imp_PL130c <- missRanger::missRanger(
+      data = datos_imp_PL130c,
+      formula = PL130 + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    imp_PL130 <- dplyr::bind_rows(
+      imp_PL130a |>
+        dplyr::filter(.fa_PL130 == -1) |>
+        dplyr::select(PB010, PB020, PB030, PL130_) |>
+        dplyr::rename(PL130 = PL130_),
+      imp_PL130b |>
+        dplyr::filter(.fb_PL130 == -1) |>
+        dplyr::select(PB010, PB020, PB030, PL130_) |>
+        dplyr::mutate(PL130 = as.numeric(as.character(PL130_))),
+      imp_PL130c |>
+        dplyr::filter(.fc_PL130 == -1) |>
+        dplyr::select(PB010, PB020, PB030, PL130) |>
+        dplyr::mutate(PL130 = as.numeric(as.character(PL130))),
+    )
 
     # Sector publico-privado -------------------
+    datos_imp_PL230 <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL230", "PE041"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+      .flag        = ".f_PL230",
+      .factores    = c("PL230", "PE041")
+    )
+
+    imp_PL230 <- missRanger::missRanger(
+      data = datos_imp_PL230,
+      formula = PL230 + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    imp_PL230 <- imp_PL230 |>
+      dplyr::filter(.f_PL230 == -1) |>
+      dplyr::select(PB010, PB020, PB030, PL230) |>
+      dplyr::mutate(PL230 = as.numeric(as.character(PL230)))
 
   }
 
   # Datos finales ------------------------------------------------------------
   imps <- list(
-    imp_maa = imp_maa,
-    imp_man = imp_man,
-    imp_PL060 = imp_PL060,
-    imp_PL040A = imp_PL040A,
-    imp_PL051A = imp_PL051A,
-    imp_PL111A = imp_PL111A,
-    imp_PL040B = imp_PL040B,
-    imp_PL051B = imp_PL051B
+    imp_maa,
+    imp_man,
+    imp_PL060,
+    imp_PL040A,
+    imp_PL051A,
+    imp_PL111A,
+    imp_PL040B,
+    imp_PL051B
   )
 
-  if (.anio >= 2021) {
-    imps <- c(
-      imps,
-      imp_PL111B = imp_corB |>
-        dplyr::filter(.f_PL111B == -1) |>
-        dplyr::select(PB010, PB020, PB030, PL111B)
-    )
-  }
+  if (.anio >= 2021) imps <- c(imps, list(imp_PL111B))
 
-  if (.lmh) {
-
-  }
+  if (.lmh) imps <- c(imps, list(imp_PL130, imp_PL230))
 
   for (.imp in imps) {
     .datos <- dplyr::left_join(
@@ -220,11 +288,12 @@ imputar_personas <- function(
 #' Title
 #'
 #' @param .datos .datos
+#' @param .anio .anio
 #' @param .lmh lmh
 #' @param ... ...
 #'
 #' @returns .datos con flags de imputacion
-calc_flags_imputacion <- function(.datos, .lmh, ...) {
+calc_flags_imputacion <- function(.datos, .anio, .lmh, ...) {
   .datos <- dplyr::mutate(
     .datos,
     .f_maa = dplyr::case_when(
@@ -250,22 +319,36 @@ calc_flags_imputacion <- function(.datos, .lmh, ...) {
       PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL051B_F %in% c(-1, -2) ~ -1,
       PY010N + PY050N != 0 & PL051B_F == 1 ~ 1,
       .default = 0
-    ),
-    .f_PL111B = dplyr::case_when(
-      PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL111B_F %in% c(-1, -2) ~ -1,
-      PY010N + PY050N != 0 & PL111B_F == 1 ~ 1,
-      .default = 0
     )
   )
+
+  if (.anio) {
+    .datos <- dplyr::mutate(
+      .datos,
+      .f_PL111B = dplyr::case_when(
+        PY010N + PY050N != 0 & (PL032 != 1 | is.na(PL032)) & PL111B_F %in% c(-1, -2) ~ -1,
+        PY010N + PY050N != 0 & PL111B_F == 1 ~ 1,
+        .default = 0
+      )
+    )
+  }
 
   if (.lmh) {
     .datos <- dplyr::mutate(
       .datos,
-      .f_PL130 = dplyr::case_when(
+      .fa_PL130 = dplyr::case_when(
         PL130 == 14 ~ -1,
         PL130 < 10 ~ 1,
-        PL130 == 15 ~ -2,
-        PL130 >= 10 ~ 2,
+        .default = 0
+      ),
+      .fb_PL130 = dplyr::case_when(
+        PL130 == 15 ~ -1,
+        PL130 %in% 10:13 ~ 1,
+        .default = 0
+      ),
+      .fc_PL130 = dplyr::case_when(
+        PL130_F == -1 ~ -1,
+        PL130_F == 1 & PL130 != 14 & PL130 != 15 ~ 1,
         .default = 0
       ),
       .f_PL230 = dplyr::case_when(

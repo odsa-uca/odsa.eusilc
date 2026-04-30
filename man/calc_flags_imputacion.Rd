@@ -4,10 +4,12 @@
 \alias{calc_flags_imputacion}
 \title{Title}
 \usage{
-calc_flags_imputacion(.datos, .lmh, ...)
+calc_flags_imputacion(.datos, .anio, .lmh, ...)
 }
 \arguments{
 \item{.datos}{.datos}
+
+\item{.anio}{.anio}
 
 \item{.lmh}{lmh}
 
