@@ -43,18 +43,15 @@ expandir_personas <- function(
   mensajes <- datos_estandar$mensajes
 
   # Imputaciones -------------------------------------------------------------
-  if (is.null(attr(.datos, "imputada"))) {
+
+  # Calcular vbles -----------------------------------------------------------
+  if (!all(c("maa", "man") %in% names(.datos))) {
     .datos <- dplyr::mutate(
       .datos,
       maa = PL073 + PL074,
       man = PL075 + PL076
     )
-  } else {
-    .datos   <- aplicar_imputaciones(.datos)
-    mensajes <- c(mensajes, "i" = "El conjunto de datos fue imputado...")
   }
-
-  # Calcular vbles -----------------------------------------------------------
   .datos <- lookup_personas(.datos, lmh)
   .datos <- calcular_personas(.datos, lmh)
 
@@ -74,36 +71,6 @@ expandir_personas <- function(
   attr(.datos, "imputada")   <- !is.null(attr(.datos, "imputada"))
 
   if (!is.null(mensajes)) rlang::warn(c("Ojo!", mensajes))
-
-  return(.datos)
-}
-
-# ============================================================================
-#' Title
-#'
-#' @param .datos .datos
-#'
-#' @returns Conjunto de datos estandarizado con imputaciones aplicadas
-aplicar_imputaciones <- function(.datos) {
-  .datos <- dplyr::mutate(
-    .datos,
-    maa = dplyr::case_when(
-      .f_maa == -1 ~ maa_imp,
-      .default = maa
-    ),
-    man = dplyr::case_when(
-      .f_man == -1 ~ man_imp,
-      .default = man
-    ),
-    PL060 = dplyr::case_when(
-      .f_PL060 == -1 ~ PL060_imp,
-      .default = PL060,
-    ),
-    PL040A = dplyr::case_when(
-      .f_PL040A == -1 ~ PL040A_imp,
-      .default = PL040A
-    )
-  )
 
   return(.datos)
 }

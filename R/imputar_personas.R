@@ -14,6 +14,7 @@ imputar_personas <- function(
   ...
 ) {
   # TODO: Reorganizar esta función!! Es una monstruosidad!!
+  # TODO: Chequear cuánto hay que imputar e incorporar al control de flujos
   # Construccion flags -------------------------------------------------------
   # Numero negativo indica grupo a imputar, mismo numero positivo indica grupo
   # de referencia para entrenamiento
@@ -173,7 +174,7 @@ imputar_personas <- function(
     dplyr::select(PB010, PB020, PB030, PL051B) |>
     dplyr::mutate(PL051B = as.numeric(as.character(PL051B)))
 
-  if (.lmh) {
+  if (.anio < 2021 | .lmh) {
     # Tamaño del establecimiento ---------------
     datos_imp_PL130a <- armar_imputables(
       .datos,
@@ -229,7 +230,9 @@ imputar_personas <- function(
         dplyr::select(PB010, PB020, PB030, PL130) |>
         dplyr::mutate(PL130 = as.numeric(as.character(PL130))),
     )
+  }
 
+  if (.lmh) {
     # Sector publico-privado -------------------
     datos_imp_PL230 <- armar_imputables(
       .datos,
@@ -267,7 +270,9 @@ imputar_personas <- function(
 
   if (.anio >= 2021) imps <- c(imps, list(imp_PL111B))
 
-  if (.lmh) imps <- c(imps, list(imp_PL130, imp_PL230))
+  if (.anio < 2021 | .lmh) imps <- c(imps, list(imp_PL130))
+
+  if (.lmh) imps <- c(imps, list(imp_PL230))
 
   for (.imp in imps) {
     .datos <- dplyr::left_join(
@@ -277,6 +282,8 @@ imputar_personas <- function(
       suffix = c("", "_imp")
     )
   }
+
+  .datos <- aplicar_imputaciones(.datos, .anio, .lmh)
 
   # Devolver -----------------------------------------------------------------
   attr(.datos, "imputada") <- TRUE
@@ -322,7 +329,7 @@ calc_flags_imputacion <- function(.datos, .anio, .lmh, ...) {
     )
   )
 
-  if (.anio) {
+  if (.anio >= 2021) {
     .datos <- dplyr::mutate(
       .datos,
       .f_PL111B = dplyr::case_when(
@@ -333,7 +340,7 @@ calc_flags_imputacion <- function(.datos, .anio, .lmh, ...) {
     )
   }
 
-  if (.lmh) {
+  if (.anio < 2021 | .lmh) {
     .datos <- dplyr::mutate(
       .datos,
       .fa_PL130 = dplyr::case_when(
@@ -350,7 +357,13 @@ calc_flags_imputacion <- function(.datos, .anio, .lmh, ...) {
         PL130_F == -1 ~ -1,
         PL130_F == 1 & PL130 != 14 & PL130 != 15 ~ 1,
         .default = 0
-      ),
+      )
+    )
+  }
+
+  if (.lmh) {
+    .datos <- dplyr::mutate(
+      .datos,
       .f_PL230 = dplyr::case_when(
         PL032 == 1 & PL040A == 3 & PL230 == 99 ~ -1,
         PL230_F %in% c(-1, 1) ~ PL230_F,
@@ -385,4 +398,50 @@ armar_imputables <- function(
     dplyr::mutate(dplyr::across(dplyr::all_of(.factores), factor))
 
   return(datos_imp)
+}
+
+# ============================================================================
+#' Title
+#'
+#' @param .datos .datos
+#' @param .anio .anio
+#' @param .lmh .lmh
+#'
+#' @returns Conjunto de datos estandarizado con imputaciones aplicadas
+aplicar_imputaciones <- function(.datos, .anio, .lmh) {
+  .datos <- dplyr::mutate(
+    .datos,
+    maa = dplyr::if_else(.f_maa == -1, maa_imp, maa),
+    man = dplyr::if_else(.f_man == -1, man_imp, man),
+    PL060 = dplyr::if_else(.f_PL060 == -1, PL060_imp, PL060),
+    PL040A = dplyr::if_else(.f_PL040A == -1, PL040A_imp, PL040A),
+    PL051A = dplyr::if_else(.f_PL051A == -1, PL051A_imp, PL051A),
+    PL111A = dplyr::if_else(.f_PL111A == -1, PL111A_imp, PL111A),
+    PL040B = dplyr::if_else(.f_PL040B == -1, PL040B_imp, PL040B),
+    PL051B = dplyr::if_else(.f_PL051B == -1, PL051B_imp, PL051B),
+  )
+
+  if (.anio >= 2021) {
+    .datos <- dplyr::mutate(
+      .datos,
+      PL111B = dplyr::if_else(.f_PL111B, PL111B_imp, PL111B)
+    )
+  }
+
+  if (.anio < 2021 | .lmh) {
+    # TODO: PL130 tiene tres flags ...
+    .datos <- dplyr::mutate(
+      .datos,
+      PL130 = dplyr::if_else(!is.na(PL130_imp), PL130_imp, PL130),
+    )
+  }
+
+  if (.lmh) {
+    .datos <- dplyr::mutate(
+      .datos,
+      PL230 = dplyr::if_else(.f_PL230 == -1, PL230_imp, PL230),
+    )
+  }
+
+  return(.datos)
 }
