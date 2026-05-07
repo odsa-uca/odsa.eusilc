@@ -7,10 +7,10 @@
 calc_heterogeneidad(
   .PL040A,
   .PL032,
-  .pl05,
-  .pl06b,
-  .pl07,
-  .pl08b,
+  .pl20,
+  .pl21b,
+  .pl22,
+  .pl13,
   .nivel,
   .lmh = TRUE
 )
@@ -20,13 +20,13 @@ calc_heterogeneidad(
 
 \item{.PL032}{PL032}
 
-\item{.pl05}{pl05}
+\item{.pl20}{pl20}
 
-\item{.pl06b}{pl06b}
+\item{.pl21b}{pl21b}
 
-\item{.pl07}{pl07}
+\item{.pl22}{pl22}
 
-\item{.pl08b}{pl08b}
+\item{.pl13}{pl13}
 
 \item{.nivel}{Nivel de agregación.}
 

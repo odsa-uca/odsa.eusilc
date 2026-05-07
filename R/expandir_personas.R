@@ -57,9 +57,9 @@ expandir_personas <- function(
 
   # Arreglos y devolver ------------------------------------------------------
   if (!.expandir) {
-    .datos <- dplyr::select(.datos, dplyr::all_of(names(etq$P$variables)))
+    .datos <- dplyr::select(.datos, dplyr::any_of(names(etq$P$variables)))
   } else {
-    .datos <- dplyr::relocate(.datos, dplyr::all_of(names(etq$P$variables)))
+    .datos <- dplyr::relocate(.datos, dplyr::any_of(names(etq$P$variables)))
   }
 
   attr(.datos, "base")       <- "P"

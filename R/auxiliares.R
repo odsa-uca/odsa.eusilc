@@ -14,11 +14,11 @@ aux_etiquetas <- function(.etq) {
   etiquetas$P <- list()
   etiquetas$H <- list()
 
-  etiquetas$P$variables <- tibble::deframe(etq_p[, c("variable_n2", "descripcion")])
-  etiquetas$H$variables <- tibble::deframe(etq_h[, c("variable_n2", "descripcion")])
+  etiquetas$P$variables <- as.list(tibble::deframe(etq_p[, c("variable_n2", "descripcion")]))
+  etiquetas$H$variables <- as.list(tibble::deframe(etq_h[, c("variable_n2", "descripcion")]))
 
-  etiquetas$P$valores <- etq_p[!is.na(etq_p$valores), ]$valores
-  etiquetas$H$valores <- etq_h[!is.na(etq_h$valores), ]$valores
+  etiquetas$P$valores <- tibble::deframe(etq_p[!is.na(etq_p$valores), c("variable_n2", "valores")])
+  etiquetas$H$valores <- tibble::deframe(etq_h[!is.na(etq_h$valores), c("variable_n2", "valores")])
 
   return(etiquetas)
 }

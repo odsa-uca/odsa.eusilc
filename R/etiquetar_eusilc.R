@@ -9,7 +9,7 @@
 etiquetar_eusilc <- function(.datos, .base = NULL, ...) {
   if (is.null(.base) & is.null(attr(.datos, "base"))) {
     rlang::abort("`.datos` debe ser un conjunto de datos EUSILC expandido.")
-  } else if (is.null(base)) {
+  } else if (is.null(.base)) {
     .base <- attr(.datos, "base")
   }
 
