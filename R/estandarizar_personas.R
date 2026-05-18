@@ -8,8 +8,6 @@
 #'
 #' @returns conjunto de datos estandarizado para [calcular_personas()].
 estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
-  mensajes <- NULL
-
   if (.anio <= 2021) {
     .datos <- dplyr::mutate(
       .datos,
@@ -39,7 +37,11 @@ estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
       PL051B_F = dplyr::if_else(PL032 != 1 | is.na(PL032), PL051_F, -2),
       PL111B_F = -2,
     )
-    mensajes <- c(mensajes, "i" = "La base es anterior a 2021.")
+
+    cli::cli_bullets(c(
+      "!" = "La base corresponde al {(.anio)}, anterior a 2021",
+      "i" = "Se pierde PL111B"
+    ))
   } else if (is.null(.R)) {
     .datos <- dplyr::mutate(
       .datos,
@@ -49,7 +51,11 @@ estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
       RB280 = NA_integer_,
       RB290 = NA_integer_
     )
-    mensajes <- c(mensajes, "i" = "No se proporciono el conjunto R. Se pierden: `pd01a`, `pd04`, `pd05`.")
+
+    cli::cli_bullets(c(
+      "!" = "No se proporciono el conjunto R",
+      "i" = "Se pierden: `pd01a`, `pd04`, `pd05`"
+    ))
   } else {
     .datos <- dplyr::left_join(
       x  = .datos,
@@ -60,7 +66,11 @@ estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
 
   if (is.null(.D)) {
     .datos <- dplyr::mutate(.datos, DB040 = NA_character_)
-    mensajes <- c(mensajes, "i" = "No se proporciono el conjunto D. Se pierden: `pi03`.")
+
+    cli::cli_bullets(c(
+      "!" = "No se proporciono el conjunto D",
+      "i" = "Se pierden: `pi03`"
+    ))
   } else {
     .datos <- dplyr::left_join(
       x  = .datos,
@@ -71,11 +81,19 @@ estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
 
   if (.anio < 2021 & !.lmh) {
     .datos <- dplyr::mutate(.datos, PL230 = NA_integer_)
-    mensajes <- c(mensajes, "i" = "No se encontro `PL230`. Se pierden: `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`.")
+
+    cli::cli_bullets(c(
+      "!" = "No se encontro `PL230`",
+      "i" = "Se pierden: `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`."
+    ))
   } else if (!.lmh) {
     .datos <- dplyr::mutate(.datos, PL130 = NA_integer_, PL230 = NA_integer_)
-    mensajes <- c(mensajes, "i" = "No se encontro `PL130` o `PL230`. Se pierden: `pl06a`, `pl06b`, `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`.")
+
+    cli::cli_bullets(c(
+      "!" = "No se encontro `PL130` o `PL230`",
+      "i" = "Se pierden: `pl06a`, `pl06b`, `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`."
+    ))
   }
 
-  return(list(datos = .datos, mensajes = mensajes))
+  return(.datos)
 }

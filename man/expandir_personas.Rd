@@ -4,7 +4,14 @@
 \alias{expandir_personas}
 \title{Construir variables adicionales en los conjuntos de datos P de la EU-SILC}
 \usage{
-expandir_personas(.datos, .D = NULL, .R = NULL, .expandir = FALSE, ...)
+expandir_personas(
+  .datos,
+  .D = NULL,
+  .R = NULL,
+  .expandir = FALSE,
+  .imputar = FALSE,
+  ...
+)
 }
 \arguments{
 \item{.datos}{Conjunto de datos P de la EU-SILC.}
@@ -14,6 +21,8 @@ expandir_personas(.datos, .D = NULL, .R = NULL, .expandir = FALSE, ...)
 \item{.R}{Conjunto de datos R de la EU-SILC.}
 
 \item{.expandir}{Conservar las variables originales en el conjunto de datos final o eliminarlas.}
+
+\item{.imputar}{Imputar algunas variables insumo.}
 
 \item{...}{...}
 }

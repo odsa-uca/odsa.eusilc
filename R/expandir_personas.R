@@ -4,6 +4,7 @@
 #' @param .D Conjunto de datos D de la EU-SILC.
 #' @param .R Conjunto de datos R de la EU-SILC.
 #' @param .expandir Conservar las variables originales en el conjunto de datos final o eliminarlas.
+#' @param .imputar Imputar algunas variables insumo.
 #' @param ... ...
 #'
 #' @returns Conjunto de datos de la EU-SILC con variables adicionales de uso habitual.
@@ -13,38 +14,52 @@ expandir_personas <- function(
     .D = NULL,
     .R = NULL,
     .expandir = FALSE,
+    .imputar = FALSE,
     ...
 ) {
   # Chequeos args ------------------------------------------------------------
   errores <- NULL
 
   if (!is.data.frame(.datos)) {
-    errores <- c(errores, "*" = "`.datos` debe ser un data.frame o tibble.")
+    errores <- c(errores, "x" = "`.datos` debe ser un data.frame o tibble.")
   }
   if (!is.null(.D) & !is.data.frame(.D)) {
-    errores <- c(errores, "*" = "`.D` debe ser un data.frame o tibble.")
+    errores <- c(errores, "x" = "`.D` debe ser un data.frame o tibble.")
   }
   if (!is.null(.R) & !is.data.frame(.R)) {
-    errores <- c(errores, "*" = "`.R` debe ser un data.frame o tibble.")
+    errores <- c(errores, "x" = "`.R` debe ser un data.frame o tibble.")
   }
   if (!is.logical(.expandir)) {
-    errores <- c(errores, "*" = "`.expandir` debe ser `TRUE` o `FALSE`.")
+    errores <- c(errores, "x" = "`.expandir` debe ser `TRUE` o `FALSE`.")
   }
 
-  if(!is.null(errores)) rlang::abort(c("Problemas en los argumentos:", errores))
+  if(!is.null(errores)) cli::cli_abort(c("Problemas en los argumentos:", errores))
 
   # Estandarizacion ----------------------------------------------------------
+  cli::cli_h1("Estandarizacion")
+
   anio <- unique(.datos$PB010)
   lmh  <- "PL230" %in% names(.datos)
 
-  datos_estandar <- estandarizar_personas(.datos, anio, .D, .R, lmh)
+  if (length(anio) > 1) {
+    cli::cli_abort(c(
+      "Solo se aceptan bases de un unico anio",
+      "x" = "Se proporciono una base para {anio}."
+    ))
+  }
 
-  .datos   <- datos_estandar$datos
-  mensajes <- datos_estandar$mensajes
+  .datos <- estandarizar_personas(.datos, anio, .D, .R, lmh)
 
   # Imputaciones -------------------------------------------------------------
+  if (.imputar) {
+    cli::cli_h1("Imputacion")
+
+    .datos <- imputar_personas(.datos, anio, lmh)
+  }
 
   # Calcular vbles -----------------------------------------------------------
+  cli::cli_h1("Calcular variables nuevas")
+
   if (!all(c("maa", "man") %in% names(.datos))) {
     .datos <- dplyr::mutate(
       .datos,
@@ -52,6 +67,7 @@ expandir_personas <- function(
       man = PL075 + PL076
     )
   }
+
   .datos <- lookup_personas(.datos, lmh)
   .datos <- calcular_personas(.datos, lmh)
 
@@ -69,8 +85,6 @@ expandir_personas <- function(
   attr(.datos, "vbles. LMH") <- lmh
   attr(.datos, "expandida")  <- .expandir
   attr(.datos, "imputada")   <- !is.null(attr(.datos, "imputada"))
-
-  if (!is.null(mensajes)) rlang::warn(c("Ojo!", mensajes))
 
   return(.datos)
 }
