@@ -87,8 +87,8 @@ calcular_personas <- function(
     pd01b = dplyr::if_else(!is.na(RB081), RB081, PB010 - RB080 - 1),
     pd01c = PB010 - agrupar_nac(PB010, RB080) - 1,
     pd02  = PB150,
-    pd04  = dplyr::if_else(RB280 == pi02, 1, 2),
-    pd05  = dplyr::if_else(RB290 == pi02, 1, 2),
+    pd04  = dplyr::if_else(RB280 == "LOC", 1, 2),
+    pd05  = dplyr::if_else(RB290 == "LOC", 1, 2),
     pd06  = NA_integer_,
     # Bloque L -----------------------
     pl02a = PL040A,
