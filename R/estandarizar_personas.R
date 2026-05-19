@@ -2,12 +2,14 @@
 #'
 #' @param .datos .datos
 #' @param .anio .anio
+#' @param .pais .pais
 #' @param .D .D
 #' @param .R .R
 #' @param .lmh lmh
 #'
 #' @returns conjunto de datos estandarizado para [calcular_personas()].
-estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
+estandarizar_personas <- function(.datos, .anio, .pais, .D, .R, .lmh) {
+  # Anterior a 2021 --------------------------
   if (.anio <= 2021) {
     .datos <- dplyr::mutate(
       .datos,
@@ -40,8 +42,10 @@ estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
 
     cli::cli_bullets(c(
       "!" = "La base corresponde al {(.anio)}, anterior a 2021",
-      "i" = "Se pierde PL111B"
+      " " = "No hace falta el conjunto R",
+      " " = "Se pierde PL111B"
     ))
+  # Posterior a 2021 sin R -------------------
   } else if (is.null(.R)) {
     .datos <- dplyr::mutate(
       .datos,
@@ -54,44 +58,71 @@ estandarizar_personas <- function(.datos, .anio, .D, .R, .lmh) {
 
     cli::cli_bullets(c(
       "!" = "No se proporciono el conjunto R",
-      "i" = "Se pierden: `pd01a`, `pd04`, `pd05`"
+      " " = "Se pierden: pd01a, pd04, pd05"
     ))
+  # Posterior a 2021 con R -------------------
   } else {
     .datos <- dplyr::left_join(
       x  = .datos,
       y  = dplyr::select(.R, RB010, RB020, RB030, RB080, RB081, RB082, RB280, RB290),
       by = dplyr::join_by(PB010 == RB010, PB020 == RB020, PB030 == RB030)
     )
+
+    cli::cli_bullets(c(
+      "v" = "La base es posterior a 2021 y se proporciono el conjunto R"
+    ))
   }
 
+  # Sin D ------------------------------------
   if (is.null(.D)) {
     .datos <- dplyr::mutate(.datos, DB040 = NA_character_)
 
     cli::cli_bullets(c(
       "!" = "No se proporciono el conjunto D",
-      "i" = "Se pierden: `pi03`"
+      " " = "Se pierden: pi03"
     ))
+  # Con D ------------------------------------
   } else {
     .datos <- dplyr::left_join(
       x  = .datos,
       y  = dplyr::select(.D, DB010, DB020, DB030, DB040),
       by = dplyr::join_by(PB010 == DB010, PB020 == DB020, PX030 == DB030)
     )
+
+    cli::cli_bullets(c(
+      "v" = "Se proporciono el conjunto D"
+    ))
   }
 
+  # Anterior a 2021 sin PL230 ----------------
   if (.anio < 2021 & !.lmh) {
     .datos <- dplyr::mutate(.datos, PL230 = NA_integer_)
 
     cli::cli_bullets(c(
-      "!" = "No se encontro `PL230`",
-      "i" = "Se pierden: `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`."
+      "!" = "No se encontro PL230",
+      " " = "Se pierden: pl22, pl30, pl31, py13, py14, py15."
     ))
+  # Posterior a 2021 sin PL230 ---------------
   } else if (!.lmh) {
     .datos <- dplyr::mutate(.datos, PL130 = NA_integer_, PL230 = NA_integer_)
 
     cli::cli_bullets(c(
-      "!" = "No se encontro `PL130` o `PL230`",
-      "i" = "Se pierden: `pl06a`, `pl06b`, `pl07`, `pl09a`, `pl09b`, `py13`, `py14`, `py15`."
+      "!" = "No se encontro PL130 o PL230",
+      " " = "Se pierden: pl21a, pl21b, pl22, pl30, pl31, py13, py14, py15."
+    ))
+  # Con PL230 --------------------------------
+  } else if (.lmh) {
+    cli::cli_bullets(c(
+      "v" = "Se encontraron las variables PL130 y PL230"
+    ))
+  }
+
+  if (.pais == "IT" & all(.datos$PY120N_F == -4)) {
+    .datos <- dplyr::mutate(.datos, PY120N = 0)
+
+    cli::cli_bullets(c(
+      "!" = "El pais es Italia y PY120N (sickness benefits) se incluye en otro monto",
+      " " = "Se deja en cero"
     ))
   }
 

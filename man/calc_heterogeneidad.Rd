@@ -4,16 +4,7 @@
 \alias{calc_heterogeneidad}
 \title{Title}
 \usage{
-calc_heterogeneidad(
-  .PL040A,
-  .PL032,
-  .pl20,
-  .pl21b,
-  .pl22,
-  .pl13,
-  .nivel,
-  .lmh = TRUE
-)
+calc_heterogeneidad(.PL040A, .PL032, .pl20, .pl21b, .pl22, .pl13, .nivel)
 }
 \arguments{
 \item{.PL040A}{PL040A}
@@ -29,8 +20,6 @@ calc_heterogeneidad(
 \item{.pl13}{pl13}
 
 \item{.nivel}{Nivel de agregación.}
-
-\item{.lmh}{lmh}
 }
 \value{
 heterogeneidad

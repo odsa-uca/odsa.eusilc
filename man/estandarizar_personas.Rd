@@ -4,12 +4,14 @@
 \alias{estandarizar_personas}
 \title{Title}
 \usage{
-estandarizar_personas(.datos, .anio, .D, .R, .lmh)
+estandarizar_personas(.datos, .anio, .pais, .D, .R, .lmh)
 }
 \arguments{
 \item{.datos}{.datos}
 
 \item{.anio}{.anio}
+
+\item{.pais}{.pais}
 
 \item{.D}{.D}
 

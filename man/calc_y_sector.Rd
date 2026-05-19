@@ -4,7 +4,7 @@
 \alias{calc_y_sector}
 \title{Title}
 \usage{
-calc_y_sector(.py10, .pl31, .sector, .lmh = TRUE)
+calc_y_sector(.py10, .pl31, .sector)
 }
 \arguments{
 \item{.py10}{py10}
@@ -12,8 +12,6 @@ calc_y_sector(.py10, .pl31, .sector, .lmh = TRUE)
 \item{.pl31}{pl31}
 
 \item{.sector}{sector}
-
-\item{.lmh}{lmh}
 }
 \value{
 py13, py14 o py15

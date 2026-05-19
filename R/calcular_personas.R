@@ -1,15 +1,25 @@
-#' Title
+#' Construye variables en la base P de la EU-SILC.
 #'
-#' @param .datos .datos
-#' @param .anio anio
-#' @param .lmh .lmh
+#' @param .datos Conjunto P de la EU-SILC.
+#' @param .anio El año del conjunto
+#' @param .lmh Si el conjunto de datos tiene el modulo LMH.
 #' @param ... ...
 #'
-#' @returns .datos con varibles recodificadas
-lookup_personas <- function(.datos, .anio, .lmh = FALSE, ...) {
-  .datos <- dplyr::left_join(x  = .datos,
-                             y  = tabla_ppa,
-                             by = dplyr::join_by(PB010, PB020))
+#' @returns Conjunto de datos P de la EU-SILC con variables adicionales.
+calcular_personas <- function(
+    .datos,
+    .anio,
+    .lmh,
+    ...
+) {
+  # PPA --------------------------------------
+  .datos <- dplyr::left_join(
+    x  = .datos,
+    y  = tabla_ppa,
+    by = dplyr::join_by(PB010, PB020)
+  )
+
+  # Lookup -----------------------------------
   .datos <- dplyr::mutate(
     .datos,
     pd03  = dplyr::recode_values(
@@ -62,9 +72,64 @@ lookup_personas <- function(.datos, .anio, .lmh = FALSE, ...) {
     ),
   )
 
-  if (.lmh) {
+  # Núcleo -----------------------------------
+  .datos <- dplyr::mutate(
+    .data = .datos,
+    # Bloque I -----------------------
+    pi01 = PB010,
+    pi02 = PB020,
+    pi03 = DB040,
+    pi04 = PX030,
+    pi05 = PB030,
+    pi06 = PB040,
+    # Bloque D -----------------------
+    pd01a = RB082,
+    pd01b = dplyr::if_else(!is.na(RB081), RB081, PB010 - RB080 - 1),
+    pd01c = PB010 - agrupar_nac(PB010, RB080) - 1,
+    pd02  = PB150,
+    pd04  = dplyr::if_else(RB280 == pi02, 1, 2),
+    pd05  = dplyr::if_else(RB290 == pi02, 1, 2),
+    pd06  = NA_integer_,
+    # Bloque L -----------------------
+    pl02a = PL040A,
+    pl02b = PL040B,
+    pl02c = calc_variante_c(PL032, pl02a, pl02b),
+    pl10a = PL051A,
+    pl10b = PL051B,
+    pl10c = calc_variante_c(PL032, pl10a, pl10b),
+    pl11a = PL051A %/% 10,
+    pl11b = PL051B %/% 10,
+    pl11c = calc_variante_c(PL032, pl11a, pl11b),
+    pl12c = calc_variante_c(PL032, pl12a, pl12b),
+    pl13c = calc_variante_c(PL032, pl13a, pl13b),
+    pl20c = calc_variante_c(PL032, pl20a, pl20b),
+    pl50  = calc_egp(PL051A, PL040A, PL150),
+    pl40a = calc_informalidad(PL040A, PY030G, PY035G, "a"),
+    pl40b = calc_informalidad(PL040A, PY030G, PY035G, "b"),
+    # Bloque Y -----------------------
+    py00 = PY010N + PY050N + PY090N + PY110N + PY120N + PY130N + PY140N + PY100N + PY080N,
+    py10 = PY010N + PY050N,
+    py11 = PY010N,
+    py12 = PY050N,
+    py20 = PY090N + PY110N + PY120N + PY130N + PY140N + PY100N + PY080N,
+    py21 = PY100N + PY080N,
+    py22 = PY100N,
+    py23 = PY080N,
+    py24 = PY090N,
+    py25 = PY110N + PY120N + PY130N + PY140N,
+    haa  = dplyr::if_else(pl01 == 1 & py11 != 0 & maa != 0,
+                          maa * PL060 * 4.2, NA_real_),
+    han  = dplyr::if_else(pl01 == 1 & py12 != 0 & man != 0,
+                          man * PL060 * 4.2, NA_real_),
+    py11h = dplyr::if_else(py11 != 0, (py11 * PX010) / haa, 0),
+    py12h = dplyr::if_else(py12 != 0, (py12 * PX010) / han, 0),
+    .keep = "all"
+  )
+
+  # Pre 2021 solo PL130 ----------------------
+  if (.anio < 2021 & !.lmh) {
     .datos <- dplyr::mutate(
-      .datos,
+      .data = .datos,
       pl21a = dplyr::recode_values(
         PL130,
         from = tabla_pl21$PL130,
@@ -76,113 +141,68 @@ lookup_personas <- function(.datos, .anio, .lmh = FALSE, ...) {
         from = tabla_pl21$PL130,
         to   = tabla_pl21$pl21b,
         default = NA_integer_
-      )
+      ),
+      pl22 = NA_integer_,
+      pl30 = NA_integer_,
+      pl31 = NA_integer_,
+      py13 = NA_real_,
+      py14 = NA_real_,
+      py15 = NA_real_,
+     .keep = "all"
     )
+
+  # Con PL130 y PL230 ------------------------
+  } else if (.lmh) {
+    .datos <- dplyr::mutate(
+      .data = .datos,
+      pl21a = dplyr::recode_values(
+        PL130,
+        from = tabla_pl21$PL130,
+        to   = tabla_pl21$pl21a,
+        default = NA_integer_
+      ),
+      pl21b = dplyr::recode_values(
+        PL130,
+        from = tabla_pl21$PL130,
+        to   = tabla_pl21$pl21b,
+        default = NA_integer_
+      ),
+      pl22 = dplyr::if_else(PL230 != 99, PL230, NA_integer_),
+      pl30 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "a"),
+      pl31 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "b"),
+      py13 = calc_y_sector(py10, pl31, 1),
+      py14 = calc_y_sector(py10, pl31, 2),
+      py15 = calc_y_sector(py10, pl31, 3),
+     .keep = "all"
+    )
+
+  # Sin PL130 ni PL230 -----------------------
   } else {
-    .datos <- dplyr::mutate(.datos, pl21a = NA_integer_, pl21b = NA_integer_)
+    .datos <- dplyr::mutate(
+      .data = .datos,
+      pl21a = NA_integer_,
+      pl21b = NA_integer_,
+      pl22  = NA_integer_,
+      pl30  = NA_integer_,
+      pl31  = NA_integer_,
+      py13  = NA_real_,
+      py14  = NA_real_,
+      py15  = NA_real_,
+     .keep  = "all"
+    )
+
   }
 
-  return(.datos)
-}
-
-# ============================================================================
-#' Construye variables en la base P de la EU-SILC.
-#'
-#' @param .datos Conjunto P de la EU-SILC.
-#' @param .lmh Si el conjunto de datos tiene el modulo LMH.
-#' @param ... ...
-#'
-#' @returns Conjunto de datos P de la EU-SILC con variables adicionales.
-calcular_personas <- function(
-    .datos,
-    .lmh = FALSE,
-    ...
-) {
-  datos <- .datos |>
-    dplyr::mutate(
-      # Bloque I -----------------------
-      pi01 = PB010,
-      pi02 = PB020,
-      pi03 = DB040,
-      pi04 = PX030,
-      pi05 = PB030,
-      pi06 = PB040,
-      # Bloque D -----------------------
-      pd01a = RB082,
-      pd01b = dplyr::if_else(!is.na(RB081), RB081, PB010 - RB080 - 1),
-      pd01c = PB010 - agrupar_nac(PB010, RB080) - 1,
-      pd02  = PB150,
-      pd04  = dplyr::if_else(RB280 == pi02, 1, 2),
-      pd05  = dplyr::if_else(RB290 == pi02, 1, 2),
-      pd06  = NA_integer_,
-      # Bloque L -----------------------
-      pl02a = PL040A,
-      pl02b = PL040B,
-      pl02c = dplyr::case_when(
-        PL032 == 1 ~ pl02a,
-        PL032 != 1 ~ pl02b,
-        .default = NA_integer_
-      ),
-      pl10a = PL051A,
-      pl10b = PL051B,
-      pl10c = dplyr::case_when(
-        PL032 == 1 ~ pl10a,
-        PL032 != 1 ~ pl10b,
-        .default = NA_integer_
-      ),
-      pl11a = PL051A %/% 10,
-      pl11b = PL051B %/% 10,
-      pl11c = dplyr::case_when(
-        PL032 == 1 ~ pl11a,
-        PL032 != 1 ~ pl11b,
-        .default = NA_integer_
-      ),
-      pl12c = dplyr::case_when(
-        PL032 == 1 ~ pl12a,
-        PL032 != 1 ~ pl12b,
-        .default = NA_integer_
-      ),
-      pl13c = dplyr::case_when(
-        PL032 == 1 ~ pl13a,
-        PL032 != 1 ~ pl13b,
-        .default = NA_integer_
-      ),
-      pl20c = dplyr::case_when(
-        PL032 == 1 ~ pl20a,
-        PL032 != 1 ~ pl20b,
-        .default = NA_integer_
-      ),
-      pl22  = dplyr::if_else(PL230 != 99, PL230, NA_integer_),
-      pl30 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "a", .lmh),
-      pl31 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "b", .lmh),
-      pl50  = calc_egp(PL051A, PL040A, PL150),
-      pl40a = calc_informalidad(PL040A, PY030G, PY035G, "a"),
-      pl40b = calc_informalidad(PL040A, PY030G, PY035G, "b"),
-      # Bloque Y -----------------------
-      py00 = PY010N + PY050N + PY090N + PY110N + PY120N + PY130N + PY140N + PY100N + PY080N,
-      py10 = PY010N + PY050N,
-      py11 = PY010N,
-      py12 = PY050N,
-      py13 = calc_y_sector(py10, pl31, 1, .lmh),
-      py14 = calc_y_sector(py10, pl31, 2, .lmh),
-      py15 = calc_y_sector(py10, pl31, 3, .lmh),
-      py20 = PY090N + PY110N + PY120N + PY130N + PY140N + PY100N + PY080N,
-      py21 = PY100N + PY080N,
-      py22 = PY100N,
-      py23 = PY080N,
-      py24 = PY090N,
-      py25 = PY110N + PY120N + PY130N + PY140N,
-      haa  = dplyr::if_else(pl01 == 1 & py11 != 0, maa * PL060 * 4.2, NA_real_),
-      han  = dplyr::if_else(pl01 == 1 & py12 != 0, man * PL060 * 4.2, NA_real_),
-      py11h = dplyr::if_else(py11 != 0, (py11 * PX010) / haa, 0),
-      py12h = dplyr::if_else(py12 != 0, (py12 * PX010) / han, 0),
-      dplyr::across(py00:py25, \(y) (y * PX010) / 12),
-      dplyr::across(c(py00:py25, py11h, py12h), \(y) y / ppa, .names = "{.col}ppa"),
-      .keep = "all"
-    )
+  # Ingresos mensuales y ppa -----------------
+  .datos <- dplyr::mutate(
+    .data = .datos,
+    dplyr::across(c(py00:py25, py13:py15), \(y) (y * PX010) / 12),
+    dplyr::across(c(py00:py25, py13:py15, py11h, py12h), \(y) y / ppa, .names = "{.col}ppa"),
+    .keep = "all"
+  )
 
   # ------------------------------------------
-  return(datos)
+  return(.datos)
 }
 
 # ============================================================================
@@ -211,15 +231,12 @@ agrupar_nac <- function(.anio, .nac) {
 #'
 #' @param .PL130 PL130
 #' @param .nivel Nivel de agregación.
-#' @param .lmh Módulo LMH
 #'
 #' @returns Tamaño del establecimiento
-calc_testablecimiento <- function(.PL130, .nivel, .lmh = TRUE) {
+calc_testablecimiento <- function(.PL130, .nivel) {
   rlang::arg_match(.nivel, c("a", "b"))
 
-  if (!.lmh) {
-    pl21 <- NA_integer_
-  } else if (.nivel == "a") {
+  if (.nivel == "a") {
     pl21 <- dplyr::recode_values(
       .PL130, from = tabla_pl21$PL130, to = tabla_pl21$pl21a, default = NA_integer_
     )
@@ -242,15 +259,12 @@ calc_testablecimiento <- function(.PL130, .nivel, .lmh = TRUE) {
 #' @param .pl22 pl22
 #' @param .pl13 pl13
 #' @param .nivel Nivel de agregación.
-#' @param .lmh lmh
 #'
 #' @returns heterogeneidad
-calc_heterogeneidad <- function(.PL040A, .PL032, .pl20, .pl21b, .pl22, .pl13, .nivel, .lmh = TRUE) {
+calc_heterogeneidad <- function(.PL040A, .PL032, .pl20, .pl21b, .pl22, .pl13, .nivel) {
   rlang::arg_match(.nivel, c("a", "b"))
 
-  if (!.lmh) {
-    pl3x <- NA_integer_
-  } else if (.nivel == "a") {
+  if (.nivel == "a") {
     pl3x <- dplyr::case_when(
       .PL040A == 1 & .pl21b > 1 ~ 1,
       .PL040A == 2 & .pl13 == 1 ~ 2,
@@ -348,19 +362,25 @@ calc_informalidad <- function(.PL040A, .PY030G, .PY035G, .nivel) {
 #' @param .py10 py10
 #' @param .pl31 pl31
 #' @param .sector sector
-#' @param .lmh lmh
 #'
 #' @returns py13, py14 o py15
-calc_y_sector <- function(.py10, .pl31, .sector, .lmh = TRUE) {
-  if (!.lmh) {
-    py1x <- NA_real_
-  } else {
-    py1x <- dplyr::case_when(
-      .py10 != 0 & is.na(.pl31) ~ NA_real_,
-      .py10 != 0 & .pl31 == .sector ~ .py10,
-      .default = 0
-    )
-  }
+calc_y_sector <- function(.py10, .pl31, .sector) {
+  py1x <- dplyr::case_when(
+    .py10 != 0 & is.na(.pl31) ~ NA_real_,
+    .py10 != 0 & .pl31 == .sector ~ .py10,
+    .default = 0
+  )
 
   return(py1x)
+}
+
+# ============================================================================
+calc_variante_c <- function(.PL032, .a, .b) {
+  plxxc <- dplyr::case_when(
+    .PL032 == 1 ~ .a,
+    .PL032 != 1 ~ .b,
+    .default = NA_integer_
+  )
+
+  return(plxxc)
 }

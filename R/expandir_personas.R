@@ -39,6 +39,7 @@ expandir_personas <- function(
   cli::cli_h1("Estandarizacion")
 
   anio <- unique(.datos$PB010)
+  pais <- unique(.datos$PB020)
   lmh  <- "PL230" %in% names(.datos)
 
   if (length(anio) > 1) {
@@ -47,8 +48,14 @@ expandir_personas <- function(
       "x" = "Se proporciono una base para {anio}."
     ))
   }
+  if (length(pais) > 1) {
+    cli::cli_abort(c(
+      "Solo se aceptan bases de un unico pais",
+      "x" = "Se proporciono una base para {pais}"
+    ))
+  }
 
-  .datos <- estandarizar_personas(.datos, anio, .D, .R, lmh)
+  .datos <- estandarizar_personas(.datos, anio, pais, .D, .R, lmh)
 
   # Imputaciones -------------------------------------------------------------
   if (.imputar) {
@@ -68,8 +75,7 @@ expandir_personas <- function(
     )
   }
 
-  .datos <- lookup_personas(.datos, lmh)
-  .datos <- calcular_personas(.datos, lmh)
+  .datos <- calcular_personas(.datos, anio, lmh)
 
   # Arreglos y devolver ------------------------------------------------------
   if (!.expandir) {

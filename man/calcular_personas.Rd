@@ -4,10 +4,12 @@
 \alias{calcular_personas}
 \title{Construye variables en la base P de la EU-SILC.}
 \usage{
-calcular_personas(.datos, .lmh = FALSE, ...)
+calcular_personas(.datos, .anio, .lmh, ...)
 }
 \arguments{
 \item{.datos}{Conjunto P de la EU-SILC.}
+
+\item{.anio}{El año del conjunto}
 
 \item{.lmh}{Si el conjunto de datos tiene el modulo LMH.}
 
