@@ -4,6 +4,7 @@
 #' @param .P Conjunto de datos P de la EU-SILC expandido por [expandir_personas()].
 #' @param .D Conjunto de datos D de la EU-SILC.
 #' @param .expandir Conservar las variables originales en el conjunto de datos final o eliminarlas.
+#' @param .etiquetar Aplicar etiquetas a las variables y sus valores
 #' @param ... ...
 #'
 #' @returns Conjunto de datos de la EU-SILC con variables adicionales de uso habitual
@@ -13,6 +14,7 @@ expandir_hogares <- function(
     .P,
     .D = NULL,
     .expandir = FALSE,
+    .etiquetar = TRUE,
     ...
 ) {
   # Chequeos args ------------------------------------------------------------
@@ -36,12 +38,8 @@ expandir_hogares <- function(
 
   if(!is.null(errores)) cli::cli_abort(c("Problemas en los argumentos:", errores))
 
-  # Estandarización ----------------------------------------------------------
-  cli::cli_h1("Estandarizacion")
-
   anio <- unique(.datos$HB010)
   pais <- unique(.datos$HB020)
-  lmh <- attr(.P, "vbles. LMH")
 
   if (length(anio) > 1) {
     cli::cli_abort(c(
@@ -56,6 +54,10 @@ expandir_hogares <- function(
     ))
   }
 
+  # Estandarización ----------------------------------------------------------
+  cli::cli_h1("Estandarizacion")
+
+  lmh <- attr(.P, "vbles. LMH")
   .datos <- estandarizar_hogares(.datos, anio, pais, .D, lmh)
 
   # Calcular vbles -----------------------------------------------------------
@@ -82,6 +84,10 @@ expandir_hogares <- function(
     .datos <- dplyr::select(.datos, dplyr::any_of(names(etq$H$variables)))
   } else {
     .datos <- dplyr::relocate(.datos, dplyr::any_of(names(etq$H$variables)))
+  }
+
+  if (.etiquetar) {
+    .datos <- etiquetar_eusilc(.datos, .base = "H")
   }
 
   attr(.datos, "base") <- "H"

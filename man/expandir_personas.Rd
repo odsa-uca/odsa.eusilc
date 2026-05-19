@@ -8,8 +8,9 @@ expandir_personas(
   .datos,
   .D = NULL,
   .R = NULL,
-  .expandir = FALSE,
   .imputar = FALSE,
+  .expandir = FALSE,
+  .etiquetar = TRUE,
   ...
 )
 }
@@ -20,9 +21,11 @@ expandir_personas(
 
 \item{.R}{Conjunto de datos R de la EU-SILC.}
 
+\item{.imputar}{Imputar algunas variables insumo.}
+
 \item{.expandir}{Conservar las variables originales en el conjunto de datos final o eliminarlas.}
 
-\item{.imputar}{Imputar algunas variables insumo.}
+\item{.etiquetar}{Aplicar etiquetas a las variables y sus valores}
 
 \item{...}{...}
 }

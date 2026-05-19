@@ -3,8 +3,9 @@
 #' @param .datos Conjunto de datos P de la EU-SILC.
 #' @param .D Conjunto de datos D de la EU-SILC.
 #' @param .R Conjunto de datos R de la EU-SILC.
-#' @param .expandir Conservar las variables originales en el conjunto de datos final o eliminarlas.
 #' @param .imputar Imputar algunas variables insumo.
+#' @param .expandir Conservar las variables originales en el conjunto de datos final o eliminarlas.
+#' @param .etiquetar Aplicar etiquetas a las variables y sus valores
 #' @param ... ...
 #'
 #' @returns Conjunto de datos de la EU-SILC con variables adicionales de uso habitual.
@@ -13,8 +14,9 @@ expandir_personas <- function(
     .datos,
     .D = NULL,
     .R = NULL,
-    .expandir = FALSE,
     .imputar = FALSE,
+    .expandir = FALSE,
+    .etiquetar = TRUE,
     ...
 ) {
   # Chequeos args ------------------------------------------------------------
@@ -35,12 +37,8 @@ expandir_personas <- function(
 
   if(!is.null(errores)) cli::cli_abort(c("Problemas en los argumentos:", errores))
 
-  # Estandarizacion ----------------------------------------------------------
-  cli::cli_h1("Estandarizacion")
-
   anio <- unique(.datos$PB010)
   pais <- unique(.datos$PB020)
-  lmh  <- "PL230" %in% names(.datos)
 
   if (length(anio) > 1) {
     cli::cli_abort(c(
@@ -55,6 +53,10 @@ expandir_personas <- function(
     ))
   }
 
+  # Estandarizacion ----------------------------------------------------------
+  cli::cli_h1("Estandarizacion")
+
+  lmh  <- "PL230" %in% names(.datos)
   .datos <- estandarizar_personas(.datos, anio, pais, .D, .R, lmh)
 
   # Imputaciones -------------------------------------------------------------
@@ -82,6 +84,10 @@ expandir_personas <- function(
     .datos <- dplyr::select(.datos, dplyr::any_of(names(etq$P$variables)))
   } else {
     .datos <- dplyr::relocate(.datos, dplyr::any_of(names(etq$P$variables)))
+  }
+
+  if (.etiquetar) {
+    .datos <- etiquetar_eusilc(.datos, .base = "P")
   }
 
   attr(.datos, "base")       <- "P"
