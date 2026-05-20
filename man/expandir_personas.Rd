@@ -2,7 +2,7 @@
 % Please edit documentation in R/expandir_personas.R
 \name{expandir_personas}
 \alias{expandir_personas}
-\title{Construir variables adicionales en los conjuntos de datos P de la EU-SILC}
+\title{Armoniza el conjunto de datos P de la EU-SILC}
 \usage{
 expandir_personas(
   .datos,
@@ -10,28 +10,79 @@ expandir_personas(
   .R = NULL,
   .imputar = FALSE,
   .expandir = FALSE,
-  .etiquetar = TRUE,
-  ...
+  .etiquetar = TRUE
 )
 }
 \arguments{
-\item{.datos}{Conjunto de datos P de la EU-SILC.}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC.}
 
-\item{.D}{Conjunto de datos D de la EU-SILC.}
+\item{.D}{\code{data.frame} o \code{tibble}. Conjunto de datos D de la EU-SILC.}
 
-\item{.R}{Conjunto de datos R de la EU-SILC.}
+\item{.R}{\code{data.frame} o \code{tibble}. Conjunto de datos R de la EU-SILC.}
 
-\item{.imputar}{Imputar algunas variables insumo.}
+\item{.imputar}{\code{TRUE} o \code{FALSE} (por defecto). ¿Se aplican imputaciones
+sobre las variables insumo?}
 
-\item{.expandir}{Conservar las variables originales en el conjunto de datos final o eliminarlas.}
+\item{.expandir}{\code{TRUE} o \code{FALSE} (por defecto). ¿Conservar las variables
+originales en el conjunto de datos final?}
 
-\item{.etiquetar}{Aplicar etiquetas a las variables y sus valores}
-
-\item{...}{...}
+\item{.etiquetar}{\code{TRUE} (por defecto) o \code{FALSE}. ¿Aplicar etiquetas a las
+variables y sus valores?}
 }
 \value{
-Conjunto de datos de la EU-SILC con variables adicionales de uso habitual.
+\code{tibble}. Conjunto de datos de la EU-SILC con variables adicionales
+armonizadas.
 }
 \description{
-Construir variables adicionales en los conjuntos de datos P de la EU-SILC
+Aplica una serie de transformaciones sobre el conjunto de datos
+P de la EU_SILC y lo devuelve con variables armonizadas. Las transformaciones
+tienen en cuenta el país y el año de la encuesta y si se proporcionaron los
+conjuntos D y R.
+}
+\details{
+La función encadena cuatro grandes operaciones sobre los datos:
+\subsection{Estandarización}{
+
+Dependiendo del país, el año y si se proveyeron los conjuntos D y R,
+se aplican ciertas transformaciones sobre las variables. Estas
+transformaciones buscan que el conjunto P se tenga un formato estándar,
+similar al de las EU-SILC posteriores a 2021, para facilitar los pasos
+siguientes. Para más detalles, ver \code{\link[=estandarizar_personas]{estandarizar_personas()}}.
+}
+
+\subsection{Imputación (opcional)}{
+
+Se imputan valores nulos o faltantes de variables relacionadas con
+\itemize{
+\item las horas semanales de trabajo,
+\item la cantidad de meses con ingresos en el período de referencia correspondiente y
+\item algunas características de la ocupación y el lugar de trabajo.
+}
+
+Para más detalles, ver \code{\link[=imputar_personas]{imputar_personas()}}.
+}
+
+\subsection{Cálculo de nuevas variables}{
+
+Se construyen nuevas variables a partir de
+las preexistentes. Estas se agrupan en cuatro bloques:
+\itemize{
+\item I: Identificación
+\item D: Demográficos
+\item L: Laborales
+\item Y: Ingresos
+}
+
+Para más detalles, ver \code{\link[=calcular_personas]{calcular_personas()}} o examinar el conjunto \link{etiquetas}.
+}
+
+\subsection{Etiquetado (opcional)}{
+
+Se asignan etiquetas a las variables y a sus categorías cuando son factores.
+Las etiquetas correspondientes a cada variable se pueden examinar en el
+conjunto \link{etiquetas}.
+
+El conjunto de datos final debería tener las mismas variables construidas sin
+importar el año, el país o si se proporcionaron los conjuntos D y R.
+}
 }

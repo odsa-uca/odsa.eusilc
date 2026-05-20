@@ -1,14 +1,69 @@
-#' Title
+#' Estandariza el conjunto P de la EU-SILC para el proceso de armonización
 #'
-#' @param .datos .datos
-#' @param .anio .anio
-#' @param .pais .pais
-#' @param .D .D
-#' @param .R .R
-#' @param .lmh lmh
+#' @description
+#' Aplica transformaciones sobre las variables del conjunto P según el año, el
+#' país y si se proveyeron los conjuntos D y R. El conjunto final tiene todas
+#' las variables necesarias para aplicar [imputar_personas()] y
+#' [calcular_personas()]. Las variables que no están disponibles quedan como
+#' `NA`.
 #'
-#' @returns conjunto de datos estandarizado para [calcular_personas()].
-estandarizar_personas <- function(.datos, .anio, .pais, .D, .R, .lmh) {
+#' @details
+#' Los conjuntos de datos de la EU-SILC presentan cierta heterogeneidad
+#' dependiendo del año y el país al que correspondan. Algunas variables pueden
+#' no estar disponibles en ciertos paises o años, o pueden tener valores
+#' diferentes (en relación a este problema, conviene consultar los documentos _methodological
+#' guidelines_ y _differences between original database ..._ de EUROSTAT).
+#'
+#' A los propósitos de la armonización, esta heterogeneidad tiene efecto sobre:
+#'
+#' * Variables demográficas: Región de residencia, edad, país de nacimiento,
+#'   país de ciudadanía y nivel educativo.
+#' * Variables laborales: Condición de actividad, categoría ocupacional,
+#'   ocupación, rama de actividad, tamaño del establecimiento y sector público
+#'   o privado.
+#' * Variables de ingreso: transferencias por enfermedad.
+#'
+#' Más en particular, la función se encarga de los siguientes problemas. Si el
+#' conjunto de datos corresponde al año 2020 o anterior, entonces:
+#'
+#' * La edad al momento de la entrevista se puede construir con el conjunto P.
+#' * El país de nacimiento y de ciudadanía están en el conjunto P, y sus nombres
+#'   son distintos a los que tienen a partir de 2021.
+#' * El nivel educativo tiene nombre distinto.
+#' * La condición de actividad tiene nombre y categorías disintas.
+#' * La categoría ocupacional, la ocupación y la rama de actividad son variables
+#'   únicas. A partir de 2021 se dividen en A (ocupados) y B (no ocupados).
+#' * El tamaño del establecimiento está disponible todos los años.
+#' * El sector público privado está disponbile los años en los que se
+#'   relevó el módulo _labor market and housing conditions (LMH)_ y queda como `NA`
+#'   los años en los que no.
+#'
+#' Si el conjunto de datos corresponde al año 2021 o posterior, entonces:
+#'
+#' * Edad al momento de la entrevista, país de nacimiento y ciudadanía están en
+#'   el conjunto R y quedan como `NA` si este no se proporciona.
+#' * El tamaño del establecimiento y el sector público privado están disponibles
+#'   sólo en los años en los que se relevó el módulo _LMH_ y quedan como `NA`
+#'   los años en los que no.
+#'
+#' Cualquiera sea el año, si no se proporciona el conjunto D, entonces la
+#' región de residencia queda como `NA`. Además, si el país es Italia, entonces
+#' la variable PY120N (_sickness benefits_) queda en cero dado que el monto se
+#' incluye en otras variables.
+#'
+#' La función modifica los conjuntos de datos de forma tal que tengan las mismas
+#' variables (potencialmente con `NA`) con los nombres y categorías con las que
+#' aparecen luego de 2021.
+#'
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
+#' @param .D `data.frame` o `tibble`. Conjunto de datos D de la EU-SILC.
+#' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
+#' @param .anio `numeric`. Año de la encuesta.
+#' @param .pais `character`. País de la encuesta.
+#' @param .lmh `TRUE` o `FALSE`. ¿Están las variables del módulo LMH.
+#'
+#' @returns `tibble`. Conjunto de datos P estandarizado para [imputar_personas()] y [calcular_personas()].
+estandarizar_personas <- function(.datos, .D, .R, .anio, .pais, .lmh) {
   # Anterior a 2021 --------------------------
   if (.anio <= 2021) {
     .datos <- dplyr::mutate(

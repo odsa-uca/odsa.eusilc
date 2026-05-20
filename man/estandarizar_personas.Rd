@@ -2,26 +2,81 @@
 % Please edit documentation in R/estandarizar_personas.R
 \name{estandarizar_personas}
 \alias{estandarizar_personas}
-\title{Title}
+\title{Estandariza el conjunto P de la EU-SILC para el proceso de armonización}
 \usage{
-estandarizar_personas(.datos, .anio, .pais, .D, .R, .lmh)
+estandarizar_personas(.datos, .D, .R, .anio, .pais, .lmh)
 }
 \arguments{
-\item{.datos}{.datos}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC.}
 
-\item{.anio}{.anio}
+\item{.D}{\code{data.frame} o \code{tibble}. Conjunto de datos D de la EU-SILC.}
 
-\item{.pais}{.pais}
+\item{.R}{\code{data.frame} o \code{tibble}. Conjunto de datos R de la EU-SILC.}
 
-\item{.D}{.D}
+\item{.anio}{\code{numeric}. Año de la encuesta.}
 
-\item{.R}{.R}
+\item{.pais}{\code{character}. País de la encuesta.}
 
-\item{.lmh}{lmh}
+\item{.lmh}{\code{TRUE} o \code{FALSE}. ¿Están las variables del módulo LMH.}
 }
 \value{
-conjunto de datos estandarizado para \code{\link[=calcular_personas]{calcular_personas()}}.
+\code{tibble}. Conjunto de datos P estandarizado para \code{\link[=imputar_personas]{imputar_personas()}} y \code{\link[=calcular_personas]{calcular_personas()}}.
 }
 \description{
-Title
+Aplica transformaciones sobre las variables del conjunto P según el año, el
+país y si se proveyeron los conjuntos D y R. El conjunto final tiene todas
+las variables necesarias para aplicar \code{\link[=imputar_personas]{imputar_personas()}} y
+\code{\link[=calcular_personas]{calcular_personas()}}. Las variables que no están disponibles quedan como
+\code{NA}.
+}
+\details{
+Los conjuntos de datos de la EU-SILC presentan cierta heterogeneidad
+dependiendo del año y el país al que correspondan. Algunas variables pueden
+no estar disponibles en ciertos paises o años, o pueden tener valores
+diferentes (en relación a este problema, conviene consultar los documentos \emph{methodological
+guidelines} y \emph{differences between original database ...} de EUROSTAT).
+
+A los propósitos de la armonización, esta heterogeneidad tiene efecto sobre:
+\itemize{
+\item Variables demográficas: Región de residencia, edad, país de nacimiento,
+país de ciudadanía y nivel educativo.
+\item Variables laborales: Condición de actividad, categoría ocupacional,
+ocupación, rama de actividad, tamaño del establecimiento y sector público
+o privado.
+\item Variables de ingreso: transferencias por enfermedad.
+}
+
+Más en particular, la función se encarga de los siguientes problemas. Si el
+conjunto de datos corresponde al año 2020 o anterior, entonces:
+\itemize{
+\item La edad al momento de la entrevista se puede construir con el conjunto P.
+\item El país de nacimiento y de ciudadanía están en el conjunto P, y sus nombres
+son distintos a los que tienen a partir de 2021.
+\item El nivel educativo tiene nombre distinto.
+\item La condición de actividad tiene nombre y categorías disintas.
+\item La categoría ocupacional, la ocupación y la rama de actividad son variables
+únicas. A partir de 2021 se dividen en A (ocupados) y B (no ocupados).
+\item El tamaño del establecimiento está disponible todos los años.
+\item El sector público privado está disponbile los años en los que se
+relevó el módulo \emph{labor market and housing conditions (LMH)} y queda como \code{NA}
+los años en los que no.
+}
+
+Si el conjunto de datos corresponde al año 2021 o posterior, entonces:
+\itemize{
+\item Edad al momento de la entrevista, país de nacimiento y ciudadanía están en
+el conjunto R y quedan como \code{NA} si este no se proporciona.
+\item El tamaño del establecimiento y el sector público privado están disponibles
+sólo en los años en los que se relevó el módulo \emph{LMH} y quedan como \code{NA}
+los años en los que no.
+}
+
+Cualquiera sea el año, si no se proporciona el conjunto D, entonces la
+región de residencia queda como \code{NA}. Además, si el país es Italia, entonces
+la variable PY120N (\emph{sickness benefits}) queda en cero dado que el monto se
+incluye en otras variables.
+
+La función modifica los conjuntos de datos de forma tal que tengan las mismas
+variables (potencialmente con \code{NA}) con los nombres y categorías con las que
+aparecen luego de 2021.
 }
