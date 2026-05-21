@@ -17,7 +17,7 @@ estandarizar_personas(.datos, .D, .R, .anio, .pais, .lmh)
 
 \item{.pais}{\code{character}. País de la encuesta.}
 
-\item{.lmh}{\code{TRUE} o \code{FALSE}. ¿Están las variables del módulo LMH.}
+\item{.lmh}{\code{TRUE} o \code{FALSE}. ¿Están las variables del módulo LMH?}
 }
 \value{
 \code{tibble}. Conjunto de datos P estandarizado para \code{\link[=imputar_personas]{imputar_personas()}} y \code{\link[=calcular_personas]{calcular_personas()}}.
@@ -49,9 +49,10 @@ o privado.
 Más en particular, la función se encarga de los siguientes problemas. Si el
 conjunto de datos corresponde al año 2020 o anterior, entonces:
 \itemize{
-\item La edad al momento de la entrevista se puede construir con el conjunto P.
-\item El país de nacimiento y de ciudadanía están en el conjunto P, y sus nombres
-son distintos a los que tienen a partir de 2021.
+\item La edad al momento de la entrevista se puede construir con el conjunto P y
+no hace falta el conjunto R.
+\item El país de nacimiento y de ciudadanía están en el conjunto P en lugar del
+R, y sus nombres son distintos a los que tienen a partir de 2021.
 \item El nivel educativo tiene nombre distinto.
 \item La condición de actividad tiene nombre y categorías disintas.
 \item La categoría ocupacional, la ocupación y la rama de actividad son variables
@@ -78,5 +79,6 @@ incluye en otras variables.
 
 La función modifica los conjuntos de datos de forma tal que tengan las mismas
 variables (potencialmente con \code{NA}) con los nombres y categorías con las que
-aparecen luego de 2021.
+aparecen luego de 2021. Esto simplifica el trabajo de las funciones
+\code{\link[=imputar_personas]{imputar_personas()}} y \code{\link[=calcular_personas]{calcular_personas()}}.
 }

@@ -2,22 +2,122 @@
 % Please edit documentation in R/calcular_personas.R
 \name{calcular_personas}
 \alias{calcular_personas}
-\title{Construye variables en la base P de la EU-SILC.}
+\title{Construye variables nuevas a partir del conjunto P de la EU-SILC}
 \usage{
-calcular_personas(.datos, .anio, .lmh, ...)
+calcular_personas(.datos, .anio, .lmh)
 }
 \arguments{
-\item{.datos}{Conjunto P de la EU-SILC.}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC
+estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.}
 
-\item{.anio}{El año del conjunto}
+\item{.anio}{\code{numeric}. El año al que corresponde el conjunto.}
 
-\item{.lmh}{Si el conjunto de datos tiene el modulo LMH.}
-
-\item{...}{...}
+\item{.lmh}{\code{TRUE} o \code{FALSE}. ¿Están disponibles las variables del módulo LMH?}
 }
 \value{
-Conjunto de datos P de la EU-SILC con variables adicionales.
+\code{tibble}. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
 }
 \description{
-Construye variables en la base P de la EU-SILC.
+Construye variables nuevas de nivel individual a partir del conjunto P de la
+EU-SILC. Las variables se organizan en cuatro bloques: I de identificación,
+D de demográficos, L de laborales e Y de ingresos. Dependiendo del año, el
+país de la encuesta y si se proporcionaron los conjuntos D y R algunas de
+las variables pueden estar perdidas (\code{NA}).
+}
+\details{
+A continuación se listan las variables construidas según bloque
+\subsection{(I) Identificación}{
+\itemize{
+\item pi01. Año de la encuesta
+\item pi02. Pais
+\item pi03. Región
+\item pi04. Identificador del hogar
+\item pi05. Identificador de la persona
+\item pi06. Ponderador
+}
+}
+
+\subsection{(D) Demográficos}{
+\itemize{
+\item pd01a. Edad al momento de la entrevista
+\item pd01b. Edad al final del período de referencia de ingresos
+\item pd01c. Edad aproximada agrupada en quinquenios
+\item pd02. Sexo
+\item pd03. Nivel educativo
+\item pd04. Estatus migratorio
+\item pd05. Estatus ciudadanía
+\item pd06. Jefatura del Hogar
+}
+}
+
+\subsection{(L) Laborales}{
+\itemize{
+\item pl01. Condición de actividad
+\item pl02a. Categoría ocupacional (CRP)
+\item pl02b. Categoría ocupacional (Último trabajo)
+\item pl02c. Categoría ocupacional (CRP / Último trabajo)
+\item pl10a. Ocupación (ISCO-08) CRP
+\item pl10b. Ocupación (ISCO-08) Último trabajo
+\item pl10c. Ocupación (ISCO-08) CRP / Último trabajo
+\item pl11a. Ocupación, grupo principal (ISCO-08) CRP
+\item pl11b. Ocupación, grupo principal (ISCO-08) Último trabajo
+\item pl11c. Ocupación, grupo principal (ISCO-08) CRP / Último trabajo
+\item pl12a. Calificación (CRP)
+\item pl12b. Calificación (Último trabajo)
+\item pl12c. Calificación (CRP / Último trabajo)
+\item pl13a. Calificación profesional (CRP)
+\item pl13b. Calificación profesional (Último trabajo)
+\item pl13c. Calificación profesional (CRP / Último trabajo)
+\item pl20a. Rama de actividad (CRP)
+\item pl20b. Rama de actividad (Último trabajo)
+\item pl20c. Rama de actividad (CRP / Último trabajo)
+\item pl21a\if{html}{\out{<sup>}}1\if{html}{\out{</sup>}}. Tamaño del establecimiento
+\item pl21b\if{html}{\out{<sup>}}1\if{html}{\out{</sup>}}. Estrato de productividad
+\item pl22\if{html}{\out{<sup>}}1\if{html}{\out{</sup>}}. Sector público/privado
+\item pl30\if{html}{\out{<sup>}}1\if{html}{\out{</sup>}}. Heterogeneidad sectorial
+\item pl31\if{html}{\out{<sup>}}1\if{html}{\out{</sup>}}. Sector de inserción
+\item pl40a. Informalidad laboral (4 categorías)
+\item pl40b. Informalidad laboral (2 categorías)
+\item pl50. EGP
+}
+
+Nota 1: Dependen de las variables PL130 y PL230 del módulo LMH
+}
+
+\subsection{(Y) Ingresos}{
+\itemize{
+\item py00. Ingreso total
+\item py10. Ingreso total por fuentes laborales
+\item py11. Ingreso por trabajo asalariado
+\item py12. Ingreso por trabajo no asalariado
+\item py13\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}}. Ingreso por trabajo en el sector público
+\item py14\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}}. Ingreso por trabajo en el sector privado formal
+\item py15\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}}. Ingreso por trabajo en el sector microinformal
+\item py20. Ingreso total por fuentes no laborales
+\item py21. Ingreso total por jubilaciones y pensiones privadas
+\item py22. Ingreso por jubilación
+\item py23. Ingreso por pensión privada
+\item py24. Ingreso por desempleo
+\item py25. Ingreso por otras ayudas
+}
+
+Nota 2: Dependen de las variables PL130 y PL230 del módulo LMH
+}
+
+\subsection{Auxiliares}{
+
+Además de las variables incluidas en los cuatro bloques principales, se
+incluyen algunas auxiliares. Estas son insumos de otras pero se conservan
+en el conjunto final por si son de utilidad.
+\itemize{
+\item ppa. Factor de conversión a PPA de la Unión Europea de 2020
+\item haa. Horas habitualmente trabajadas anuales, trabajadores asalariados
+\item han. Horas habitualmente trabajadas anuales, trabajadores no asalariados
+\item maa. Meses con ingresos por trabajo asalariado en el IRP
+\item man. Meses con ingresos por trabajo no asalariado en el IRP
+\item .f_(variable)\if{html}{\out{<sup>}}3\if{html}{\out{</sup>}}. Flag de imputación de la variable x. Para más detalle, ver \code{\link[=imputar_personas]{imputar_personas()}}
+}
+
+Nota 3: Estas variables están presentes sólo si se imputaron los datos insumo.
+}
 }

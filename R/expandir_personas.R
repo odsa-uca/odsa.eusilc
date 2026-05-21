@@ -5,15 +5,28 @@
 #' tienen en cuenta el país y el año de la encuesta y si se proporcionaron los
 #' conjuntos D y R.
 #'
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
+#' @param .D `data.frame` o `tibble`. Conjunto de datos D de la EU-SILC.
+#' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
+#' @param .imputar `TRUE` o `FALSE` (por defecto). ¿Se aplican imputaciones
+#'   sobre las variables insumo?
+#' @param .expandir `TRUE` o `FALSE` (por defecto). ¿Conservar las variables
+#'   originales en el conjunto de datos final?
+#' @param .etiquetar `TRUE` (por defecto) o `FALSE`. ¿Aplicar etiquetas a las
+#'   variables y sus valores?
+#'
+#' @returns `tibble`. Conjunto de datos de la EU-SILC con variables adicionales
+#'   armonizadas.
+#'
 #' @details La función encadena cuatro grandes operaciones sobre los datos:
 #'
 #' ## Estandarización
 #'
-#' Dependiendo del país, el año y si se proveyeron los conjuntos D y R,
-#' se aplican ciertas transformaciones sobre las variables. Estas
-#' transformaciones buscan que el conjunto P se tenga un formato estándar,
-#' similar al de las EU-SILC posteriores a 2021, para facilitar los pasos
-#' siguientes. Para más detalles, ver [estandarizar_personas()].
+#' Se aplican ciertas transformaciones a las variables dependiendo del país, el
+#' año y si se proveyeron los conjuntos D y R. Su propósito es que el conjunto P
+#' se tenga un formato estándar, similar al de las EU-SILC posteriores a 2021,
+#' para facilitar los pasos siguientes. Para más detalles, ver
+#' [estandarizar_personas()].
 #'
 #' ## Imputación (opcional)
 #'
@@ -45,19 +58,6 @@
 #'
 #' El conjunto de datos final debería tener las mismas variables construidas sin
 #' importar el año, el país o si se proporcionaron los conjuntos D y R.
-#'
-#' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
-#' @param .D `data.frame` o `tibble`. Conjunto de datos D de la EU-SILC.
-#' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
-#' @param .imputar `TRUE` o `FALSE` (por defecto). ¿Se aplican imputaciones
-#'   sobre las variables insumo?
-#' @param .expandir `TRUE` o `FALSE` (por defecto). ¿Conservar las variables
-#'   originales en el conjunto de datos final?
-#' @param .etiquetar `TRUE` (por defecto) o `FALSE`. ¿Aplicar etiquetas a las
-#'   variables y sus valores?
-#'
-#' @returns `tibble`. Conjunto de datos de la EU-SILC con variables adicionales
-#'   armonizadas.
 #'
 #' @export
 expandir_personas <- function(

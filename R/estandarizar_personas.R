@@ -7,6 +7,15 @@
 #' [calcular_personas()]. Las variables que no están disponibles quedan como
 #' `NA`.
 #'
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
+#' @param .D `data.frame` o `tibble`. Conjunto de datos D de la EU-SILC.
+#' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
+#' @param .anio `numeric`. Año de la encuesta.
+#' @param .pais `character`. País de la encuesta.
+#' @param .lmh `TRUE` o `FALSE`. ¿Están las variables del módulo LMH?
+#'
+#' @returns `tibble`. Conjunto de datos P estandarizado para [imputar_personas()] y [calcular_personas()].
+#'
 #' @details
 #' Los conjuntos de datos de la EU-SILC presentan cierta heterogeneidad
 #' dependiendo del año y el país al que correspondan. Algunas variables pueden
@@ -26,9 +35,10 @@
 #' Más en particular, la función se encarga de los siguientes problemas. Si el
 #' conjunto de datos corresponde al año 2020 o anterior, entonces:
 #'
-#' * La edad al momento de la entrevista se puede construir con el conjunto P.
-#' * El país de nacimiento y de ciudadanía están en el conjunto P, y sus nombres
-#'   son distintos a los que tienen a partir de 2021.
+#' * La edad al momento de la entrevista se puede construir con el conjunto P y
+#'   no hace falta el conjunto R.
+#' * El país de nacimiento y de ciudadanía están en el conjunto P en lugar del
+#'   R, y sus nombres son distintos a los que tienen a partir de 2021.
 #' * El nivel educativo tiene nombre distinto.
 #' * La condición de actividad tiene nombre y categorías disintas.
 #' * La categoría ocupacional, la ocupación y la rama de actividad son variables
@@ -53,16 +63,10 @@
 #'
 #' La función modifica los conjuntos de datos de forma tal que tengan las mismas
 #' variables (potencialmente con `NA`) con los nombres y categorías con las que
-#' aparecen luego de 2021.
+#' aparecen luego de 2021. Esto simplifica el trabajo de las funciones
+#' [imputar_personas()] y [calcular_personas()].
 #'
-#' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
-#' @param .D `data.frame` o `tibble`. Conjunto de datos D de la EU-SILC.
-#' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
-#' @param .anio `numeric`. Año de la encuesta.
-#' @param .pais `character`. País de la encuesta.
-#' @param .lmh `TRUE` o `FALSE`. ¿Están las variables del módulo LMH.
-#'
-#' @returns `tibble`. Conjunto de datos P estandarizado para [imputar_personas()] y [calcular_personas()].
+#' @export
 estandarizar_personas <- function(.datos, .D, .R, .anio, .pais, .lmh) {
   # Anterior a 2021 --------------------------
   if (.anio <= 2021) {

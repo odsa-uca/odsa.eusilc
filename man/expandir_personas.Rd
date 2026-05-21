@@ -43,11 +43,11 @@ conjuntos D y R.
 La función encadena cuatro grandes operaciones sobre los datos:
 \subsection{Estandarización}{
 
-Dependiendo del país, el año y si se proveyeron los conjuntos D y R,
-se aplican ciertas transformaciones sobre las variables. Estas
-transformaciones buscan que el conjunto P se tenga un formato estándar,
-similar al de las EU-SILC posteriores a 2021, para facilitar los pasos
-siguientes. Para más detalles, ver \code{\link[=estandarizar_personas]{estandarizar_personas()}}.
+Se aplican ciertas transformaciones a las variables dependiendo del país, el
+año y si se proveyeron los conjuntos D y R. Su propósito es que el conjunto P
+se tenga un formato estándar, similar al de las EU-SILC posteriores a 2021,
+para facilitar los pasos siguientes. Para más detalles, ver
+\code{\link[=estandarizar_personas]{estandarizar_personas()}}.
 }
 
 \subsection{Imputación (opcional)}{

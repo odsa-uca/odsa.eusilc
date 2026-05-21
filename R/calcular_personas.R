@@ -1,16 +1,112 @@
-#' Construye variables en la base P de la EU-SILC.
+#' Construye variables nuevas a partir del conjunto P de la EU-SILC
 #'
-#' @param .datos Conjunto P de la EU-SILC.
-#' @param .anio El año del conjunto
-#' @param .lmh Si el conjunto de datos tiene el modulo LMH.
-#' @param ... ...
+#' @description
+#' Construye variables nuevas de nivel individual a partir del conjunto P de la
+#' EU-SILC. Las variables se organizan en cuatro bloques: I de identificación,
+#' D de demográficos, L de laborales e Y de ingresos. Dependiendo del año, el
+#' país de la encuesta y si se proporcionaron los conjuntos D y R algunas de
+#' las variables pueden estar perdidas (`NA`).
 #'
-#' @returns Conjunto de datos P de la EU-SILC con variables adicionales.
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
+#'               estandarizado con [estandarizar_personas()].
+#' @param .anio `numeric`. El año al que corresponde el conjunto.
+#' @param .lmh `TRUE` o `FALSE`. ¿Están disponibles las variables del módulo LMH?
+#'
+#' @returns `tibble`. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
+#'
+#' @details
+#' A continuación se listan las variables construidas según bloque
+#'
+#' ## (I) Identificación
+#'
+#' - pi01. Año de la encuesta
+#' - pi02. Pais
+#' - pi03. Región
+#' - pi04. Identificador del hogar
+#' - pi05. Identificador de la persona
+#' - pi06. Ponderador
+#'
+#' ## (D) Demográficos
+#'
+#' - pd01a. Edad al momento de la entrevista
+#' - pd01b. Edad al final del período de referencia de ingresos
+#' - pd01c. Edad aproximada agrupada en quinquenios
+#' - pd02. Sexo
+#' - pd03. Nivel educativo
+#' - pd04. Estatus migratorio
+#' - pd05. Estatus ciudadanía
+#' - pd06. Jefatura del Hogar
+#'
+#' ## (L) Laborales
+#'
+#' - pl01. Condición de actividad
+#' - pl02a. Categoría ocupacional (CRP)
+#' - pl02b. Categoría ocupacional (Último trabajo)
+#' - pl02c. Categoría ocupacional (CRP / Último trabajo)
+#' - pl10a. Ocupación (ISCO-08) CRP
+#' - pl10b. Ocupación (ISCO-08) Último trabajo
+#' - pl10c. Ocupación (ISCO-08) CRP / Último trabajo
+#' - pl11a. Ocupación, grupo principal (ISCO-08) CRP
+#' - pl11b. Ocupación, grupo principal (ISCO-08) Último trabajo
+#' - pl11c. Ocupación, grupo principal (ISCO-08) CRP / Último trabajo
+#' - pl12a. Calificación (CRP)
+#' - pl12b. Calificación (Último trabajo)
+#' - pl12c. Calificación (CRP / Último trabajo)
+#' - pl13a. Calificación profesional (CRP)
+#' - pl13b. Calificación profesional (Último trabajo)
+#' - pl13c. Calificación profesional (CRP / Último trabajo)
+#' - pl20a. Rama de actividad (CRP)
+#' - pl20b. Rama de actividad (Último trabajo)
+#' - pl20c. Rama de actividad (CRP / Último trabajo)
+#' - pl21a<sup>1</sup>. Tamaño del establecimiento
+#' - pl21b<sup>1</sup>. Estrato de productividad
+#' - pl22<sup>1</sup>. Sector público/privado
+#' - pl30<sup>1</sup>. Heterogeneidad sectorial
+#' - pl31<sup>1</sup>. Sector de inserción
+#' - pl40a. Informalidad laboral (4 categorías)
+#' - pl40b. Informalidad laboral (2 categorías)
+#' - pl50. EGP
+#'
+#' Nota 1: Dependen de las variables PL130 y PL230 del módulo LMH
+#'
+#' ## (Y) Ingresos
+#'
+#' - py00. Ingreso total
+#' - py10. Ingreso total por fuentes laborales
+#' - py11. Ingreso por trabajo asalariado
+#' - py12. Ingreso por trabajo no asalariado
+#' - py13<sup>2</sup>. Ingreso por trabajo en el sector público
+#' - py14<sup>2</sup>. Ingreso por trabajo en el sector privado formal
+#' - py15<sup>2</sup>. Ingreso por trabajo en el sector microinformal
+#' - py20. Ingreso total por fuentes no laborales
+#' - py21. Ingreso total por jubilaciones y pensiones privadas
+#' - py22. Ingreso por jubilación
+#' - py23. Ingreso por pensión privada
+#' - py24. Ingreso por desempleo
+#' - py25. Ingreso por otras ayudas
+#'
+#' Nota 2: Dependen de las variables PL130 y PL230 del módulo LMH
+#'
+#' ## Auxiliares
+#'
+#' Además de las variables incluidas en los cuatro bloques principales, se
+#' incluyen algunas auxiliares. Estas son insumos de otras pero se conservan
+#' en el conjunto final por si son de utilidad.
+#'
+#' - ppa. Factor de conversión a PPA de la Unión Europea de 2020
+#' - haa. Horas habitualmente trabajadas anuales, trabajadores asalariados
+#' - han. Horas habitualmente trabajadas anuales, trabajadores no asalariados
+#' - maa. Meses con ingresos por trabajo asalariado en el IRP
+#' - man. Meses con ingresos por trabajo no asalariado en el IRP
+#' - .f_(variable)<sup>3</sup>. Flag de imputación de la variable. Para más detalle, ver [imputar_personas()]
+#'
+#' Nota 3: Estas variables están presentes sólo si se imputaron los datos insumo.
+#'
+#' @export
 calcular_personas <- function(
     .datos,
     .anio,
-    .lmh,
-    ...
+    .lmh
 ) {
   # PPA --------------------------------------
   .datos <- dplyr::left_join(
@@ -224,29 +320,6 @@ agrupar_nac <- function(.anio, .nac) {
   nac_agrup <- .nac + (desf - .nac) %% 5
   nac_agrup <- dplyr::if_else(nac_agrup < .anio, nac_agrup, .anio)
   return(nac_agrup)
-}
-
-# ============================================================================
-#' Title
-#'
-#' @param .PL130 PL130
-#' @param .nivel Nivel de agregación.
-#'
-#' @returns Tamaño del establecimiento
-calc_testablecimiento <- function(.PL130, .nivel) {
-  rlang::arg_match(.nivel, c("a", "b"))
-
-  if (.nivel == "a") {
-    pl21 <- dplyr::recode_values(
-      .PL130, from = tabla_pl21$PL130, to = tabla_pl21$pl21a, default = NA_integer_
-    )
-  } else {
-    pl21 <- dplyr::recode_values(
-      .PL130, from = tabla_pl21$PL130, to = tabla_pl21$pl21b, default = NA_integer_
-    )
-  }
-
-  return(pl21)
 }
 
 # ============================================================================
