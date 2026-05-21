@@ -12,7 +12,6 @@
 #' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
 #' @param .anio `numeric`. Año de la encuesta.
 #' @param .pais `character`. País de la encuesta.
-#' @param .lmh `TRUE` o `FALSE`. ¿Están las variables del módulo LMH?
 #'
 #' @returns `tibble`. Conjunto de datos P estandarizado para [imputar_personas()] y [calcular_personas()].
 #'
@@ -67,7 +66,7 @@
 #' [imputar_personas()] y [calcular_personas()].
 #'
 #' @export
-estandarizar_personas <- function(.datos, .D, .R, .anio, .pais, .lmh) {
+estandarizar_personas <- function(.datos, .D, .R, .anio, .pais) {
   # Anterior a 2021 --------------------------
   if (.anio <= 2021) {
     .datos <- dplyr::mutate(
@@ -153,27 +152,27 @@ estandarizar_personas <- function(.datos, .D, .R, .anio, .pais, .lmh) {
     ))
   }
 
-  # Anterior a 2021 sin PL230 ----------------
-  if (.anio < 2021 & !.lmh) {
-    .datos <- dplyr::mutate(.datos, PL230 = NA_integer_)
-
+  if (!("PL230" %in% names(.datos))) {
     cli::cli_bullets(c(
       "!" = "No se encontro PL230",
       " " = "Se pierden: pl22, pl30, pl31, py13, py14, py15."
     ))
-  # Posterior a 2021 sin PL230 ---------------
-  } else if (!.lmh) {
-    .datos <- dplyr::mutate(.datos, PL130 = NA_integer_, PL230 = NA_integer_)
+  } else {
+    cli::cli_bullets(c(
+      "v" = "Se encontro la variable PL230"
+    ))
+  }
 
+  if (!("PL130" %in% names(.datos))) {
     cli::cli_bullets(c(
-      "!" = "No se encontro PL130 o PL230",
-      " " = "Se pierden: pl21a, pl21b, pl22, pl30, pl31, py13, py14, py15."
+      "!" = "No se encontro PL130",
+      " " = "Se pierden: pl21a, pl21b, pl30, pl31, py13, py14, py15."
     ))
-  # Con PL230 --------------------------------
-  } else if (.lmh) {
+  } else {
     cli::cli_bullets(c(
-      "v" = "Se encontraron las variables PL130 y PL230"
+      "v" = "Se encontro la variable PL130"
     ))
+
   }
 
   if (.pais == "IT" & all(.datos$PY120N_F == -4)) {

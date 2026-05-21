@@ -105,14 +105,13 @@ expandir_personas <- function(
   # Estandarizacion ----------------------------------------------------------
   cli::cli_h1("Estandarizacion")
 
-  lmh <- "PL230" %in% names(.datos)
-  .datos <- estandarizar_personas(.datos, .D, .R, anio, pais, lmh)
+  .datos <- estandarizar_personas(.datos, .D, .R, anio, pais)
 
   # Imputaciones -------------------------------------------------------------
   if (.imputar) {
     cli::cli_h1("Imputacion")
 
-    .datos <- imputar_personas(.datos, anio, lmh)
+    .datos <- imputar_personas(.datos, anio)
   }
 
   # Calcular vbles -----------------------------------------------------------
@@ -126,9 +125,18 @@ expandir_personas <- function(
     )
   }
 
-  .datos <- calcular_personas(.datos, anio, lmh)
+  .datos <- calcular_personas(.datos, anio)
 
   # Arreglos y devolver ------------------------------------------------------
+  attr(.datos, "base")       <- "P"
+  attr(.datos, "pre. 2021")  <- anio < 2021
+  attr(.datos, "vbles. D")   <- !is.null(.D)
+  attr(.datos, "vbles. R")   <- !is.null(.R)
+  attr(.datos, "vble. PL130") <- "PL130" %in% names(.datos)
+  attr(.datos, "vble. PL230") <- "PL230" %in% names(.datos)
+  attr(.datos, "expandida")  <- .expandir
+  attr(.datos, "imputada")   <- .imputar
+
   if (!.expandir) {
     .datos <- dplyr::select(.datos, dplyr::any_of(names(etq$P$variables)))
   } else {
@@ -138,14 +146,6 @@ expandir_personas <- function(
   if (.etiquetar) {
     .datos <- etiquetar_eusilc(.datos, .base = "P")
   }
-
-  attr(.datos, "base")       <- "P"
-  attr(.datos, "pre. 2021")  <- anio < 2021
-  attr(.datos, "vbles. D")   <- !is.null(.D)
-  attr(.datos, "vbles. R")   <- !is.null(.R)
-  attr(.datos, "vbles. LMH") <- lmh
-  attr(.datos, "expandida")  <- .expandir
-  attr(.datos, "imputada")   <- .imputar
 
   return(.datos)
 }

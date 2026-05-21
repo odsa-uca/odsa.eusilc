@@ -10,7 +10,6 @@
 #' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
 #'               estandarizado con [estandarizar_personas()].
 #' @param .anio `numeric`. El año al que corresponde el conjunto.
-#' @param .lmh `TRUE` o `FALSE`. ¿Están disponibles las variables del módulo LMH?
 #'
 #' @returns `tibble`. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
 #'
@@ -105,8 +104,7 @@
 #' @export
 calcular_personas <- function(
     .datos,
-    .anio,
-    .lmh
+    .anio
 ) {
   # PPA --------------------------------------
   .datos <- dplyr::left_join(
@@ -222,8 +220,7 @@ calcular_personas <- function(
     .keep = "all"
   )
 
-  # Pre 2021 solo PL130 ----------------------
-  if (.anio < 2021 & !.lmh) {
+  if ("PL130" %in% names(.datos)) {
     .datos <- dplyr::mutate(
       .data = .datos,
       pl21a = dplyr::recode_values(
@@ -238,47 +235,13 @@ calcular_personas <- function(
         to   = tabla_pl21$pl21b,
         default = NA_integer_
       ),
-      pl22 = NA_integer_,
-      pl30 = NA_integer_,
-      pl31 = NA_integer_,
-      py13 = NA_real_,
-      py14 = NA_real_,
-      py15 = NA_real_,
      .keep = "all"
     )
-
-  # Con PL130 y PL230 ------------------------
-  } else if (.lmh) {
-    .datos <- dplyr::mutate(
-      .data = .datos,
-      pl21a = dplyr::recode_values(
-        PL130,
-        from = tabla_pl21$PL130,
-        to   = tabla_pl21$pl21a,
-        default = NA_integer_
-      ),
-      pl21b = dplyr::recode_values(
-        PL130,
-        from = tabla_pl21$PL130,
-        to   = tabla_pl21$pl21b,
-        default = NA_integer_
-      ),
-      pl22 = dplyr::if_else(PL230 != 99, PL230, NA_integer_),
-      pl30 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "a"),
-      pl31 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "b"),
-      py13 = calc_y_sector(py10, pl31, 1),
-      py14 = calc_y_sector(py10, pl31, 2),
-      py15 = calc_y_sector(py10, pl31, 3),
-     .keep = "all"
-    )
-
-  # Sin PL130 ni PL230 -----------------------
   } else {
     .datos <- dplyr::mutate(
       .data = .datos,
       pl21a = NA_integer_,
       pl21b = NA_integer_,
-      pl22  = NA_integer_,
       pl30  = NA_integer_,
       pl31  = NA_integer_,
       py13  = NA_real_,
@@ -287,6 +250,36 @@ calcular_personas <- function(
      .keep  = "all"
     )
 
+  }
+
+  if("PL230" %in% names(.datos)) {
+    .datos <- dplyr::mutate(
+      .data = .datos,
+      pl22 = dplyr::if_else(PL230 != 99, PL230, NA_integer_)
+    )
+  } else {
+    .datos <- dplyr::mutate(
+      .data = .datos,
+      pl22  = NA_integer_,
+      pl30  = NA_integer_,
+      pl31  = NA_integer_,
+      py13  = NA_real_,
+      py14  = NA_real_,
+      py15  = NA_real_,
+     .keep  = "all"
+    )
+  }
+
+  if(all(c("PL130", "PL230") %in% names(.datos))) {
+    .datos <- dplyr::mutate(
+      .data = .datos,
+      pl30 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "a"),
+      pl31 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "b"),
+      py13 = calc_y_sector(py10, pl31, 1),
+      py14 = calc_y_sector(py10, pl31, 2),
+      py15 = calc_y_sector(py10, pl31, 3),
+     .keep = "all"
+    )
   }
 
   # Ingresos mensuales y ppa -----------------

@@ -1,18 +1,23 @@
-#' Title
+#' Imputa valores faltantes o inconsistentes en el conjunto P de la EU-SILC
+#'
+#' @description
+#' Imputa valores faltantes o inconsistentes (según los criterios de armonización)
+#' en el conjunto P de la EU-SILC estandarizado con [estandarizar_personas()].
 #'
 #' @param .datos .datos
 #' @param .anio .anio
-#' @param .lmh .lmh
 #'
 #' @returns datos imputados
+#'
+#' @details
+#'
 #' @export
 imputar_personas <- function(
     .datos,
-    .anio,
-    .lmh
+    .anio
 ) {
   # Flags ------------------------------------
-  .datos <- calc_flags_imputacion(.datos, .anio, .lmh)
+  .datos <- calc_flags_imputacion(.datos, .anio)
 
   .datos <- dplyr::mutate(
     .datos,
@@ -32,11 +37,11 @@ imputar_personas <- function(
   .datos <-  imputar_laboral_a(.datos)
   .datos <-  imputar_laboral_b(.datos, .anio)
 
-  if (.anio < 2021 | .lmh) {
+  if ("PL130" %in% names(.datos)) {
     .datos <- imputar_tamanio(.datos)
   }
 
-  if (.lmh) {
+  if ("PL230" %in% names(.datos)) {
     .datos <- imputar_sectorpp(.datos)
   }
 
@@ -78,11 +83,9 @@ armar_imputables <- function(
 #'
 #' @param .datos .datos
 #' @param .anio .anio
-#' @param .lmh lmh
-#' @param ... ...
 #'
 #' @returns .datos con flags de imputacion
-calc_flags_imputacion <- function(.datos, .anio, .lmh, ...) {
+calc_flags_imputacion <- function(.datos, .anio) {
   .datos <- dplyr::mutate(
     .datos,
     .f_maa = dplyr::case_when(
@@ -122,7 +125,7 @@ calc_flags_imputacion <- function(.datos, .anio, .lmh, ...) {
     )
   }
 
-  if (.anio < 2021 | .lmh) {
+  if ("PL130" %in% names(.datos)) {
     .datos <- dplyr::mutate(
       .datos,
       .f_PL130 = dplyr::case_when(
@@ -147,7 +150,7 @@ calc_flags_imputacion <- function(.datos, .anio, .lmh, ...) {
     )
   }
 
-  if (.lmh) {
+  if ("PL230" %in% names(.datos)) {
     .datos <- dplyr::mutate(
       .datos,
       .f_PL230 = dplyr::case_when(
