@@ -4,17 +4,19 @@
 \alias{aplicar_imputaciones}
 \title{Title}
 \usage{
-aplicar_imputaciones(.datos, .anio, .lmh)
+aplicar_imputaciones(.datos, .imp, .vble, .flag)
 }
 \arguments{
 \item{.datos}{.datos}
 
-\item{.anio}{.anio}
+\item{.imp}{.imp}
 
-\item{.lmh}{.lmh}
+\item{.vble}{.vble}
+
+\item{.flag}{.flag}
 }
 \value{
-Conjunto de datos estandarizado con imputaciones aplicadas
+Conjunto de datos con las imputaciones aplicadas
 }
 \description{
 Title

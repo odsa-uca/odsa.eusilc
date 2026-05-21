@@ -27,31 +27,18 @@ imputar_personas <- function(
   )
 
   # Imputaciones -----------------------------
-  imps <- c(
-    imp_meses <- imputar_meses(.datos),
-    imp_horas <-  imputar_horas(.datos),
-    imp_laboral_a <- imputar_laboral_a(.datos),
-    imp_laboral_b <- imputar_laboral_b(.datos, .anio)
-  )
+  .datos <-  imputar_meses(.datos)
+  .datos <-  imputar_horas(.datos)
+  .datos <-  imputar_laboral_a(.datos)
+  .datos <-  imputar_laboral_b(.datos, .anio)
 
   if (.anio < 2021 | .lmh) {
-    imps <- c(imps, imputar_tamanio(.datos))
+    .datos <- imputar_tamanio(.datos)
   }
 
   if (.lmh) {
-    imps <- c(imps, imputar_sectorpp(.datos))
+    .datos <- imputar_sectorpp(.datos)
   }
-
-  for (.imp in imps) {
-    .datos <- dplyr::left_join(
-      x = .datos,
-      y = .imp,
-      by = dplyr::join_by(PB010, PB020, PB030),
-      suffix = c("", "_imp")
-    )
-  }
-
-  .datos <- aplicar_imputaciones(.datos, .anio, .lmh)
 
   # Devolver -----------------------------------------------------------------
   return(.datos)
@@ -74,58 +61,16 @@ armar_imputables <- function(
   .flags,
   .factores = NULL
 ) {
-  datos_imp <- .datos |>
-    dplyr::select(dplyr::all_of(c("PB010", "PB020", "PB030", .predictoras, .imputadas, .flags))) |>
-    dplyr::filter(!!rlang::sym(.flags[1]) %in% c(-1, 1)) |>
-    dplyr::mutate(dplyr::across(dplyr::all_of(.factores), factor))
+  datos_imp <- .datos[
+    .datos[[.flags[1]]] %in% c(-1, 1),
+    unique(c("PB010", "PB020", "PB030", .predictoras, .imputadas, .flags))
+  ]
+
+  for (.vble in .factores) {
+    datos_imp[.vble] <- factor(datos_imp[[.vble]])
+  }
 
   return(datos_imp)
-}
-
-# ============================================================================
-#' Title
-#'
-#' @param .datos .datos
-#' @param .anio .anio
-#' @param .lmh .lmh
-#'
-#' @returns Conjunto de datos estandarizado con imputaciones aplicadas
-aplicar_imputaciones <- function(.datos, .anio, .lmh) {
-  .datos <- dplyr::mutate(
-    .datos,
-    maa = dplyr::if_else(.f_maa == -1, maa_imp, maa),
-    man = dplyr::if_else(.f_man == -1, man_imp, man),
-    PL060 = dplyr::if_else(.f_PL060 == -1, PL060_imp, PL060),
-    PL040A = dplyr::if_else(.f_PL040A == -1, PL040A_imp, PL040A),
-    PL051A = dplyr::if_else(.f_PL051A == -1, PL051A_imp, PL051A),
-    PL111A = dplyr::if_else(.f_PL111A == -1, PL111A_imp, PL111A),
-    PL040B = dplyr::if_else(.f_PL040B == -1, PL040B_imp, PL040B),
-    PL051B = dplyr::if_else(.f_PL051B == -1, PL051B_imp, PL051B),
-  )
-
-  if (.anio >= 2021) {
-    .datos <- dplyr::mutate(
-      .datos,
-      PL111B = dplyr::if_else(.f_PL111B == -1, PL111B_imp, PL111B)
-    )
-  }
-
-  if (.anio < 2021 | .lmh) {
-    # TODO: PL130 tiene tres flags ...
-    .datos <- dplyr::mutate(
-      .datos,
-      PL130 = dplyr::if_else(!is.na(PL130_imp), PL130_imp, PL130),
-    )
-  }
-
-  if (.lmh) {
-    .datos <- dplyr::mutate(
-      .datos,
-      PL230 = dplyr::if_else(.f_PL230 == -1, PL230_imp, PL230),
-    )
-  }
-
-  return(.datos)
 }
 
 # ============================================================================
@@ -180,6 +125,10 @@ calc_flags_imputacion <- function(.datos, .anio, .lmh, ...) {
   if (.anio < 2021 | .lmh) {
     .datos <- dplyr::mutate(
       .datos,
+      .f_PL130 = dplyr::case_when(
+        PL130 == 14 | PL130 == 15 | PL130_F == -1 ~ -1,
+        .default = 0
+      ),
       .fa_PL130 = dplyr::case_when(
         PL130 == 14 ~ -1,
         PL130 < 10 ~ 1,
@@ -216,47 +165,110 @@ calc_flags_imputacion <- function(.datos, .anio, .lmh, ...) {
 #' Title
 #'
 #' @param .datos .datos
+#' @param .imp .imp
+#' @param .vble .vble
+#' @param .flag .flag
+#'
+#' @returns Conjunto de datos con las imputaciones aplicadas
+#' @export
+aplicar_imputaciones <- function(.datos, .imp, .vble, .flag) {
+  .imp <- .imp[.imp[[.flag]] == -1, c("PB010", "PB020", "PB030", .vble)]
+
+  .datos <- dplyr::left_join(
+    x = .datos,
+    y = .imp,
+    by = dplyr::join_by(PB010, PB020, PB030),
+    suffix = c("", "_imp")
+  )
+
+  reemplazar <- .datos[[.flag]] == -1
+  .datos[reemplazar, .vble] <- .datos[reemplazar, paste0(.vble, "_imp")]
+
+  return(.datos)
+}
+
+# ============================================================================
+chequear_faltantes <- function(.flag) {
+  imputables <- length(.flag[.flag == -1])
+  referencia <- length(.flag[.flag == 1])
+
+  cli::cli_bullets(c(
+    "i" = "Casos a imputar: {imputables}",
+    "i" = "Casos de referencia: {referencia}"
+  ))
+
+  if (imputables == 0) {
+    cli::cli_alert_success("Nada que imputar!")
+
+    return("completo")
+  } else if (imputables / referencia > 0.5) {
+    cli::cli_bullets(c(
+      "x" = "La razon entre casos a imputar y casos de referencia es mayor a 0.5",
+      " " = "No se imputa la variable"
+    ))
+
+    return("no imputar")
+  } else {
+    return("imputar")
+  }
+}
+
+# ============================================================================
+#' Title
+#'
+#' @param .datos .datos
 #'
 #' @returns datos imputados
 #' @export
 imputar_meses <- function(.datos) {
-  # Selección a imputar ----------------------
-  imp_maa <- armar_imputables(
-    .datos,
-    .imputadas   = "maa",
-    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
-    .flag        = ".f_maa"
-  )
-  imp_man <- armar_imputables(
-    .datos,
-    .imputadas   = "man",
-    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
-    .flag        = ".f_man"
-  )
+  cli::cli_h2("Meses trabajados en el IRP (asalariados)")
 
-  # Imputación -------------------------------
-  imp_maa <- missRanger::missRanger(
-    data = imp_maa,
-    formula = maa + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
-    num.trees = 100,
-    pmm.k = 10
-  )
-  imp_man <- missRanger::missRanger(
-    data = imp_man,
-    formula = man + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
-    num.trees = 100,
-    pmm.k = 10
-  )
+  # Meses asalariados ------------------------
+  imputar_maa <- chequear_faltantes(.datos$.f_maa)
 
-  # Devolver imputados -----------------------
-  imp_maa <- imp_maa |>
-    dplyr::filter(.f_maa == -1) |>
-    dplyr::select(PB010, PB020, PB030, maa, .f_maa)
-  imp_man <- imp_man |>
-    dplyr::filter(.f_man == -1) |>
-    dplyr::select(PB010, PB020, PB030, man, .f_man)
+  if (imputar_maa == "imputar") {
+    imp_maa <- armar_imputables(
+      .datos,
+      .imputadas   = "maa",
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+      .flag        = ".f_maa"
+    )
 
-  return(list(imp_maa, imp_man))
+    imp_maa <- missRanger::missRanger(
+      data = imp_maa,
+      formula = maa + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    .datos <- aplicar_imputaciones(.datos, imp_maa, "maa", ".f_maa")
+  }
+
+
+  # Meses no asalariados ---------------------
+  imputar_maa <- chequear_faltantes(.datos$.f_man)
+
+  if (imputar_maa == "completo" | imputar_maa == "no imputar") {
+    return(.datos)
+  } else {
+    imp_man <- armar_imputables(
+      .datos,
+      .imputadas   = "man",
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+      .flag        = ".f_man"
+    )
+
+    imp_man <- missRanger::missRanger(
+      data = imp_man,
+      formula = man + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    .datos <- aplicar_imputaciones(.datos, imp_man, "man", ".f_man")
+  }
+
+  return(.datos)
 }
 
 # ============================================================================
@@ -267,28 +279,29 @@ imputar_meses <- function(.datos) {
 #' @returns datos imputados
 #' @export
 imputar_horas <- function(.datos) {
-  # Selección a imputar ----------------------
-  imp <- armar_imputables(
-    .datos,
-    .imputadas   = "PL060",
-    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PL073", "PL074", "PL075", "PL076"),
-    .flag        = ".f_PL060"
-  )
+  cli::cli_h2("Horas semanales trabajadas habitualmente")
 
-  # Imputación -------------------------------
-  imp <- missRanger::missRanger(
-    data = imp,
-    formula = PL060 ~ PY010N + PY050N + PB140 + PB150 + PL073 + PL074 + PL075 + PL076,
-    num.trees = 100,
-    pmm.k = 10
-  )
+  imputar <- chequear_faltantes(.datos$.f_PL060)
 
-  # Devolver imputados -----------------------
-  imp <- imp |>
-    dplyr::filter(.f_PL060 == -1) |>
-    dplyr::select(PB010, PB020, PB030, PL060, .f_PL060)
+  if (imputar == "imputar") {
+    imp <- armar_imputables(
+      .datos,
+      .imputadas   = "PL060",
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PL073", "PL074", "PL075", "PL076"),
+      .flag        = ".f_PL060"
+    )
 
-  return(list(imp))
+    imp <- missRanger::missRanger(
+      data = imp,
+      formula = PL060 ~ PY010N + PY050N + PB140 + PB150 + PL073 + PL074 + PL075 + PL076,
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    .datos <- aplicar_imputaciones(.datos, imp, "PL060", ".f_PL060")
+  }
+
+  return(.datos)
 }
 
 # ============================================================================
@@ -299,37 +312,56 @@ imputar_horas <- function(.datos) {
 #' @returns datos imputados
 #' @export
 imputar_laboral_a <- function(.datos) {
-  # Selección a imputar ----------------------
-  imp <- armar_imputables(
-    .datos,
-    .imputadas   = c("PL040A", "PL051A", "PL111A"),
-    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
-    .flags       = c(".f_PL040A", ".f_PL051A", ".f_PL111A"),
-    .factores    = c("PL040A", "PL051A", "PE041")
+  cli::cli_h2("Categoria ocupacional, ocupacion y rama de actividad (A)")
+  cli::cli_alert_info(
+    "Estas variables tienen la misma condicion de imputacion. Se imputan simultaneamente."
   )
 
-  # Imputación -------------------------------
-  imp <- missRanger::missRanger(
-    data = imp,
-    formula = PL040A + PL051A + PL111A + PE041 ~ PY010N + PY050N + PB140 + PB150 + PL040A + PL051A + PL111A + PE041,
-    num.trees = 100,
-    pmm.k = 10
-  )
+  cli::cli_h3("Categoria ocupacional")
+  imputar_PL040A <- chequear_faltantes(.datos$.f_PL040A)
 
-  # Devolver imputados -----------------------
-  imp_PL040A <- imp |>
-    dplyr::filter(.f_PL040A == -1) |>
-    dplyr::select(PB010, PB020, PB030, PL040A, .f_PL040A) |>
-    dplyr::mutate(PL040A = as.numeric(as.character(PL040A)))
-  imp_PL051A <- imp |>
-    dplyr::filter(.f_PL051A == -1) |>
-    dplyr::select(PB010, PB020, PB030, PL051A, .f_PL051A) |>
-    dplyr::mutate(PL051A = as.numeric(as.character(PL051A)))
-  imp_PL111A <- imp |>
-    dplyr::filter(.f_PL111A == -1) |>
-    dplyr::select(PB010, PB020, PB030, PL111A, .f_PL111A)
+  cli::cli_h3("Ocupacion")
+  imputar_PL051A <- chequear_faltantes(.datos$.f_PL051A)
 
-  return(list(imp_PL040A, imp_PL051A, imp_PL111A))
+  cli::cli_h3("Rama de actividad")
+  imputar_PL111A <- chequear_faltantes(.datos$.f_PL111A)
+
+  imputar <- c(PL040A = imputar_PL040A, PL051A = imputar_PL051A, PL111A = imputar_PL111A)
+
+  if (any(imputar == "imputar")) {
+    imputadas <- names(imputar[imputar == "imputar"])
+    completas <- names(imputar[imputar == "completo"])
+
+    imp <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL040A", "PL051A", "PL111A"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+      .flags       = c(".f_PL040A", ".f_PL051A", ".f_PL111A"),
+      .factores    = c("PL040A", "PL051A", "PE041")
+    )
+
+    formula <- paste0(paste(c(imputadas, "PE041"), collapse = " + "), " ~ ",
+                      paste(c(imputadas, completas, "PY010N", "PY050N", "PB140", "PB150", "PE041"), collapse = " + "))
+    imp <- missRanger::missRanger(
+      data = imp,
+      formula = formula(formula),
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    if ("PL040A" %in% imputadas) {
+      imp$PL040A <- as.numeric(as.character(imp$PL040A))
+    }
+    if ("PL051A" %in% imputadas) {
+      imp$PL051A <- as.numeric(as.character(imp$PL051A))
+    }
+
+    for (.vble in imputadas) {
+      .datos <- aplicar_imputaciones(.datos, imp, .vble, paste0(".f_", .vble))
+    }
+  }
+
+  return(.datos)
 }
 
 # ============================================================================
@@ -341,58 +373,62 @@ imputar_laboral_a <- function(.datos) {
 #' @returns datos imputados
 #' @export
 imputar_laboral_b <- function(.datos, .anio) {
+  cli::cli_h2("Categoria ocupacional, ocupacion y rama de actividad (B)")
+  cli::cli_alert_info(
+    "Estas variables tienen la misma condicion de imputacion. Se imputan simultaneamente."
+  )
+
+  cli::cli_h3("Categoria ocupacional")
+  imputar_PL040B <- chequear_faltantes(.datos$.f_PL040B)
+
+  cli::cli_h3("Ocupacion")
+  imputar_PL051B <- chequear_faltantes(.datos$.f_PL051B)
+
   if (.anio >= 2021) {
-    # Selección a imputar --------------------
-    imp <- armar_imputables(
-      .datos,
-      .imputadas   = c("PL040B", "PL051B", "PL111B"),
-      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
-      .flags       = c(".f_PL040B", ".f_PL051B", ".f_PL111B"),
-      .factores    = c("PL040B", "PL051B", "PE041")
-    )
-
-    # Imputación -----------------------------
-    imp <- missRanger::missRanger(
-      data = imp,
-      formula = PL040B + PL051B + PL111B + PE041 ~ PY010N + PY050N + PB140 + PB150 + PL040B + PL051B + PL111B + PE041,
-      num.trees = 100,
-      pmm.k = 10
-    )
-
-    # Devolver imputados ---------------------
-    imp_PL111B <- imp |>
-      dplyr::filter(.f_PL111B == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL111B, .f_PL111B)
+    cli::cli_h3("Rama de actividad")
+    imputar_PL111B <- chequear_faltantes(.datos$.f_PL111B)
   } else {
-    # Selección a imputar --------------------
-    imp <- armar_imputables(
-      .datos,
-      .imputadas   = c("PL040B", "PL051B"),
-      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
-      .flags       = c(".f_PL040B", ".f_PL051B"),
-      .factores    = c("PL040B", "PL051B", "PE041")
-    )
-
-    # Imputación -----------------------------
-    imp <- missRanger::missRanger(
-      data = imp,
-      formula = PL040B + PL051B + PE041 ~ PY010N + PY050N + PB140 + PB150 + PL040B + PL051B + PE041,
-      num.trees = 100,
-      pmm.k = 10
-    )
+    cli::cli_h3("Rama de actividad")
+    cli::cli_alert_warning("La variable no esta disponible antes de 2021")
+    imputar_PL111B <- NULL
   }
 
-  # Devolver imputados -----------------------
-  imp_PL040B <- imp |>
-    dplyr::filter(.f_PL040B == -1) |>
-    dplyr::select(PB010, PB020, PB030, PL040B, .f_PL040B) |>
-    dplyr::mutate(PL040B = as.numeric(as.character(PL040B)))
-  imp_PL051B <- imp |>
-    dplyr::filter(.f_PL051B == -1) |>
-    dplyr::select(PB010, PB020, PB030, PL051B, .f_PL051B) |>
-    dplyr::mutate(PL051B = as.numeric(as.character(PL051B)))
+  imputar <- c(PL040B = imputar_PL040B, PL051B = imputar_PL051B, PL111B = imputar_PL111B)
 
-  return(list(imp_PL111B, imp_PL040B, imp_PL051B))
+  if (any(imputar == "imputar")) {
+    imputadas <- names(imputar[imputar == "imputar"])
+    completas <- names(imputar[imputar == "completo"])
+
+    imp <- armar_imputables(
+      .datos,
+      .imputadas   = imputadas,
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+      .flags       = paste0(".f_", imputadas),
+      .factores    = c(imputadas[imputadas != "PL111B"], "PE041")
+    )
+
+    formula <- paste0(paste(c(imputadas, "PE041"), collapse = " + "), " ~ ",
+                      paste(c(imputadas, completas, "PY010N", "PY050N", "PB140", "PB150", "PE041"), collapse = " + "))
+    imp <- missRanger::missRanger(
+      data = imp,
+      formula = formula(formula),
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    if ("PL040B" %in% imputadas) {
+      imp$PL040B <- as.numeric(as.character(imp$PL040B))
+    }
+    if ("PL051B" %in% imputadas) {
+      imp$PL051B <- as.numeric(as.character(imp$PL051B))
+    }
+
+    for (.vble in imputadas) {
+      .datos <- aplicar_imputaciones(.datos, imp, .vble, paste0(".f_", .vble))
+    }
+  }
+
+  return(.datos)
 }
 
 # ============================================================================
@@ -403,65 +439,102 @@ imputar_laboral_b <- function(.datos, .anio) {
 #' @returns datos imputados
 #' @export
 imputar_tamanio <- function(.datos) {
-  # Selección a imputar ----------------------
-  imp_PL130a <- armar_imputables(
+  cli::cli_h2("Tamanio del establecimiento")
+  cli::cli_alert_info("Se imputa por partes segun el caso este perdido o truncado (codigos 14 y 15)")
+
+  .datos <- dplyr::mutate(
     .datos,
-    .imputadas   = c("PL130_", "PE041", "PL111A"),
-    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
-    .flags       = ".fa_PL130"
-  )
-  imp_PL130b <- armar_imputables(
-    .datos,
-    .imputadas   = c("PL130_", "PE041", "PL111A"),
-    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
-    .flags       = ".fb_PL130",
-    .factores    = c("PL130_", "PE041")
-  )
-  imp_PL130c <- armar_imputables(
-    .datos,
-    .imputadas   = c("PL130", "PE041", "PL111A"),
-    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
-    .flags       = ".fc_PL130",
-    .factores    = c("PL130", "PE041")
+    PL130_ = dplyr::if_else(PL130 %in% 14:15, NA_integer_, PL130)
   )
 
-  # Imputación -------------------------------
-  imp_PL130a <- missRanger::missRanger(
-    data = imp_PL130a,
-    formula = PL130_ + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
-    num.trees = 100,
-    pmm.k = 10
-  )
-  imp_PL130b <- missRanger::missRanger(
-    data = imp_PL130b,
-    formula = PL130_ + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
-    num.trees = 100,
-    pmm.k = 10
-  )
-  imp_PL130c <- missRanger::missRanger(
-    data = imp_PL130c,
-    formula = PL130 + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
-    num.trees = 100,
-    pmm.k = 10
-  )
+  # No sabe, menos de 10 ---------------------
+  cli::cli_h3("No sabe, pero menos de 10 personas")
+  imputar_PL130a <- chequear_faltantes(.datos$.fa_PL130)
 
-  # Devolver imputados -----------------------
-  imp <- dplyr::bind_rows(
-    imp_PL130a |>
-      dplyr::filter(.fa_PL130 == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL130_, .fa_PL130) |>
-      dplyr::rename(PL130 = PL130_),
-    imp_PL130b |>
-      dplyr::filter(.fb_PL130 == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL130_, .fb_PL130) |>
-      dplyr::mutate(PL130 = as.numeric(as.character(PL130_))),
-    imp_PL130c |>
-      dplyr::filter(.fc_PL130 == -1) |>
-      dplyr::select(PB010, PB020, PB030, PL130, .fc_PL130) |>
-      dplyr::mutate(PL130 = as.numeric(as.character(PL130))),
-  )
+  if (imputar_PL130a == "imputar") {
+    imp_PL130a <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL130_", "PE041", "PL111A"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
+      .flags       = c(".fa_PL130", ".f_PL130"),
+      .factores    = "PE041"
+    )
 
-  return(list(imp))
+    imp_PL130a <- missRanger::missRanger(
+      data = imp_PL130a,
+      formula = PL130_ + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    imp_PL130a <- dplyr::rename(imp_PL130a, PL130 = PL130_)
+  } else {
+    imp_PL130a <- NULL
+  }
+
+  # No sabe, mas de 10 -----------------------
+  cli::cli_h3("No sabe, pero mas de 10 personas")
+  imputar_PL130b <- chequear_faltantes(.datos$.fb_PL130)
+
+  if (imputar_PL130b == "imputar") {
+    imp_PL130b <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL130_", "PE041", "PL111A"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
+      .flags       = c(".fb_PL130", ".f_PL130"),
+      .factores    = c("PL130_", "PE041")
+    )
+
+    imp_PL130b <- missRanger::missRanger(
+      data = imp_PL130b,
+      formula = PL130_ + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    imp_PL130b <- dplyr::mutate(imp_PL130b, PL130 = as.numeric(as.character(PL130_)))
+
+    .datos <- aplicar_imputaciones(.datos, imp_PL130b, "PL130", ".fb_PL130")
+  } else {
+    imp_PL130b <- NULL
+  }
+
+  # Perdidos ---------------------------------
+  cli::cli_h3("Perdido")
+  imputar_PL130c <- chequear_faltantes(.datos$.fc_PL130)
+
+  if (imputar_PL130c == "imputar") {
+    imp_PL130c <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL130", "PE041", "PL111A"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
+      .flags       = c(".fc_PL130", ".f_PL130"),
+      .factores    = c("PL130", "PE041")
+    )
+
+    imp_PL130c <- missRanger::missRanger(
+      data = imp_PL130c,
+      formula = PL130 + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    imp_PL130c <- dplyr::mutate(imp_PL130c, PL130 = as.numeric(as.character(PL130)))
+
+    .datos <- aplicar_imputaciones(.datos, imp_PL130c, "PL130", ".fc_PL130")
+  } else {
+    imp_PL130c <- NULL
+  }
+
+  if (!any(c(imputar_PL130a, imputar_PL130b, imputar_PL130c) == "imputar")) {
+    return(.datos)
+  }
+
+  imp <- dplyr::bind_rows(imp_PL130a, imp_PL130b, imp_PL130c)
+
+  .datos <- aplicar_imputaciones(.datos, imp, "PL130", ".f_PL130")
+
+  return(.datos)
 }
 
 # ============================================================================
@@ -472,28 +545,30 @@ imputar_tamanio <- function(.datos) {
 #' @returns datos imputados
 #' @export
 imputar_sectorpp <- function(.datos) {
-  # Selección a imputar ----------------------
-  imp <- armar_imputables(
-    .datos,
-    .imputadas   = c("PL230", "PE041"),
-    .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
-    .flag        = ".f_PL230",
-    .factores    = c("PL230", "PE041")
-  )
+  cli::cli_h2("Sector publico o privado")
 
-  # Imputación -------------------------------
-  imp <- missRanger::missRanger(
-    data = imp,
-    formula = PL230 + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
-    num.trees = 100,
-    pmm.k = 10
-  )
+  imputar <- chequear_faltantes(.datos$.f_PL230)
 
-  # Devolver imputados -----------------------
-  imp <- imp |>
-    dplyr::filter(.f_PL230 == -1) |>
-    dplyr::select(PB010, PB020, PB030, PL230, .f_PL230) |>
-    dplyr::mutate(PL230 = as.numeric(as.character(PL230)))
+  if (imputar == "imputar") {
+    imp <- armar_imputables(
+      .datos,
+      .imputadas   = c("PL230", "PE041"),
+      .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
+      .flag        = ".f_PL230",
+      .factores    = c("PL230", "PE041")
+    )
 
-  return(list(imp))
+    imp <- missRanger::missRanger(
+      data = imp,
+      formula = PL230 + PE041 ~ PY010N + PY050N + PB140 + PB150 + PE041,
+      num.trees = 100,
+      pmm.k = 10
+    )
+
+    imp <- dplyr::mutate(imp, PL230 = as.numeric(as.character(PL230)))
+
+    .datos <- aplicar_imputaciones(.datos, imp, "PL230", ".f_PL230")
+  }
+
+  return(.datos)
 }
