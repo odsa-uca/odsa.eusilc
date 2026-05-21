@@ -4,15 +4,13 @@
 \alias{calcular_personas}
 \title{Construye variables nuevas a partir del conjunto P de la EU-SILC}
 \usage{
-calcular_personas(.datos, .anio, .lmh)
+calcular_personas(.datos, .anio)
 }
 \arguments{
 \item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC
 estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.}
 
 \item{.anio}{\code{numeric}. El año al que corresponde el conjunto.}
-
-\item{.lmh}{\code{TRUE} o \code{FALSE}. ¿Están disponibles las variables del módulo LMH?}
 }
 \value{
 \code{tibble}. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
@@ -115,7 +113,7 @@ en el conjunto final por si son de utilidad.
 \item han. Horas habitualmente trabajadas anuales, trabajadores no asalariados
 \item maa. Meses con ingresos por trabajo asalariado en el IRP
 \item man. Meses con ingresos por trabajo no asalariado en el IRP
-\item .f_(variable)\if{html}{\out{<sup>}}3\if{html}{\out{</sup>}}. Flag de imputación de la variable x. Para más detalle, ver \code{\link[=imputar_personas]{imputar_personas()}}
+\item .f_(variable)\if{html}{\out{<sup>}}3\if{html}{\out{</sup>}}. Flag de imputación de la variable. Para más detalle, ver \code{\link[=imputar_personas]{imputar_personas()}}
 }
 
 Nota 3: Estas variables están presentes sólo si se imputaron los datos insumo.

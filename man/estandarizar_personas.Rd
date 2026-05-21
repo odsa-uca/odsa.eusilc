@@ -4,7 +4,7 @@
 \alias{estandarizar_personas}
 \title{Estandariza el conjunto P de la EU-SILC para el proceso de armonización}
 \usage{
-estandarizar_personas(.datos, .D, .R, .anio, .pais, .lmh)
+estandarizar_personas(.datos, .D, .R, .anio, .pais)
 }
 \arguments{
 \item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC.}
@@ -16,8 +16,6 @@ estandarizar_personas(.datos, .D, .R, .anio, .pais, .lmh)
 \item{.anio}{\code{numeric}. Año de la encuesta.}
 
 \item{.pais}{\code{character}. País de la encuesta.}
-
-\item{.lmh}{\code{TRUE} o \code{FALSE}. ¿Están las variables del módulo LMH?}
 }
 \value{
 \code{tibble}. Conjunto de datos P estandarizado para \code{\link[=imputar_personas]{imputar_personas()}} y \code{\link[=calcular_personas]{calcular_personas()}}.

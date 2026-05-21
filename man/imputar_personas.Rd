@@ -2,20 +2,98 @@
 % Please edit documentation in R/imputar_personas.R
 \name{imputar_personas}
 \alias{imputar_personas}
-\title{Title}
+\title{Imputa valores faltantes o inconsistentes en el conjunto P de la EU-SILC}
 \usage{
-imputar_personas(.datos, .anio, .lmh)
+imputar_personas(.datos, .anio)
 }
 \arguments{
-\item{.datos}{.datos}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC
+estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.}
 
-\item{.anio}{.anio}
-
-\item{.lmh}{.lmh}
+\item{.anio}{\code{numeric}. Año de la encuesta.}
 }
 \value{
-datos imputados
+\code{tibble}. Conjunto P de la EU-SILC con valores imputados.
 }
 \description{
-Title
+Imputa valores faltantes o inconsistentes (según los criterios de armonización)
+en el conjunto P de la EU-SILC estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.
+Las variables imputadas tienen que ver con las horas trabajadas semanalmente,
+los meses con percepción de ingresos laborales en el IRP y con características
+de la ocupación y el lugar de trabajo.
+}
+\details{
+\subsection{Valores imputados}{
+
+La función imputa valores faltantes y valores considerados inconsistentes
+según los criterios de armonización. En general estos se derivan de la
+comparación de los montos de ingresos en el IRP, la cantidad de meses
+trabajados en el IRP y la condición de actividad de la persona. A
+continuación se detalla el criterio de imputación de las variables
+consideradas.
+\subsection{Meses con ingreso por trabajo asalariado y no asalariado en el IRP (maa y man)}{
+
+Las variables de la EU-SILC que registran esta información son las PL073 y
+PL074 para el ingreso asalariado (full- y part-time respectivamente), y las
+PL075 y PL076 para el ingreso no asalariado (full- y part-time). La suma de
+meses con ingresos full o part-time está restringida a los valores 0, 1, ..., 12.
+Como no era de interés la distinción entre full o part-time, para evitar los
+problemas que introducía esta restricción se imputaron directamente las sumas:
+\itemize{
+\item maa = PL073 + PL074
+\item man = PL075 + PL076
+}
+
+Los valores se imputaron si la persona percibió los ingresos correspondientes
+en el IRP pero la cantidad de los meses está perdida o es cero.
+}
+
+\subsection{Horas semanales habitualmente trabajadas (PL060)}{
+
+Los valores se imputaron si estaban perdidos según lo reportado por EUROSTAT
+(PL060_F = -1). No se imputaron los casos en los que EUROSTAT informa que las
+horas son demasiado variables y no se pueden establecer (PL060_F = -2).
+}
+
+\subsection{Categoría ocupacional, ocupación y rama de actividad (A)}{
+
+Este grupo de variables corresponde a la ocupación actual de los respondentes
+ocupados en el CRP (PL032 = 1). Se imputan los valores perdidos según lo
+reportado por EUROSTAT. Como la condición de imputación es la misma para las
+tres variables (PL032 = 1 y valor perdido), se imputan de forma simultánea.
+}
+
+\subsection{Categoría ocupacional, ocupación y rama de actividad (B)}{
+
+Este grupo de variables corresponde a la última ocupación de los respondentes
+no ocupados en el CRP (PL032 != 1). Se imputan los valores perdidos según lo
+reportado por EUROSTAT para aquellos que percibieron ingreso laboral en el
+IRP y están desocupados en el CRP (PL032 != 1) o se desconoce su condición
+de actividad (PL032 perdido). Al igual que con el bloque A, estas variables
+se imputan simultáneamente.
+}
+
+\subsection{Tamaño del establecimiento}{
+
+Se imputan los valores perdidos según lo reportado por EUROSTAT (PL130_F = -1)
+y aquellos que son \emph{coarse} (PL130 = 14 o 15). Se imputan por separado los
+que son propiamente faltantes, los que se sabe únicamente que son menores
+que 10 y los que se sabe únicamente que son mayores que 10.
+}
+
+\subsection{Sector público o privado}{
+
+Se imputan los valores perdidos según lo reportado por EUROSTAT (PL230_F = -1)
+y aquellos en los que el respondente no sabe (PL230 = 99) cuando son ocupados
+y asalariados (PL032 = 1 y PL040A = 3).
+}
+
+}
+
+\subsection{Modelos de imputación}{
+
+Por el momento, las imputaciones se hacen con bosques aleatorios implementados
+con \code{\link[missRanger:missRanger]{missRanger::missRanger()}}. Se optó por estos modelos por simplicidad y
+porque las distribuciones de las variables suelen ser complejas.
+}
 }
