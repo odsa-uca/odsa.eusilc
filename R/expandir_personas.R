@@ -5,7 +5,7 @@
 #' tienen en cuenta el país y el año de la encuesta y si se proporcionaron los
 #' conjuntos D y R.
 #'
-#' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
+#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
 #' @param .D `data.frame` o `tibble`. Conjunto de datos D de la EU-SILC.
 #' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
 #' @param .imputar `TRUE` o `FALSE` (por defecto). ¿Se aplican imputaciones
@@ -61,7 +61,7 @@
 #'
 #' @export
 expandir_personas <- function(
-    .datos,
+    .P,
     .D = NULL,
     .R = NULL,
     .imputar = FALSE,
@@ -71,8 +71,8 @@ expandir_personas <- function(
   # Chequeos args ------------------------------------------------------------
   errores <- NULL
 
-  if (!is.data.frame(.datos)) {
-    errores <- c(errores, "x" = "`.datos` debe ser un data.frame o tibble.")
+  if (!is.data.frame(.P)) {
+    errores <- c(errores, "x" = "`.P` debe ser un data.frame o tibble.")
   }
   if (!is.null(.D) & !is.data.frame(.D)) {
     errores <- c(errores, "x" = "`.D` debe ser un data.frame o tibble.")
@@ -92,8 +92,8 @@ expandir_personas <- function(
 
   if(!is.null(errores)) cli::cli_abort(c("Problemas en los argumentos:", errores))
 
-  anio <- unique(.datos$PB010)
-  pais <- unique(.datos$PB020)
+  anio <- unique(.P$PB010)
+  pais <- unique(.P$PB020)
 
   if (length(anio) > 1) {
     cli::cli_abort(c(
@@ -111,47 +111,47 @@ expandir_personas <- function(
   # Estandarizacion ----------------------------------------------------------
   cli::cli_h1("Estandarizacion")
 
-  .datos <- estandarizar_personas(.datos, .D, .R, anio, pais)
+  .P <- estandarizar_personas_(.P, .R, .D, anio, pais)
 
   # Imputaciones -------------------------------------------------------------
   if (.imputar) {
     cli::cli_h1("Imputacion")
 
-    .datos <- imputar_personas(.datos, anio)
+    .P <- imputar_personas(.P, anio)
   }
 
   # Calcular vbles -----------------------------------------------------------
   cli::cli_h1("Calcular variables nuevas")
 
-  if (!all(c("maa", "man") %in% names(.datos))) {
-    .datos <- dplyr::mutate(
-      .datos,
+  if (!all(c("maa", "man") %in% names(.P))) {
+    .P <- dplyr::mutate(
+      .P,
       maa = PL073 + PL074,
       man = PL075 + PL076
     )
   }
 
-  .datos <- calcular_personas(.datos, anio)
+  .P <- calcular_personas(.P, anio)
 
   # Arreglos y devolver ------------------------------------------------------
-  attr(.datos, "base")       <- "P"
-  attr(.datos, "pre. 2021")  <- anio < 2021
-  attr(.datos, "vbles. D")   <- !is.null(.D)
-  attr(.datos, "vbles. R")   <- !is.null(.R)
-  attr(.datos, "vble. PL130") <- "PL130" %in% names(.datos)
-  attr(.datos, "vble. PL230") <- "PL230" %in% names(.datos)
-  attr(.datos, "expandida")  <- .expandir
-  attr(.datos, "imputada")   <- .imputar
+  attr(.P, "base")       <- "P"
+  attr(.P, "pre. 2021")  <- anio < 2021
+  attr(.P, "vbles. D")   <- !is.null(.D)
+  attr(.P, "vbles. R")   <- !is.null(.R)
+  attr(.P, "vble. PL130") <- "PL130" %in% names(.P)
+  attr(.P, "vble. PL230") <- "PL230" %in% names(.P)
+  attr(.P, "expandida")  <- .expandir
+  attr(.P, "imputada")   <- .imputar
 
   if (!.expandir) {
-    .datos <- dplyr::select(.datos, dplyr::any_of(names(etq$P$variables)))
+    .P <- dplyr::select(.P, dplyr::any_of(names(etq$P$variables)))
   } else {
-    .datos <- dplyr::relocate(.datos, dplyr::any_of(names(etq$P$variables)))
+    .P <- dplyr::relocate(.P, dplyr::any_of(names(etq$P$variables)))
   }
 
   if (.etiquetar) {
-    .datos <- etiquetar_eusilc(.datos, .base = "P")
+    .P <- etiquetar_eusilc(.P, .base = "P")
   }
 
-  return(.datos)
+  return(.P)
 }

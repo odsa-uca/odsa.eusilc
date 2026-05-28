@@ -4,18 +4,18 @@
 \alias{estandarizar_hogares}
 \title{Title}
 \usage{
-estandarizar_hogares(.datos, .anio, .pais, .D, .lmh)
+estandarizar_hogares(.datos, .P, .D, .anio, .pais)
 }
 \arguments{
 \item{.datos}{Conjunto de datos H}
 
-\item{.anio}{Año de la encuesta}
-
-\item{.pais}{Pais de la encuesta}
+\item{.P}{Conjunto de datos P}
 
 \item{.D}{Conjunto de datos D}
 
-\item{.lmh}{Si se encontró la variable PL230}
+\item{.anio}{Año de la encuesta}
+
+\item{.pais}{Pais de la encuesta}
 }
 \value{
 Conjunto de datos H estandarizado

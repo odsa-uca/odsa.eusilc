@@ -5,7 +5,7 @@
 \title{Armoniza el conjunto de datos P de la EU-SILC}
 \usage{
 expandir_personas(
-  .datos,
+  .P,
   .D = NULL,
   .R = NULL,
   .imputar = FALSE,
@@ -14,7 +14,7 @@ expandir_personas(
 )
 }
 \arguments{
-\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC.}
+\item{.P}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC.}
 
 \item{.D}{\code{data.frame} o \code{tibble}. Conjunto de datos D de la EU-SILC.}
 

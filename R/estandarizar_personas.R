@@ -7,11 +7,9 @@
 #' [calcular_personas()]. Las variables que no están disponibles quedan como
 #' `NA`.
 #'
-#' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
+#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
 #' @param .D `data.frame` o `tibble`. Conjunto de datos D de la EU-SILC.
 #' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
-#' @param .anio `numeric`. Año de la encuesta.
-#' @param .pais `character`. País de la encuesta.
 #'
 #' @returns `tibble`. Conjunto de datos P estandarizado para [imputar_personas()] y [calcular_personas()].
 #'
@@ -66,11 +64,33 @@
 #' [imputar_personas()] y [calcular_personas()].
 #'
 #' @export
-estandarizar_personas <- function(.datos, .D, .R, .anio, .pais) {
+estandarizar_personas <- function(
+    .P,
+    .R = NULL,
+    .D = NULL
+) {
+  # TODO: chequeos de argumentos
+  anio <- unique(.P$PB010)
+  pais <- unique(.P$PB020)
+  
+  estandarizar_personas_(.P, .R, .D, anio, pais)
+}
+
+# ============================================================================
+#' Estandariza el conjunto P de la EU-SILC para el proceso de armonización (interna)
+#'
+#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
+#' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
+#' @param .D `data.frame` o `tibble`. Conjunto de datos D de la EU-SILC.
+#' @param .anio `numeric`. Año de la encuesta.
+#' @param .pais `character`. País de la encuesta.
+#'
+#' @returns `tibble`. Conjunto de datos P estandarizado para [imputar_personas()] y [calcular_personas()].
+estandarizar_personas_ <- function(.P, .R, .D, .anio, .pais) {
   # Anterior a 2021 --------------------------
   if (.anio <= 2021) {
-    .datos <- dplyr::mutate(
-      .datos,
+    .P <- dplyr::mutate(
+      .P,
       RB080 = PB140,
       RB081 = PB010 - PB140 - 1,
       RB082 = PB110 - PB140 - (PB130 > PB100),
@@ -105,8 +125,8 @@ estandarizar_personas <- function(.datos, .D, .R, .anio, .pais) {
     ))
   # Posterior a 2021 sin R -------------------
   } else if (is.null(.R)) {
-    .datos <- dplyr::mutate(
-      .datos,
+    .P <- dplyr::mutate(
+      .P,
       RB080 = PB010 - PX020 - 1,
       RB081 = PX020,
       RB082 = NA_integer_,
@@ -120,8 +140,8 @@ estandarizar_personas <- function(.datos, .D, .R, .anio, .pais) {
     ))
   # Posterior a 2021 con R -------------------
   } else {
-    .datos <- dplyr::left_join(
-      x  = .datos,
+    .P <- dplyr::left_join(
+      x  = .P,
       y  = dplyr::select(.R, RB010, RB020, RB030, RB080, RB081, RB082, RB280, RB290),
       by = dplyr::join_by(PB010 == RB010, PB020 == RB020, PB030 == RB030)
     )
@@ -133,7 +153,7 @@ estandarizar_personas <- function(.datos, .D, .R, .anio, .pais) {
 
   # Sin D ------------------------------------
   if (is.null(.D)) {
-    .datos <- dplyr::mutate(.datos, DB040 = NA_character_)
+    .P <- dplyr::mutate(.P, DB040 = NA_character_)
 
     cli::cli_bullets(c(
       "!" = "No se proporciono el conjunto D",
@@ -141,8 +161,8 @@ estandarizar_personas <- function(.datos, .D, .R, .anio, .pais) {
     ))
   # Con D ------------------------------------
   } else {
-    .datos <- dplyr::left_join(
-      x  = .datos,
+    .P <- dplyr::left_join(
+      x  = .P,
       y  = dplyr::select(.D, DB010, DB020, DB030, DB040),
       by = dplyr::join_by(PB010 == DB010, PB020 == DB020, PX030 == DB030)
     )
@@ -152,7 +172,7 @@ estandarizar_personas <- function(.datos, .D, .R, .anio, .pais) {
     ))
   }
 
-  if (!("PL230" %in% names(.datos))) {
+  if (!("PL230" %in% names(.P))) {
     cli::cli_bullets(c(
       "!" = "No se encontro PL230",
       " " = "Se pierden: pl22, pl30, pl31, py13, py14, py15."
@@ -163,7 +183,7 @@ estandarizar_personas <- function(.datos, .D, .R, .anio, .pais) {
     ))
   }
 
-  if (!("PL130" %in% names(.datos))) {
+  if (!("PL130" %in% names(.P))) {
     cli::cli_bullets(c(
       "!" = "No se encontro PL130",
       " " = "Se pierden: pl21a, pl21b, pl30, pl31, py13, py14, py15."
@@ -175,8 +195,8 @@ estandarizar_personas <- function(.datos, .D, .R, .anio, .pais) {
 
   }
 
-  if (.pais == "IT" & all(.datos$PY120N_F == -4)) {
-    .datos <- dplyr::mutate(.datos, PY120N = 0)
+  if (.pais == "IT" & all(.P$PY120N_F == -4)) {
+    .P <- dplyr::mutate(.P, PY120N = 0)
 
     cli::cli_bullets(c(
       "!" = "El pais es Italia y PY120N (sickness benefits) se incluye en otro monto",
@@ -184,5 +204,5 @@ estandarizar_personas <- function(.datos, .D, .R, .anio, .pais) {
     ))
   }
 
-  return(.datos)
+  return(.P)
 }
