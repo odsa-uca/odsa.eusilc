@@ -80,7 +80,7 @@ expandir_hogares <- function(
     by = dplyr::join_by(HB010 == PB010, HB020 == PB020)
   )
 
-  .H <- calcular_hogares(.H)
+  .H <- calcular_hogares_(.H)
 
   # Arreglos y devolver ------------------------------------------------------
   attr(.H, "base") <- "H"
@@ -95,7 +95,7 @@ expandir_hogares <- function(
   }
 
   if (.etiquetar) {
-    .H <- etiquetar_eusilc(.H, .base = "H")
+    .H <- etiquetar_eusilc_(.H, .base = "H")
   }
 
   return(.H)

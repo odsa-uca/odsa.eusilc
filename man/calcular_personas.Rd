@@ -4,13 +4,11 @@
 \alias{calcular_personas}
 \title{Construye variables nuevas a partir del conjunto P de la EU-SILC}
 \usage{
-calcular_personas(.datos, .anio)
+calcular_personas(.P)
 }
 \arguments{
-\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC
+\item{.P}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC
 estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.}
-
-\item{.anio}{\code{numeric}. El año al que corresponde el conjunto.}
 }
 \value{
 \code{tibble}. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.

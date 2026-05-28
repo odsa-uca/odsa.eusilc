@@ -7,9 +7,8 @@
 #' país de la encuesta y si se proporcionaron los conjuntos D y R algunas de
 #' las variables pueden estar perdidas (`NA`).
 #'
-#' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
+#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
 #'               estandarizado con [estandarizar_personas()].
-#' @param .anio `numeric`. El año al que corresponde el conjunto.
 #'
 #' @returns `tibble`. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
 #'
@@ -102,20 +101,30 @@
 #' Nota 3: Estas variables están presentes sólo si se imputaron los datos insumo.
 #'
 #' @export
-calcular_personas <- function(
-    .datos,
-    .anio
-) {
+calcular_personas <- function(.P) {
+  # TODO: chequear argumentos
+  
+  calcular_personas_(.P)
+}
+
+# ============================================================================
+#' Title
+#'
+#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
+#'               estandarizado con [estandarizar_personas()].
+#'
+#' @returns `tibble`. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
+calcular_personas_ <- function(.P) {
   # PPA --------------------------------------
-  .datos <- dplyr::left_join(
-    x  = .datos,
+  .P <- dplyr::left_join(
+    x  = .P,
     y  = tabla_ppa,
     by = dplyr::join_by(PB010, PB020)
   )
 
   # Lookup -----------------------------------
-  .datos <- dplyr::mutate(
-    .datos,
+  .P <- dplyr::mutate(
+    .P,
     pd03  = dplyr::recode_values(
       PE041,
       from = tabla_pd03$PE041,
@@ -167,8 +176,8 @@ calcular_personas <- function(
   )
 
   # Núcleo -----------------------------------
-  .datos <- dplyr::mutate(
-    .data = .datos,
+  .P <- dplyr::mutate(
+    .data = .P,
     # Bloque I -----------------------
     pi01 = PB010,
     pi02 = PB020,
@@ -220,9 +229,9 @@ calcular_personas <- function(
     .keep = "all"
   )
 
-  if ("PL130" %in% names(.datos)) {
-    .datos <- dplyr::mutate(
-      .data = .datos,
+  if ("PL130" %in% names(.P)) {
+    .P <- dplyr::mutate(
+      .data = .P,
       pl21a = dplyr::recode_values(
         PL130,
         from = tabla_pl21$PL130,
@@ -238,8 +247,8 @@ calcular_personas <- function(
      .keep = "all"
     )
   } else {
-    .datos <- dplyr::mutate(
-      .data = .datos,
+    .P <- dplyr::mutate(
+      .data = .P,
       pl21a = NA_integer_,
       pl21b = NA_integer_,
       pl30  = NA_integer_,
@@ -252,14 +261,14 @@ calcular_personas <- function(
 
   }
 
-  if("PL230" %in% names(.datos)) {
-    .datos <- dplyr::mutate(
-      .data = .datos,
+  if("PL230" %in% names(.P)) {
+    .P <- dplyr::mutate(
+      .data = .P,
       pl22 = dplyr::if_else(PL230 != 99, PL230, NA_integer_)
     )
   } else {
-    .datos <- dplyr::mutate(
-      .data = .datos,
+    .P <- dplyr::mutate(
+      .data = .P,
       pl22  = NA_integer_,
       pl30  = NA_integer_,
       pl31  = NA_integer_,
@@ -270,9 +279,9 @@ calcular_personas <- function(
     )
   }
 
-  if(all(c("PL130", "PL230") %in% names(.datos))) {
-    .datos <- dplyr::mutate(
-      .data = .datos,
+  if(all(c("PL130", "PL230") %in% names(.P))) {
+    .P <- dplyr::mutate(
+      .data = .P,
       pl30 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "a"),
       pl31 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "b"),
       py13 = calc_y_sector(py10, pl31, 1),
@@ -283,15 +292,15 @@ calcular_personas <- function(
   }
 
   # Ingresos mensuales y ppa -----------------
-  .datos <- dplyr::mutate(
-    .data = .datos,
+  .P <- dplyr::mutate(
+    .data = .P,
     dplyr::across(c(py00:py25, py13:py15), \(y) (y * PX010) / 12),
     dplyr::across(c(py00:py25, py13:py15, py11h, py12h), \(y) y / ppa, .names = "{.col}ppa"),
     .keep = "all"
   )
 
   # ------------------------------------------
-  return(.datos)
+  return(.P)
 }
 
 # ============================================================================

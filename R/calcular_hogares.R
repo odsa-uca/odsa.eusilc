@@ -1,14 +1,24 @@
 #' Construye variables en la base H de la EU-SILC.
 #'
-#' @param .datos Conjunto H de la EU-SILC.
-#' @param ... ...
+#' @param .H Conjunto H de la EU-SILC.
 #'
 #' @returns Conjunto H de la EU-SILC con variables adicionales.
-calcular_hogares <- function(
-    .datos,
-    ...
-) {
-  hogares <- .datos |>
+#' 
+#' @export
+calcular_hogares <- function(.H) {
+  # TODO: chequear argumentos
+  
+  calcular_hogares_(.H)
+}
+
+# ============================================================================
+#' Construye variables en la base H de la EU-SILC.
+#'
+#' @param .H Conjunto H de la EU-SILC.
+#'
+#' @returns Conjunto H de la EU-SILC con variables adicionales.
+calcular_hogares_ <- function(.H) {
+  .H <- .H |>
     dplyr::mutate(
       # Bloque I -----------------------
       hi01 = HB010,
@@ -42,7 +52,7 @@ calcular_hogares <- function(
     )
 
   # ------------------------------------------
-  return(hogares)
+  return(.H)
 }
 
 # ============================================================================

@@ -131,7 +131,7 @@ expandir_personas <- function(
     )
   }
 
-  .P <- calcular_personas(.P, anio)
+  .P <- calcular_personas_(.P)
 
   # Arreglos y devolver ------------------------------------------------------
   attr(.P, "base")       <- "P"
@@ -150,7 +150,7 @@ expandir_personas <- function(
   }
 
   if (.etiquetar) {
-    .P <- etiquetar_eusilc(.P, .base = "P")
+    .P <- etiquetar_eusilc_(.P, .base = "P")
   }
 
   return(.P)
