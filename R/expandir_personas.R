@@ -117,7 +117,7 @@ expandir_personas <- function(
   if (.imputar) {
     cli::cli_h1("Imputacion")
 
-    .P <- imputar_personas(.P, anio)
+    .P <- imputar_personas_(.P, anio)
   }
 
   # Calcular vbles -----------------------------------------------------------

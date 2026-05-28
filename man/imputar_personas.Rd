@@ -4,13 +4,11 @@
 \alias{imputar_personas}
 \title{Imputa valores faltantes o inconsistentes en el conjunto P de la EU-SILC}
 \usage{
-imputar_personas(.datos, .anio)
+imputar_personas(.P)
 }
 \arguments{
-\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC
+\item{.P}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC
 estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.}
-
-\item{.anio}{\code{numeric}. Año de la encuesta.}
 }
 \value{
 \code{tibble}. Conjunto P de la EU-SILC con valores imputados.

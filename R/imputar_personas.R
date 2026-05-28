@@ -7,9 +7,8 @@
 #' los meses con percepción de ingresos laborales en el IRP y con características
 #' de la ocupación y el lugar de trabajo.
 #'
-#' @param .datos `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
+#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
 #'               estandarizado con [estandarizar_personas()].
-#' @param .anio `numeric`. Año de la encuesta.
 #'
 #' @returns `tibble`. Conjunto P de la EU-SILC con valores imputados.
 #'
@@ -81,15 +80,34 @@
 #' porque las distribuciones de las variables suelen ser complejas.
 #'
 #' @export
-imputar_personas <- function(
-    .datos,
-    .anio
+imputar_personas <- function(.P) {
+  # TODO: chequear argumentos
+  
+  anio <- unique(.P$PB010)
+  pais <- unique(.P$PB020)
+
+  imputar_personas_(.P, anio, pais)
+}
+
+# ============================================================================
+#' Title
+#'
+#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
+#'               estandarizado con [estandarizar_personas()].
+#' @param .anio `numeric`. Año de la encuesta.
+#' @param .pais `character`. País de la encuesta.
+#'
+#' @returns `tibble`. Conjunto P de la EU-SILC con valores imputados.
+imputar_personas_ <- function(
+    .P,
+    .anio,
+    .pais
 ) {
   # Flags ------------------------------------
-  .datos <- calc_flags_imputacion(.datos, .anio)
+  .P <- calc_flags_imputacion(.P, .anio, .pais)
 
-  .datos <- dplyr::mutate(
-    .datos,
+  .P <- dplyr::mutate(
+    .P,
     maa = dplyr::case_when(
       .f_maa == -1 ~ NA_integer_,
       .default = PL073 + PL074
@@ -101,21 +119,21 @@ imputar_personas <- function(
   )
 
   # Imputaciones -----------------------------
-  .datos <-  imputar_meses(.datos)
-  .datos <-  imputar_horas(.datos)
-  .datos <-  imputar_laboral_a(.datos)
-  .datos <-  imputar_laboral_b(.datos, .anio)
+  .P <-  imputar_meses(.P)
+  .P <-  imputar_horas(.P)
+  .P <-  imputar_laboral_a(.P)
+  .P <-  imputar_laboral_b(.P, .anio)
 
-  if ("PL130" %in% names(.datos)) {
-    .datos <- imputar_tamanio(.datos)
+  if ("PL130" %in% names(.P)) {
+    .P <- imputar_tamanio(.P)
   }
 
-  if ("PL230" %in% names(.datos)) {
-    .datos <- imputar_sectorpp(.datos)
+  if ("PL230" %in% names(.P)) {
+    .P <- imputar_sectorpp(.P)
   }
 
   # Devolver -----------------------------------------------------------------
-  return(.datos)
+  return(.P)
 }
 
 # ============================================================================
@@ -152,9 +170,10 @@ armar_imputables <- function(
 #'
 #' @param .datos .datos
 #' @param .anio .anio
+#' @param .pais .pais
 #'
 #' @returns .datos con flags de imputacion
-calc_flags_imputacion <- function(.datos, .anio) {
+calc_flags_imputacion <- function(.datos, .anio, .pais) {
   .datos <- dplyr::mutate(
     .datos,
     .f_maa = dplyr::case_when(

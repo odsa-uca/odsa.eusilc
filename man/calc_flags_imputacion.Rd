@@ -4,12 +4,14 @@
 \alias{calc_flags_imputacion}
 \title{Title}
 \usage{
-calc_flags_imputacion(.datos, .anio)
+calc_flags_imputacion(.datos, .anio, .pais)
 }
 \arguments{
 \item{.datos}{.datos}
 
 \item{.anio}{.anio}
+
+\item{.pais}{.pais}
 }
 \value{
 .datos con flags de imputacion
