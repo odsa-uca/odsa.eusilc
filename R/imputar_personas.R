@@ -303,7 +303,7 @@ imputar_meses <- function(.datos) {
       .datos,
       .imputadas   = "maa",
       .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
-      .flag        = ".f_maa"
+      .flags       = ".f_maa"
     )
 
     imp_maa <- missRanger::missRanger(
@@ -327,7 +327,7 @@ imputar_meses <- function(.datos) {
       .datos,
       .imputadas   = "man",
       .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
-      .flag        = ".f_man"
+      .flags       = ".f_man"
     )
 
     imp_man <- missRanger::missRanger(
@@ -360,7 +360,7 @@ imputar_horas <- function(.datos) {
       .datos,
       .imputadas   = "PL060",
       .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PL073", "PL074", "PL075", "PL076"),
-      .flag        = ".f_PL060"
+      .flags       = ".f_PL060"
     )
 
     imp <- missRanger::missRanger(
@@ -626,7 +626,7 @@ imputar_sectorpp <- function(.datos) {
       .datos,
       .imputadas   = c("PL230", "PE041"),
       .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041"),
-      .flag        = ".f_PL230",
+      .flags       = ".f_PL230",
       .factores    = c("PL230", "PE041")
     )
 

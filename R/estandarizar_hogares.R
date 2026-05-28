@@ -1,17 +1,38 @@
 #' Title
 #'
-#' @param .datos Conjunto de datos H
-#' @param .anio Año de la encuesta
+#' @param .H Conjunto de datos H
 #' @param .P Conjunto de datos P
 #' @param .D Conjunto de datos D
-#' @param .pais Pais de la encuesta
 #'
 #' @returns Conjunto de datos H estandarizado
 #' @export
-estandarizar_hogares <- function(.datos, .P, .D, .anio, .pais) {
+estandarizar_hogares <- function(
+    .H,
+    .P,
+    .D = NULL
+) {
+  # TODO: chequeos args
+
+  anio <- unique(.H$HB010)
+  pais <- unique(.H$HB020)
+  
+  estandarizar_hogares_(.H, .P, .D, anio, pais)
+}
+
+# ============================================================================
+#' Title
+#'
+#' @param .H Conjunto de datos H
+#' @param .P Conjunto de datos P
+#' @param .D Conjunto de datos D
+#' @param .anio Año de la encuesta
+#' @param .pais Pais de la encuesta
+#'
+#' @returns Conjunto de datos H estandarizado
+estandarizar_hogares_ <- function(.H, .P, .D, .anio, .pais) {
   if (!is.null(.D)) {
-    .datos <- dplyr::left_join(
-      x = .datos,
+    .H <- dplyr::left_join(
+      x = .H,
       y = dplyr::select(.D, DB010, DB020, DB030, DB040, DB090),
       by = dplyr::join_by(HB010 == DB010, HB020 == DB020, HB030 == DB030)
     )
@@ -20,7 +41,7 @@ estandarizar_hogares <- function(.datos, .P, .D, .anio, .pais) {
       "v" = "Se proporciono el conjunto D"
     ))
   } else {
-    .datos <- dplyr::mutate(.datos, DB090 = NA)
+    .H <- dplyr::mutate(.H, DB090 = NA)
 
     cli::cli_bullets(c(
       "!" = "No se proporciono el conjunto D",
@@ -35,5 +56,5 @@ estandarizar_hogares <- function(.datos, .P, .D, .anio, .pais) {
     ))
   }
 
-  return(.datos)
+  return(.H)
 }

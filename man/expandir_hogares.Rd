@@ -4,17 +4,10 @@
 \alias{expandir_hogares}
 \title{Construir variables adicionales en los conjuntos de datos H de la EU-SILC}
 \usage{
-expandir_hogares(
-  .datos,
-  .P,
-  .D = NULL,
-  .expandir = FALSE,
-  .etiquetar = TRUE,
-  ...
-)
+expandir_hogares(.H, .P, .D = NULL, .expandir = FALSE, .etiquetar = TRUE, ...)
 }
 \arguments{
-\item{.datos}{Conjunto de datos H de la EU-SILC.}
+\item{.H}{Conjunto de datos H de la EU-SILC.}
 
 \item{.P}{Conjunto de datos P de la EU-SILC expandido por \code{\link[=expandir_personas]{expandir_personas()}}.}
 
