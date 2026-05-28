@@ -25,15 +25,19 @@ expandir_hogares <- function(
   }
   if (!is.data.frame(.P)) {
     errores <- c(errores, "x" = "`.P` debe ser un data.frame o tibble.")
-  }
-  if (is.null(attr(.P, "base"))) {
-    errores <- c(errores, "x" = "`.P` debe ser una base P expandida con `expandir_eusilc().`")
-  }
-  if (attr(.P, "base") != "P") {
-    errores <- c(errores, "x" = "`.P` debe ser una base P expandida con `expandir_eusilc().`")
+  } else if (is.null(attr(.P, "base"))) {
+    errores <- c(errores, "x" = "`.P` debe ser una base P expandida con expandir_personas().")
+  } else if (attr(.P, "base") != "P") {
+    errores <- c(errores, "x" = "`.P` debe ser una base P.")
   }
   if (!is.null(.D) & !is.data.frame(.D)) {
     errores <- c(errores, "x" = "`.D` debe ser un data.frame o tibble.")
+  }
+  if (!is.logical(.expandir)) {
+    errores <- c(errores, "x" = "`.expandir` debe ser `TRUE` o `FALSE`.")
+  }
+  if (!is.logical(.etiquetar)) {
+    errores <- c(errores, "x" = "`.etiquetar` debe ser `TRUE` o `FALSE`.")
   }
 
   if(!is.null(errores)) cli::cli_abort(c("Problemas en los argumentos:", errores))
@@ -57,8 +61,7 @@ expandir_hogares <- function(
   # Estandarización ----------------------------------------------------------
   cli::cli_h1("Estandarizacion")
 
-  lmh <- attr(.P, "vbles. LMH")
-  .datos <- estandarizar_hogares(.datos, anio, pais, .D, lmh)
+  .datos <- estandarizar_hogares(.datos, .P, .D, anio, pais)
 
   # Calcular vbles -----------------------------------------------------------
   cli::cli_h1("Calcular variables nuevas")
@@ -80,6 +83,11 @@ expandir_hogares <- function(
   .datos <- calcular_hogares(.datos)
 
   # Arreglos y devolver ------------------------------------------------------
+  attr(.datos, "base") <- "H"
+  attr(.datos, "vbles. D") <- !is.null(.D)
+  attr(.datos, "vbles. LMH") <- attr(.P, "vble. PL230")
+  attr(.datos, "expandida") <- .expandir
+
   if (!.expandir) {
     .datos <- dplyr::select(.datos, dplyr::any_of(names(etq$H$variables)))
   } else {
@@ -89,11 +97,6 @@ expandir_hogares <- function(
   if (.etiquetar) {
     .datos <- etiquetar_eusilc(.datos, .base = "H")
   }
-
-  attr(.datos, "base") <- "H"
-  attr(.datos, "vbles. D") <- !is.null(.D)
-  attr(.datos, "vbles. LMH") <- lmh
-  attr(.datos, "expandida") <- .expandir
 
   return(.datos)
 }

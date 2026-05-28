@@ -80,8 +80,14 @@ expandir_personas <- function(
   if (!is.null(.R) & !is.data.frame(.R)) {
     errores <- c(errores, "x" = "`.R` debe ser un data.frame o tibble.")
   }
+  if (!is.logical(.imputar)) {
+    errores <- c(errores, "x" = "`.imputar` debe ser `TRUE` o `FALSE`.")
+  }
   if (!is.logical(.expandir)) {
     errores <- c(errores, "x" = "`.expandir` debe ser `TRUE` o `FALSE`.")
+  }
+  if (!is.logical(.etiquetar)) {
+    errores <- c(errores, "x" = "`.etiquetar` debe ser `TRUE` o `FALSE`.")
   }
 
   if(!is.null(errores)) cli::cli_abort(c("Problemas en los argumentos:", errores))
