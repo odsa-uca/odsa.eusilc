@@ -106,18 +106,6 @@ imputar_personas_ <- function(
   # Flags ------------------------------------
   .P <- calc_flags_imputacion(.P, .anio, .pais)
 
-  .P <- dplyr::mutate(
-    .P,
-    maa = dplyr::case_when(
-      .f_maa == -1 ~ NA_integer_,
-      .default = maa
-    ),
-    man = dplyr::case_when(
-      .f_man == -1 ~ NA_integer_,
-      .default = man
-    )
-  )
-
   # Imputaciones -----------------------------
   .P <-  imputar_meses(.P)
   .P <-  imputar_horas(.P)
@@ -157,6 +145,12 @@ armar_imputables <- function(
     .datos[[.flags[1]]] %in% c(-1, 1),
     unique(c("PB010", "PB020", "PB030", .predictoras, .imputadas, .flags))
   ]
+
+  for (.i in 1:length(.imputadas)) {
+    if (!is.na(.flags[.i])) {
+      datos_imp[datos_imp[[.flags[.i]]] == -1, .imputadas[.i]] <- NA
+    }
+  }
 
   for (.vble in .factores) {
     datos_imp[.vble] <- factor(datos_imp[[.vble]])
@@ -216,10 +210,6 @@ calc_flags_imputacion <- function(.datos, .anio, .pais) {
   if ("PL130" %in% names(.datos)) {
     .datos <- dplyr::mutate(
       .datos,
-      .f_PL130 = dplyr::case_when(
-        PL130 == 14 | PL130 == 15 | PL130_F == -1 ~ -1,
-        .default = 0
-      ),
       .fa_PL130 = dplyr::case_when(
         PL130 == 14 ~ -1,
         PL130 < 10 ~ 1,
@@ -547,7 +537,7 @@ imputar_tamanio <- function(.datos) {
       .datos,
       .imputadas   = c("PL130_", "PE041", "PL111A"),
       .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
-      .flags       = c(".fa_PL130", ".f_PL130"),
+      .flags       = c(".fa_PL130"),
       .factores    = "PE041"
     )
 
@@ -572,7 +562,7 @@ imputar_tamanio <- function(.datos) {
       .datos,
       .imputadas   = c("PL130_", "PE041", "PL111A"),
       .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
-      .flags       = c(".fb_PL130", ".f_PL130"),
+      .flags       = c(".fb_PL130"),
       .factores    = c("PL130_", "PE041")
     )
 
@@ -599,7 +589,7 @@ imputar_tamanio <- function(.datos) {
       .datos,
       .imputadas   = c("PL130", "PE041", "PL111A"),
       .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
-      .flags       = c(".fc_PL130", ".f_PL130"),
+      .flags       = c(".fc_PL130"),
       .factores    = c("PL130", "PE041")
     )
 
@@ -622,8 +612,6 @@ imputar_tamanio <- function(.datos) {
   }
 
   imp <- dplyr::bind_rows(imp_PL130a, imp_PL130b, imp_PL130c)
-
-  .datos <- aplicar_imputaciones(.datos, imp, "PL130", ".f_PL130")
 
   return(.datos)
 }
