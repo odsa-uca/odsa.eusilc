@@ -84,7 +84,7 @@ expandir_personas <- function(
 
   if (length(anio) > 1) {
     cli::cli_abort(
-      c("Solo se aceptan bases de un unico anio",
+      c("Solo se aceptan bases P de un unico anio",
         "x" = "Se proporciono una base para {anio}."
       ),
       class = "varios_anios"
@@ -92,7 +92,7 @@ expandir_personas <- function(
   }
   if (length(pais) > 1) {
     cli::cli_abort(
-      c("Solo se aceptan bases de un unico pais",
+      c("Solo se aceptan bases P de un unico pais",
         "x" = "Se proporciono una base para {pais}."
       ),
       class = "varios_paises"
@@ -192,13 +192,6 @@ expandir_personas <- function(
   }
 
   cli::cli_h1("Calcular variables nuevas")
-  if (!all(c("maa", "man") %in% names(.P))) {
-    .P <- dplyr::mutate(
-      .P,
-      maa = PL073 + PL074,
-      man = PL075 + PL076
-    )
-  }
   .P <- calcular_personas_(.P)
 
   attr(.P, "base")       <- "P"

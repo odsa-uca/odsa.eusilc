@@ -82,7 +82,7 @@
 #' @export
 imputar_personas <- function(.P) {
   # TODO: chequear argumentos
-  
+
   anio <- unique(.P$PB010)
   pais <- unique(.P$PB020)
 
@@ -110,11 +110,11 @@ imputar_personas_ <- function(
     .P,
     maa = dplyr::case_when(
       .f_maa == -1 ~ NA_integer_,
-      .default = PL073 + PL074
+      .default = maa
     ),
     man = dplyr::case_when(
       .f_man == -1 ~ NA_integer_,
-      .default = PL075 + PL076
+      .default = man
     )
   )
 
