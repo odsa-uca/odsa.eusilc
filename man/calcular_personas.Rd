@@ -4,11 +4,13 @@
 \alias{calcular_personas}
 \title{Construye variables nuevas a partir del conjunto P de la EU-SILC}
 \usage{
-calcular_personas(.P)
+calcular_personas(.P, .expandir = FALSE)
 }
 \arguments{
 \item{.P}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC
 estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.}
+
+\item{.expandir}{\code{TRUE} o \code{FALSE} (por defecto). ¿Mantener variables originales?}
 }
 \value{
 \code{tibble}. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.

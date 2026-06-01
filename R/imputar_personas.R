@@ -86,41 +86,21 @@ imputar_personas <- function(.P) {
   anio <- unique(.P$PB010)
   pais <- unique(.P$PB020)
 
-  imputar_personas_(.P, anio, pais)
-}
+  .P <- calc_flags_imputacion(.P, anio, pais)
 
-# ============================================================================
-#' Title
-#'
-#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
-#'               estandarizado con [estandarizar_personas()].
-#' @param .anio `numeric`. Año de la encuesta.
-#' @param .pais `character`. País de la encuesta.
-#'
-#' @returns `tibble`. Conjunto P de la EU-SILC con valores imputados.
-imputar_personas_ <- function(
-    .P,
-    .anio,
-    .pais
-) {
-  # Flags ------------------------------------
-  .P <- calc_flags_imputacion(.P, .anio, .pais)
-
-  # Imputaciones -----------------------------
   .P <-  imputar_meses(.P)
   .P <-  imputar_horas(.P)
   .P <-  imputar_laboral_a(.P)
-  .P <-  imputar_laboral_b(.P, .anio)
-
+  .P <-  imputar_laboral_b(.P, anio)
   if ("PL130" %in% names(.P)) {
     .P <- imputar_tamanio(.P)
   }
-
   if ("PL230" %in% names(.P)) {
     .P <- imputar_sectorpp(.P)
   }
 
-  # Devolver -----------------------------------------------------------------
+  attr(.P, "imputada") <- TRUE
+  
   return(.P)
 }
 
@@ -523,11 +503,6 @@ imputar_tamanio <- function(.datos) {
   cli::cli_h2("Tamanio del establecimiento")
   cli::cli_alert_info("Se imputa por partes segun el caso este perdido o truncado (codigos 14 y 15)")
 
-  .datos <- dplyr::mutate(
-    .datos,
-    PL130_ = dplyr::if_else(PL130 %in% 14:15, NA_integer_, PL130)
-  )
-
   # No sabe, menos de 10 ---------------------
   cli::cli_h3("No sabe, pero menos de 10 personas")
   imputar_PL130a <- chequear_faltantes(.datos$.fa_PL130)
@@ -535,7 +510,7 @@ imputar_tamanio <- function(.datos) {
   if (imputar_PL130a == "imputar") {
     imp_PL130a <- armar_imputables(
       .datos,
-      .imputadas   = c("PL130_", "PE041", "PL111A"),
+      .imputadas   = c("PL130", "PE041", "PL111A"),
       .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
       .flags       = c(".fa_PL130"),
       .factores    = "PE041"
@@ -543,14 +518,15 @@ imputar_tamanio <- function(.datos) {
 
     imp_PL130a <- missRanger::missRanger(
       data = imp_PL130a,
-      formula = PL130_ + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
+      formula = PL130 + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
       num.trees = 100,
       pmm.k = 10
     )
 
-    imp_PL130a <- dplyr::rename(imp_PL130a, PL130 = PL130_)
-  } else {
-    imp_PL130a <- NULL
+    #imp_PL130a <- dplyr::rename(imp_PL130a, PL130 = PL130_)
+    
+    .datos <- aplicar_imputaciones(.datos, imp_PL130a, "PL130", ".fa_PL130")
+    .datos <- dplyr::rename(.datos, PL130a_imp = PL130_imp)
   }
 
   # No sabe, mas de 10 -----------------------
@@ -560,24 +536,23 @@ imputar_tamanio <- function(.datos) {
   if (imputar_PL130b == "imputar") {
     imp_PL130b <- armar_imputables(
       .datos,
-      .imputadas   = c("PL130_", "PE041", "PL111A"),
+      .imputadas   = c("PL130", "PE041", "PL111A"),
       .predictoras = c("PY010N", "PY050N", "PB140", "PB150", "PE041", "PL111A"),
       .flags       = c(".fb_PL130"),
-      .factores    = c("PL130_", "PE041")
+      .factores    = c("PL130", "PE041")
     )
 
     imp_PL130b <- missRanger::missRanger(
       data = imp_PL130b,
-      formula = PL130_ + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
+      formula = PL130 + PE041 + PL111A ~ PY010N + PY050N + PB140 + PB150 + PE041 + PL111A,
       num.trees = 100,
       pmm.k = 10
     )
 
-    imp_PL130b <- dplyr::mutate(imp_PL130b, PL130 = as.numeric(as.character(PL130_)))
+    imp_PL130b <- dplyr::mutate(imp_PL130b, PL130 = as.numeric(as.character(PL130)))
 
     .datos <- aplicar_imputaciones(.datos, imp_PL130b, "PL130", ".fb_PL130")
-  } else {
-    imp_PL130b <- NULL
+    .datos <- dplyr::rename(.datos, PL130b_imp = PL130_imp)
   }
 
   # Perdidos ---------------------------------
@@ -603,15 +578,8 @@ imputar_tamanio <- function(.datos) {
     imp_PL130c <- dplyr::mutate(imp_PL130c, PL130 = as.numeric(as.character(PL130)))
 
     .datos <- aplicar_imputaciones(.datos, imp_PL130c, "PL130", ".fc_PL130")
-  } else {
-    imp_PL130c <- NULL
+    .datos <- dplyr::rename(.datos, PL130c_imp = PL130_imp)
   }
-
-  if (!any(c(imputar_PL130a, imputar_PL130b, imputar_PL130c) == "imputar")) {
-    return(.datos)
-  }
-
-  imp <- dplyr::bind_rows(imp_PL130a, imp_PL130b, imp_PL130c)
 
   return(.datos)
 }

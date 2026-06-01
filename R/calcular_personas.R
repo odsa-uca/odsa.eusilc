@@ -9,6 +9,7 @@
 #'
 #' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
 #'               estandarizado con [estandarizar_personas()].
+#' @param .expandir `TRUE` o `FALSE` (por defecto). ¿Mantener variables originales?
 #'
 #' @returns `tibble`. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
 #'
@@ -101,10 +102,20 @@
 #' Nota 3: Estas variables están presentes sólo si se imputaron los datos insumo.
 #'
 #' @export
-calcular_personas <- function(.P) {
+calcular_personas <- function(.P, .expandir = FALSE) {
   # TODO: chequear argumentos
   
-  calcular_personas_(.P)
+  .P <- calcular_personas_(.P)
+  
+  if (!.expandir) {
+    .P <- dplyr::select(.P, dplyr::any_of(names(etq$P$variables)))
+  } else {
+    .P <- dplyr::relocate(.P, dplyr::any_of(names(etq$P$variables)))
+  }
+  
+  attr(.P, "expandida") <- .expandir
+  
+  return(.P)
 }
 
 # ============================================================================

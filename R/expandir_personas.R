@@ -181,6 +181,9 @@ expandir_personas <- function(
       class = "no_logical"
     )
   }
+  
+  vble_PL130 <- "PL130" %in% names(.P)
+  vble_PL230 <- "PL230" %in% names(.P)
 
   # --------------------------------------------------------------------------
   cli::cli_h1("Estandarizacion")
@@ -188,20 +191,24 @@ expandir_personas <- function(
 
   if (.imputar) {
     cli::cli_h1("Imputacion")
-    .P <- imputar_personas_(.P, anio)
+    
+    .P <- calc_flags_imputacion(.P, anio, pais)
+  
+    # Imputaciones -----------------------------
+    .P <-  imputar_meses(.P)
+    .P <-  imputar_horas(.P)
+    .P <-  imputar_laboral_a(.P)
+    .P <-  imputar_laboral_b(.P, anio)
+    if (vble_PL130) {
+      .P <- imputar_tamanio(.P)
+    }
+    if (vble_PL230) {
+      .P <- imputar_sectorpp(.P)
+    }
   }
 
   cli::cli_h1("Calcular variables nuevas")
   .P <- calcular_personas_(.P)
-
-  attr(.P, "base")       <- "P"
-  attr(.P, "pre. 2021")  <- anio < 2021
-  attr(.P, "vbles. D")   <- !is.null(.D)
-  attr(.P, "vbles. R")   <- !is.null(.R)
-  attr(.P, "vble. PL130") <- "PL130" %in% names(.P)
-  attr(.P, "vble. PL230") <- "PL230" %in% names(.P)
-  attr(.P, "expandida")  <- .expandir
-  attr(.P, "imputada")   <- .imputar
 
   if (!.expandir) {
     .P <- dplyr::select(.P, dplyr::any_of(names(etq$P$variables)))
@@ -212,6 +219,18 @@ expandir_personas <- function(
   if (.etiquetar) {
     .P <- etiquetar_eusilc_(.P, .base = "P")
   }
+  
+  .P <- structure(
+    .P,
+    "base"        = "P",
+    "pre. 2021"   = anio < 2021,
+    "vbles. D"    = !is.null(.D),
+    "vbles. R"    = !is.null(.R),
+    "vble. PL130" = vble_PL130,
+    "vble. PL230" = vble_PL230,
+    "expandida"   = .expandir,
+    "imputada"    = .imputar
+  )
 
   return(.P)
 }

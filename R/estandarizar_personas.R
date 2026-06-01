@@ -156,7 +156,20 @@ estandarizar_personas <- function(
     }
   }
 
-  estandarizar_personas_(.P, .R, .D, anio, pais)
+  .P <- estandarizar_personas_(.P, .R, .D, anio, pais)
+  
+  .P <- structure(
+    .P,
+    "estandar"    = TRUE,
+    "base"        = "P",
+    "pre. 2021"   = anio < 2021,
+    "vbles. D"    = !is.null(.D),
+    "vbles. R"    = !is.null(.R),
+    "vble. PL130" = "PL130" %in% names(.P),
+    "vble. PL230" = "PL230" %in% names(.P)
+  )
+  
+  return(.P)
 }
 
 # ============================================================================
