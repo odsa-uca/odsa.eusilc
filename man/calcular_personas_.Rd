@@ -2,17 +2,24 @@
 % Please edit documentation in R/calcular_personas.R
 \name{calcular_personas_}
 \alias{calcular_personas_}
-\title{Title}
+\title{Construye variables nuevas a partir del conjunto P de la EU-SILC (interna)}
 \usage{
 calcular_personas_(.P)
 }
 \arguments{
-\item{.P}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC
-estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.}
+\item{.P}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.}
 }
 \value{
 \code{tibble}. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
 }
 \description{
-Title
+¡Esta función es interna! Construye variables nuevas de nivel individual a
+partir del conjunto P de la EU-SILC. Las variables se organizan en cuatro
+bloques: I de identificación, D de demográficos, L de laborales e Y de
+ingresos. Dependiendo del año, el país de la encuesta y si se proporcionaron
+los conjuntos D y R algunas de las variables pueden estar perdidas (\code{NA}).
+}
+\details{
+Esta función es el núcleo interno de \code{\link[=calcular_personas]{calcular_personas()}}. Para más detalles
+ver la documentación de esa función.
 }

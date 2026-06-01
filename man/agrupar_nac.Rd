@@ -7,12 +7,12 @@
 agrupar_nac(.anio, .nac)
 }
 \arguments{
-\item{.anio}{Año de la encuesta.}
+\item{.anio}{\code{numeric}. Año de la encuesta.}
 
-\item{.nac}{Vector de años de nacimiento.}
+\item{.nac}{\code{numeric}. Vector de años de nacimiento.}
 }
 \value{
-Vector de años de nacimiento agrupados.
+\code{numeric}. Vector de años de nacimiento agrupados.
 }
 \description{
 La función agrupa los años según el criterio que se aplica en el conjunto de

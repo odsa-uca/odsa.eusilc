@@ -2,20 +2,20 @@
 % Please edit documentation in R/calcular_personas.R
 \name{calc_y_sector}
 \alias{calc_y_sector}
-\title{Title}
+\title{Censura ingresos que no provienen de determinado sector de inserción}
 \usage{
 calc_y_sector(.py10, .pl31, .sector)
 }
 \arguments{
-\item{.py10}{py10}
+\item{.py10}{\code{numeric}. Ingresos laborales}
 
-\item{.pl31}{pl31}
+\item{.pl31}{\code{numeric}. Sector de inserción de los individuos}
 
-\item{.sector}{sector}
+\item{.sector}{\code{numeric}. Sector de inserción a seleccionar}
 }
 \value{
-py13, py14 o py15
+\code{numeric}. Ingresos laborales provenientes de determinado sector, 0 el resto
 }
 \description{
-Title
+Censura ingresos que no provienen de determinado sector de inserción
 }

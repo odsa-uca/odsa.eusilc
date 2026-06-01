@@ -2,22 +2,24 @@
 % Please edit documentation in R/imputar_personas.R
 \name{aplicar_imputaciones}
 \alias{aplicar_imputaciones}
-\title{Title}
+\title{Reemplaza valores originales por valores imputados}
 \usage{
 aplicar_imputaciones(.datos, .imp, .vble, .flag)
 }
 \arguments{
-\item{.datos}{.datos}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P sin imputar}
 
-\item{.imp}{.imp}
+\item{.imp}{\code{data.frame} o \code{tibble}. Conjunto de datos con las observaciones imputadas}
 
-\item{.vble}{.vble}
+\item{.vble}{\code{character}. Nombre de la variable imputada}
 
-\item{.flag}{.flag}
+\item{.flag}{\code{character}. Nombre del flag de imputación de la variable imputada}
 }
 \value{
-Conjunto de datos con las imputaciones aplicadas
+\code{tibble}. Conjunto de datos P con valores imputados
 }
 \description{
-Title
+Dado un conjunto de datos P y un conjunto de datos con imputaciones,
+reemplaza los valores de la variable original por los valores imputados
+para los casos corresopondientes.
 }

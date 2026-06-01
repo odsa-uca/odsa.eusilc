@@ -2,20 +2,26 @@
 % Please edit documentation in R/imputar_personas.R
 \name{calc_flags_imputacion}
 \alias{calc_flags_imputacion}
-\title{Title}
+\title{Calcula flags de imputación para ciertas variables}
 \usage{
 calc_flags_imputacion(.datos, .anio, .pais)
 }
 \arguments{
-\item{.datos}{.datos}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P a imputar}
 
-\item{.anio}{.anio}
+\item{.anio}{\code{numeric}. Año al que corresponde el conjunto de datos}
 
-\item{.pais}{.pais}
+\item{.pais}{\code{character}. País al que corresponde el conjunto de datos}
 }
 \value{
-.datos con flags de imputacion
+\code{tibble}. Conjunto de datos P con variables flag de imputación
 }
 \description{
-Title
+Calcula flags de imputación para los meses con ingresos en el IRP, las
+horas semanales habitualmente trabajadas, la categoría ocupacional, la
+ocupación, la rama de actividad, el tamaño del establecimiento y el sector
+de actividad. Los flags llevan el nombre de la variable con el prefijo ".f_".
+Cada flag indica con un -1 los casos a amputar-imputar, con un 1 los casos
+de referencia para la imputación y con un 0 los casos que no deben considerarse
+en la imputación.
 }

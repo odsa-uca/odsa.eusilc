@@ -7,8 +7,7 @@
 #' país de la encuesta y si se proporcionaron los conjuntos D y R algunas de
 #' las variables pueden estar perdidas (`NA`).
 #'
-#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
-#'               estandarizado con [estandarizar_personas()].
+#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC estandarizado con [estandarizar_personas()].
 #' @param .expandir `TRUE` o `FALSE` (por defecto). ¿Mantener variables originales?
 #'
 #' @returns `tibble`. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
@@ -119,10 +118,20 @@ calcular_personas <- function(.P, .expandir = FALSE) {
 }
 
 # ============================================================================
-#' Title
+#' Construye variables nuevas a partir del conjunto P de la EU-SILC (interna)
 #'
-#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC
-#'               estandarizado con [estandarizar_personas()].
+#' @description
+#' ¡Esta función es interna! Construye variables nuevas de nivel individual a
+#' partir del conjunto P de la EU-SILC. Las variables se organizan en cuatro
+#' bloques: I de identificación, D de demográficos, L de laborales e Y de
+#' ingresos. Dependiendo del año, el país de la encuesta y si se proporcionaron
+#' los conjuntos D y R algunas de las variables pueden estar perdidas (`NA`).
+#' 
+#' @details
+#' Esta función es el núcleo interno de [calcular_personas()]. Para más detalles
+#' ver la documentación de esa función.
+#'
+#' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC estandarizado con [estandarizar_personas()].
 #'
 #' @returns `tibble`. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
 calcular_personas_ <- function(.P) {
@@ -324,10 +333,10 @@ calcular_personas_ <- function(.P) {
 #' en 2023 el primer año registrado fue 2023 - 81 = 1942, por lo cual los
 #' grupos resultan ser 1942-1946, 1947-1951, 1951-1956, etc.
 #'
-#' @param .anio Año de la encuesta.
-#' @param .nac Vector de años de nacimiento.
+#' @param .anio `numeric`. Año de la encuesta.
+#' @param .nac `numeric`. Vector de años de nacimiento.
 #'
-#' @returns Vector de años de nacimiento agrupados.
+#' @returns `numeric`. Vector de años de nacimiento agrupados.
 agrupar_nac <- function(.anio, .nac) {
   desf <- (.anio - 1) %% 5
   nac_agrup <- .nac + (desf - .nac) %% 5
@@ -336,17 +345,17 @@ agrupar_nac <- function(.anio, .nac) {
 }
 
 # ============================================================================
-#' Title
+#' Calcula el clasificador de heterogeneidad estructural
+#' 
+#' @param .PL040A `numeric`. Categoría ocupacional
+#' @param .PL032 `numeric`. Condición de actividad
+#' @param .pl20  `numeric`. Rama de actividad
+#' @param .pl21b `numeric`. Estrato de productividad
+#' @param .pl22  `numeric`. Sector público-privado
+#' @param .pl13  `numeric`. Calificación profesional
+#' @param .nivel `numeric`. Nivel de agregación
 #'
-#' @param .PL040A PL040A
-#' @param .PL032 PL032
-#' @param .pl20 pl20
-#' @param .pl21b pl21b
-#' @param .pl22 pl22
-#' @param .pl13 pl13
-#' @param .nivel Nivel de agregación.
-#'
-#' @returns heterogeneidad
+#' @returns `numeric`. Clasificador de heterogeneidad estructural
 calc_heterogeneidad <- function(.PL040A, .PL032, .pl20, .pl21b, .pl22, .pl13, .nivel) {
   rlang::arg_match(.nivel, c("a", "b"))
 
@@ -383,13 +392,13 @@ calc_heterogeneidad <- function(.PL040A, .PL032, .pl20, .pl21b, .pl22, .pl13, .n
 }
 
 # ============================================================================
-#' Title
+#' Calcula el clasificador de clase social de Erikson, Goldthorpe y Pontocarero
 #'
-#' @param .PL051A PL051A
-#' @param .PL040A PL040A
-#' @param .PL150 PL150
+#' @param .PL051A `numeric`. Ocupación (ISCO-08)
+#' @param .PL040A `numeric`. Categoría ocupacional
+#' @param .PL150  `numeric`. Responsabilidades de supervisión
 #'
-#' @returns egp
+#' @returns `numeric`. Clasificador de clase de EGP
 calc_egp <- function(.PL051A, .PL040A, .PL150) {
   .pl50 <- dplyr::recode_values(
     .PL051A, from = tabla_isco$PL051, to = tabla_isco$.pl50, default = NA_integer_
@@ -408,14 +417,14 @@ calc_egp <- function(.PL051A, .PL040A, .PL150) {
 }
 
 # ============================================================================
-#' Title
+#' Clacula el clasificador de informalidad laboral según aportes a la seguridad social
 #'
-#' @param .PL040A PL040A
-#' @param .PY030G PY030G
-#' @param .PY035G PY035G
-#' @param .nivel nivel de agregación
+#' @param .PL040A `numeric`. Categoría ocupacional
+#' @param .PY030G `numeric`. Contribuciones a la seguridad social del empleador
+#' @param .PY035G `numeric`. Contribuciones a pensiones privadas individuales
+#' @param .nivel  `numeric`. Nivel de agregación
 #'
-#' @returns informalidad
+#' @returns `numeric`. Clasificador de informalidad laboral
 calc_informalidad <- function(.PL040A, .PY030G, .PY035G, .nivel) {
   rlang::arg_match(.nivel, c("a", "b"))
 
@@ -443,13 +452,13 @@ calc_informalidad <- function(.PL040A, .PY030G, .PY035G, .nivel) {
 }
 
 # ============================================================================
-#' Title
+#' Censura ingresos que no provienen de determinado sector de inserción
 #'
-#' @param .py10 py10
-#' @param .pl31 pl31
-#' @param .sector sector
+#' @param .py10   `numeric`. Ingresos laborales
+#' @param .pl31   `numeric`. Sector de inserción de los individuos
+#' @param .sector `numeric`. Sector de inserción a seleccionar
 #'
-#' @returns py13, py14 o py15
+#' @returns `numeric`. Ingresos laborales provenientes de determinado sector, 0 el resto
 calc_y_sector <- function(.py10, .pl31, .sector) {
   py1x <- dplyr::case_when(
     .py10 != 0 & is.na(.pl31) ~ NA_real_,
@@ -461,6 +470,13 @@ calc_y_sector <- function(.py10, .pl31, .sector) {
 }
 
 # ============================================================================
+#' Calcula híbrido entre características de la ocupación de los ocupados y los desocupados
+#'
+#' @param .PL032 `numeric`. Condición de actividad
+#' @param .a `numeric`. Características de la ocupación de los ocupados en el CRP
+#' @param .b `numeric`. Características de la última ocupación de los desocupados en el CRP
+#'
+#' @returns `numeric`. Características de la ocupación actual o de la última ocupación
 calc_variante_c <- function(.PL032, .a, .b) {
   plxxc <- dplyr::case_when(
     .PL032 == 1 ~ .a,

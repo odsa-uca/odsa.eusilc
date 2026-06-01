@@ -2,28 +2,28 @@
 % Please edit documentation in R/calcular_personas.R
 \name{calc_heterogeneidad}
 \alias{calc_heterogeneidad}
-\title{Title}
+\title{Calcula el clasificador de heterogeneidad estructural}
 \usage{
 calc_heterogeneidad(.PL040A, .PL032, .pl20, .pl21b, .pl22, .pl13, .nivel)
 }
 \arguments{
-\item{.PL040A}{PL040A}
+\item{.PL040A}{\code{numeric}. Categoría ocupacional}
 
-\item{.PL032}{PL032}
+\item{.PL032}{\code{numeric}. Condición de actividad}
 
-\item{.pl20}{pl20}
+\item{.pl20}{\code{numeric}. Rama de actividad}
 
-\item{.pl21b}{pl21b}
+\item{.pl21b}{\code{numeric}. Estrato de productividad}
 
-\item{.pl22}{pl22}
+\item{.pl22}{\code{numeric}. Sector público-privado}
 
-\item{.pl13}{pl13}
+\item{.pl13}{\code{numeric}. Calificación profesional}
 
-\item{.nivel}{Nivel de agregación.}
+\item{.nivel}{\code{numeric}. Nivel de agregación}
 }
 \value{
-heterogeneidad
+\code{numeric}. Clasificador de heterogeneidad estructural
 }
 \description{
-Title
+Calcula el clasificador de heterogeneidad estructural
 }

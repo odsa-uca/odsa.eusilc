@@ -2,16 +2,16 @@
 % Please edit documentation in R/imputar_personas.R
 \name{imputar_meses}
 \alias{imputar_meses}
-\title{Title}
+\title{Imputa meses con ingresos en el IRP}
 \usage{
 imputar_meses(.datos)
 }
 \arguments{
-\item{.datos}{.datos}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P a imputar}
 }
 \value{
-datos imputados
+\code{tibble}. Conjunto de datos P con valores imputados
 }
 \description{
-Title
+Imputa meses con ingresos en el IRP
 }

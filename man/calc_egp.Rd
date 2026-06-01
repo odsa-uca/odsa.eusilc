@@ -2,20 +2,20 @@
 % Please edit documentation in R/calcular_personas.R
 \name{calc_egp}
 \alias{calc_egp}
-\title{Title}
+\title{Calcula el clasificador de clase social de Erikson, Goldthorpe y Pontocarero}
 \usage{
 calc_egp(.PL051A, .PL040A, .PL150)
 }
 \arguments{
-\item{.PL051A}{PL051A}
+\item{.PL051A}{\code{numeric}. Ocupación (ISCO-08)}
 
-\item{.PL040A}{PL040A}
+\item{.PL040A}{\code{numeric}. Categoría ocupacional}
 
-\item{.PL150}{PL150}
+\item{.PL150}{\code{numeric}. Responsabilidades de supervisión}
 }
 \value{
-egp
+\code{numeric}. Clasificador de clase de EGP
 }
 \description{
-Title
+Calcula el clasificador de clase social de Erikson, Goldthorpe y Pontocarero
 }

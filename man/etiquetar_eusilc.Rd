@@ -2,16 +2,19 @@
 % Please edit documentation in R/etiquetar_eusilc.R
 \name{etiquetar_eusilc}
 \alias{etiquetar_eusilc}
-\title{Title}
+\title{Etiqueta un conjunto de datos EU-SILC armonizado}
 \usage{
 etiquetar_eusilc(.datos)
 }
 \arguments{
-\item{.datos}{datos}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos armonizado P o H de la EU-SILC}
 }
 \value{
-datos etiquetados
+\code{tibble}. Conjunto de datos armonizado P o H con variables y valores etiquetados
 }
 \description{
-Title
+Aplica etiquetas a las variables y los valores de un conjunto de datos
+EU-SILC armonizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}} y \code{\link[=calcular_personas]{calcular_personas()}}.
+Sólo etiqueta las variables nuevas, no etiqueta las originales. Las
+etiquetas aplicadas se pueden ver en \link{etiquetas}.
 }

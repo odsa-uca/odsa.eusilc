@@ -2,18 +2,18 @@
 % Please edit documentation in R/imputar_personas.R
 \name{imputar_laboral_b}
 \alias{imputar_laboral_b}
-\title{Title}
+\title{Imputa categoría ocupacional, ocupación y rama de actividad (B)}
 \usage{
 imputar_laboral_b(.datos, .anio)
 }
 \arguments{
-\item{.datos}{.datos}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P a imputar}
 
-\item{.anio}{.anio}
+\item{.anio}{\code{numeric}. El año al que corresponde el conjunto de datos}
 }
 \value{
-datos imputados
+\code{tibble}. Conjunto de datos P con valores imputados
 }
 \description{
-Title
+Imputa categoría ocupacional, ocupación y rama de actividad (B)
 }

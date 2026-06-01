@@ -105,15 +105,21 @@ imputar_personas <- function(.P) {
 }
 
 # ============================================================================
-#' Title
+#' Arma conjunto de datos para imputar
+#' 
+#' @description
+#' Arma un conjunto de datos con los casos a imputar y los casos de referencia
+#' para la imputación con las variables objetivo, las predictoras y los flags.
+#' Convierte las variables indicadas en factores para la imputación y amputa los
+#' valores marcados con -1 en los flags.
 #'
-#' @param .datos .datos
-#' @param .imputadas .imputadas
-#' @param .predictoras .predictoras
-#' @param .flags .flags
-#' @param .factores .factores
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos original
+#' @param .imputadas `character`. Vector de nombres de variables a imputar
+#' @param .predictoras `character`. Vector de nombres de variables predictoras para la imputación
+#' @param .flags `character`. Vector de nombres de flags de imputación para las variables en `.imputadas`
+#' @param .factores `character`. Vector de nombres de variables a convertir a factor
 #'
-#' @returns conjunto de datos para imputar
+#' @returns `tibble`. Conjunto de datos con casos a imputar amputados y casos de referencia
 armar_imputables <- function(
   .datos,
   .imputadas,
@@ -140,13 +146,22 @@ armar_imputables <- function(
 }
 
 # ============================================================================
-#' Title
+#' Calcula flags de imputación para ciertas variables
+#' 
+#' @description
+#' Calcula flags de imputación para los meses con ingresos en el IRP, las
+#' horas semanales habitualmente trabajadas, la categoría ocupacional, la
+#' ocupación, la rama de actividad, el tamaño del establecimiento y el sector
+#' de actividad. Los flags llevan el nombre de la variable con el prefijo ".f_".
+#' Cada flag indica con un -1 los casos a amputar-imputar, con un 1 los casos
+#' de referencia para la imputación y con un 0 los casos que no deben considerarse
+#' en la imputación.
 #'
-#' @param .datos .datos
-#' @param .anio .anio
-#' @param .pais .pais
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P a imputar
+#' @param .anio `numeric`. Año al que corresponde el conjunto de datos
+#' @param .pais `character`. País al que corresponde el conjunto de datos
 #'
-#' @returns .datos con flags de imputacion
+#' @returns `tibble`. Conjunto de datos P con variables flag de imputación
 calc_flags_imputacion <- function(.datos, .anio, .pais) {
   .datos <- dplyr::mutate(
     .datos,
@@ -223,15 +238,19 @@ calc_flags_imputacion <- function(.datos, .anio, .pais) {
 }
 
 # ============================================================================
-#' Title
+#' Reemplaza valores originales por valores imputados
+#' 
+#' @description
+#' Dado un conjunto de datos P y un conjunto de datos con imputaciones,
+#' reemplaza los valores de la variable original por los valores imputados
+#' para los casos corresopondientes.
 #'
-#' @param .datos .datos
-#' @param .imp .imp
-#' @param .vble .vble
-#' @param .flag .flag
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P sin imputar
+#' @param .imp `data.frame` o `tibble`. Conjunto de datos con las observaciones imputadas
+#' @param .vble `character`. Nombre de la variable imputada
+#' @param .flag `character`. Nombre del flag de imputación de la variable imputada
 #'
-#' @returns Conjunto de datos con las imputaciones aplicadas
-#' @export
+#' @returns `tibble`. Conjunto de datos P con valores imputados
 aplicar_imputaciones <- function(.datos, .imp, .vble, .flag) {
   .imp <- .imp[.imp[[.flag]] == -1, c("PB010", "PB020", "PB030", .vble)]
 
@@ -249,6 +268,16 @@ aplicar_imputaciones <- function(.datos, .imp, .vble, .flag) {
 }
 
 # ============================================================================
+#' Cuenta casos a imputar y casos de referencia
+#' 
+#' @description
+#' A partir de un flag de imputación cuenta los casos a imputar y los casos de
+#' referencia y determina si se procede con la imputación, si no conviene por
+#' la magnitud de la pérdida o si no hay nada que imputar.
+#'
+#' @param .flag `numeric`. Vector de flags de imputación
+#'
+#' @returns `character`. Cadena de caracteres que indica la decisión, "imputar", "no imputar" o "completo"
 chequear_faltantes <- function(.flag) {
   imputables <- length(.flag[.flag == -1])
   referencia <- length(.flag[.flag == 1])
@@ -275,12 +304,11 @@ chequear_faltantes <- function(.flag) {
 }
 
 # ============================================================================
-#' Title
+#' Imputa meses con ingresos en el IRP
 #'
-#' @param .datos .datos
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P a imputar
 #'
-#' @returns datos imputados
-#' @export
+#' @returns `tibble`. Conjunto de datos P con valores imputados
 imputar_meses <- function(.datos) {
   cli::cli_h2("Meses trabajados en el IRP (asalariados)")
 
@@ -333,12 +361,11 @@ imputar_meses <- function(.datos) {
 }
 
 # ============================================================================
-#' Title
+#' Imputa horas semanales habitualmente trabajadas
 #'
-#' @param .datos .datos
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P a imputar
 #'
-#' @returns datos imputados
-#' @export
+#' @returns `tibble`. Conjunto de datos P con valores imputados
 imputar_horas <- function(.datos) {
   cli::cli_h2("Horas semanales trabajadas habitualmente")
 
@@ -366,12 +393,11 @@ imputar_horas <- function(.datos) {
 }
 
 # ============================================================================
-#' Title
+#' Imputa categoría ocupacional, ocupación y rama de actividad (A)
 #'
-#' @param .datos .datos
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P a imputar
 #'
-#' @returns datos imputados
-#' @export
+#' @returns `tibble`. Conjunto de datos P con valores imputados
 imputar_laboral_a <- function(.datos) {
   cli::cli_h2("Categoria ocupacional, ocupacion y rama de actividad (A)")
   cli::cli_alert_info(
@@ -426,13 +452,12 @@ imputar_laboral_a <- function(.datos) {
 }
 
 # ============================================================================
-#' Title
+#' Imputa categoría ocupacional, ocupación y rama de actividad (B)
 #'
-#' @param .datos .datos
-#' @param .anio .anio
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P a imputar
+#' @param .anio `numeric`. El año al que corresponde el conjunto de datos
 #'
-#' @returns datos imputados
-#' @export
+#' @returns `tibble`. Conjunto de datos P con valores imputados
 imputar_laboral_b <- function(.datos, .anio) {
   cli::cli_h2("Categoria ocupacional, ocupacion y rama de actividad (B)")
   cli::cli_alert_info(
@@ -493,12 +518,11 @@ imputar_laboral_b <- function(.datos, .anio) {
 }
 
 # ============================================================================
-#' Title
+#' Imputa el tamaño del establecimiento
 #'
-#' @param .datos .datos
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P a imputar
 #'
-#' @returns datos imputados
-#' @export
+#' @returns `tibble`. Conjunto de datos P con valores imputados
 imputar_tamanio <- function(.datos) {
   cli::cli_h2("Tamanio del establecimiento")
   cli::cli_alert_info("Se imputa por partes segun el caso este perdido o truncado (codigos 14 y 15)")
@@ -585,12 +609,11 @@ imputar_tamanio <- function(.datos) {
 }
 
 # ============================================================================
-#' Title
+#' Imputa el sector de actividad (público o privado)
 #'
-#' @param .datos .datos
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos P a imputar
 #'
-#' @returns datos imputados
-#' @export
+#' @returns `tibble`. Conjunto de datos P con valores imputados
 imputar_sectorpp <- function(.datos) {
   cli::cli_h2("Sector publico o privado")
 

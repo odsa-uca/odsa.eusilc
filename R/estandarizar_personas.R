@@ -175,6 +175,17 @@ estandarizar_personas <- function(
 # ============================================================================
 #' Estandariza el conjunto P de la EU-SILC para el proceso de armonización (interna)
 #'
+#' @description
+#' ¡Esta función es interna! Aplica transformaciones sobre las variables del
+#' conjunto P según el año, el país y si se proveyeron los conjuntos D y R. El
+#' conjunto final tiene todas las variables necesarias para aplicar
+#' [imputar_personas()] y [calcular_personas()]. Las variables que no están
+#' disponibles quedan como `NA`.
+#' 
+#' @details
+#' Esta función es el núcleo interno de [estandarizar_personas()]. Para más
+#' detalles ver la documentación de esa función.
+#' 
 #' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
 #' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
 #' @param .D `data.frame` o `tibble`. Conjunto de datos D de la EU-SILC.

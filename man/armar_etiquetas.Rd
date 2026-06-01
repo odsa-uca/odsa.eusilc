@@ -2,16 +2,18 @@
 % Please edit documentation in R/etiquetar_eusilc.R
 \name{armar_etiquetas}
 \alias{armar_etiquetas}
-\title{Title}
+\title{Convierte un data frame de etiquetas en una lista anidada}
 \usage{
 armar_etiquetas(.etq)
 }
 \arguments{
-\item{.etq}{df de xlsx de etiquetas}
+\item{.etq}{\code{tibble}. Data frame con etiquetas de variables y valores}
 }
 \value{
-lista anidada con etiquetas para etiquetar_eusilc
+\code{list}. Lista anidada con etiquetas para \code{\link[=etiquetar_eusilc]{etiquetar_eusilc()}}.
 }
 \description{
-Title
+Toma un data frame con etiquetas de variables y valores y lo convierte en
+una lista anidada de etiquetas para aplicar con \code{\link[=etiquetar_eusilc]{etiquetar_eusilc()}}. La
+función tiene un rol auxiliar de desarrollo.
 }

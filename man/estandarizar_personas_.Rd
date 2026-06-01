@@ -21,5 +21,13 @@ estandarizar_personas_(.P, .R, .D, .anio, .pais)
 \code{tibble}. Conjunto de datos P estandarizado para \code{\link[=imputar_personas]{imputar_personas()}} y \code{\link[=calcular_personas]{calcular_personas()}}.
 }
 \description{
-Estandariza el conjunto P de la EU-SILC para el proceso de armonización (interna)
+¡Esta función es interna! Aplica transformaciones sobre las variables del
+conjunto P según el año, el país y si se proveyeron los conjuntos D y R. El
+conjunto final tiene todas las variables necesarias para aplicar
+\code{\link[=imputar_personas]{imputar_personas()}} y \code{\link[=calcular_personas]{calcular_personas()}}. Las variables que no están
+disponibles quedan como \code{NA}.
+}
+\details{
+Esta función es el núcleo interno de \code{\link[=estandarizar_personas]{estandarizar_personas()}}. Para más
+detalles ver la documentación de esa función.
 }

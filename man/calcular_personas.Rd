@@ -7,8 +7,7 @@
 calcular_personas(.P, .expandir = FALSE)
 }
 \arguments{
-\item{.P}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC
-estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.}
+\item{.P}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC estandarizado con \code{\link[=estandarizar_personas]{estandarizar_personas()}}.}
 
 \item{.expandir}{\code{TRUE} o \code{FALSE} (por defecto). ¿Mantener variables originales?}
 }

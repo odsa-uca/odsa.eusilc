@@ -2,24 +2,27 @@
 % Please edit documentation in R/imputar_personas.R
 \name{armar_imputables}
 \alias{armar_imputables}
-\title{Title}
+\title{Arma conjunto de datos para imputar}
 \usage{
 armar_imputables(.datos, .imputadas, .predictoras, .flags, .factores = NULL)
 }
 \arguments{
-\item{.datos}{.datos}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos original}
 
-\item{.imputadas}{.imputadas}
+\item{.imputadas}{\code{character}. Vector de nombres de variables a imputar}
 
-\item{.predictoras}{.predictoras}
+\item{.predictoras}{\code{character}. Vector de nombres de variables predictoras para la imputación}
 
-\item{.flags}{.flags}
+\item{.flags}{\code{character}. Vector de nombres de flags de imputación para las variables en \code{.imputadas}}
 
-\item{.factores}{.factores}
+\item{.factores}{\code{character}. Vector de nombres de variables a convertir a factor}
 }
 \value{
-conjunto de datos para imputar
+\code{tibble}. Conjunto de datos con casos a imputar amputados y casos de referencia
 }
 \description{
-Title
+Arma un conjunto de datos con los casos a imputar y los casos de referencia
+para la imputación con las variables objetivo, las predictoras y los flags.
+Convierte las variables indicadas en factores para la imputación y amputa los
+valores marcados con -1 en los flags.
 }

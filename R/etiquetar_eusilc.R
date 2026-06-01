@@ -1,8 +1,14 @@
-#' Title
+#' Etiqueta un conjunto de datos EU-SILC armonizado
+#' 
+#' @description
+#' Aplica etiquetas a las variables y los valores de un conjunto de datos
+#' EU-SILC armonizado con [estandarizar_personas()] y [calcular_personas()].
+#' Sólo etiqueta las variables nuevas, no etiqueta las originales. Las
+#' etiquetas aplicadas se pueden ver en [etiquetas].
 #'
-#' @param .datos datos
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos armonizado P o H de la EU-SILC
 #'
-#' @returns datos etiquetados
+#' @returns `tibble`. Conjunto de datos armonizado P o H con variables y valores etiquetados
 #' @export
 etiquetar_eusilc <- function(.datos) {
   if (is.null(attr(.datos, "base"))) {
@@ -14,12 +20,22 @@ etiquetar_eusilc <- function(.datos) {
 }
 
 # ============================================================================
-#' Title
+#' Etiqueta un conjunto de datos EU-SILC armonizado (interna)
+#' 
+#' @description
+#' ¡Esta función es interna! Aplica etiquetas a las variables y los valores de
+#' un conjunto de datos EU-SILC armonizado con [estandarizar_personas()] y
+#' [calcular_personas()]. Sólo etiqueta las variables nuevas, no etiqueta las
+#' originales. Las etiquetas aplicadas se pueden ver en [etiquetas].
+#' 
+#' @details
+#' Esta función es el núcleo interno de [etiquetar_eusilc()]. Para más detalles,
+#' consultar la documentación de esa función.
 #'
-#' @param .datos datos
-#' @param .base base
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos armonizado P o H de la EU-SILC
+#' @param .base `character`, "P" o "H". ¿Qué tipo de conjunto se debe etiquetar?
 #'
-#' @returns datos etiquetados
+#' @returns `tibble`. Conjunto de datos armonizado P o H con variables y valores etiquetados
 etiquetar_eusilc_ <- function(.datos, .base) {
 
   .datos <- labelled::set_variable_labels(
@@ -37,11 +53,16 @@ etiquetar_eusilc_ <- function(.datos, .base) {
 }
 
 # ============================================================================
-#' Title
+#' Convierte un data frame de etiquetas en una lista anidada
+#' 
+#' @description
+#' Toma un data frame con etiquetas de variables y valores y lo convierte en
+#' una lista anidada de etiquetas para aplicar con [etiquetar_eusilc()]. La
+#' función tiene un rol auxiliar de desarrollo.
 #'
-#' @param .etq df de xlsx de etiquetas
+#' @param .etq `tibble`. Data frame con etiquetas de variables y valores
 #'
-#' @returns lista anidada con etiquetas para etiquetar_eusilc
+#' @returns `list`. Lista anidada con etiquetas para [etiquetar_eusilc()].
 armar_etiquetas <- function(.etq) {
   etq <- tidyr::nest(.etq, valores = c(etiqueta, valor))
   etq$valores <- purrr::map(etq$valores, tibble::deframe)
