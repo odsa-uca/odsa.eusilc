@@ -1,6 +1,6 @@
 Package: odsa.eusilc
 Title: Funciones para trabajar con los datos de la encuesta EU-SILC
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person("Fernando", "Piderit", , "fgpiderit@gmail.com", role = c("aut", "cre"))
 Description: |
