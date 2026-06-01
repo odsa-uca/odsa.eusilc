@@ -2,20 +2,23 @@
 % Please edit documentation in R/estandarizar_hogares.R
 \name{estandarizar_hogares}
 \alias{estandarizar_hogares}
-\title{Title}
+\title{Estandariza el conjunto H de la EU-SILC para el proceso de armonización}
 \usage{
 estandarizar_hogares(.H, .P, .D = NULL)
 }
 \arguments{
-\item{.H}{Conjunto de datos H}
+\item{.H}{\code{data.frame}o \code{tibble}. Conjunto de datos H de la EU-SILC}
 
-\item{.P}{Conjunto de datos P}
+\item{.P}{\code{data.frame}o \code{tibble}. Conjunto de datos P de la EU-SILC expandido por \code{\link[=expandir_personas]{expandir_personas()}}}
 
-\item{.D}{Conjunto de datos D}
+\item{.D}{\code{data.frame}o \code{tibble}. Conjunto de datos D de la EU-SILC}
 }
 \value{
-Conjunto de datos H estandarizado
+\code{tibble}. Conjunto de datos H de la EU-SILC con variables adicionales armonizadas
 }
 \description{
-Title
+Aplica transformaciones sobre las variables de los conjuntos H y P (expandido)
+según el año, el país y si se proveyó el conjunto D. El conjunto final tiene
+las variables necesarias para aplicar \code{\link[=calcular_hogares]{calcular_hogares()}}. Las variables
+que no están disponibles quedan como \code{NA}.
 }

@@ -18,6 +18,14 @@ calcular_hogares <- function(.H) {
 #'
 #' @returns Conjunto H de la EU-SILC con variables adicionales.
 calcular_hogares_ <- function(.H) {
+  # Lookup -----------------------------------
+  .H <- dplyr::left_join(
+    x = .H,
+    y = tabla_ppa,
+    by = dplyr::join_by(HB010 == PB010, HB020 == PB020)
+  )
+  
+  # Núcleo -----------------------------------
   .H <- .H |>
     dplyr::mutate(
       # Bloque I -----------------------

@@ -2,26 +2,27 @@
 % Please edit documentation in R/expandir_hogares.R
 \name{expandir_hogares}
 \alias{expandir_hogares}
-\title{Construir variables adicionales en los conjuntos de datos H de la EU-SILC}
+\title{Armoniza el conjunto de datos H de la EU-SILC}
 \usage{
-expandir_hogares(.H, .P, .D = NULL, .expandir = FALSE, .etiquetar = TRUE, ...)
+expandir_hogares(.H, .P, .D = NULL, .expandir = FALSE, .etiquetar = TRUE)
 }
 \arguments{
-\item{.H}{Conjunto de datos H de la EU-SILC.}
+\item{.H}{\code{data.frame}o \code{tibble}. Conjunto de datos H de la EU-SILC}
 
-\item{.P}{Conjunto de datos P de la EU-SILC expandido por \code{\link[=expandir_personas]{expandir_personas()}}.}
+\item{.P}{\code{data.frame}o \code{tibble}. Conjunto de datos P de la EU-SILC expandido por \code{\link[=expandir_personas]{expandir_personas()}}}
 
-\item{.D}{Conjunto de datos D de la EU-SILC.}
+\item{.D}{\code{data.frame}o \code{tibble}. Conjunto de datos D de la EU-SILC}
 
-\item{.expandir}{Conservar las variables originales en el conjunto de datos final o eliminarlas.}
+\item{.expandir}{\code{TRUE} o \code{FALSE} (por defecto). ¿Conservar las variables originales en el conjunto de datos final?}
 
-\item{.etiquetar}{Aplicar etiquetas a las variables y sus valores}
-
-\item{...}{...}
+\item{.etiquetar}{\code{TRUE} (por defecto) o \code{FALSE}. ¿Aplicar etiquetas a las variables y sus valores?}
 }
 \value{
-Conjunto de datos de la EU-SILC con variables adicionales de uso habitual
+\code{tibble}. Conjunto de datos de la EU-SILC con variables adicionales armonizadas
 }
 \description{
-Construir variables adicionales en los conjuntos de datos H de la EU-SILC
+Aplica una serie de transformaciones sobre los conjuntos de datos H y P de
+la EU-SILC y devuelve un conjunto de datos de nivel hogar con variables
+armonizadas. Las transformaciones tienen en cuenta el país y el año de la
+encuesta y si se proporciona el conjunto de datos D.
 }

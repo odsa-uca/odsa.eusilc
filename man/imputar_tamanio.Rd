@@ -2,16 +2,16 @@
 % Please edit documentation in R/imputar_personas.R
 \name{imputar_tamanio}
 \alias{imputar_tamanio}
-\title{Title}
+\title{Imputa el tamaño del establecimiento}
 \usage{
 imputar_tamanio(.datos)
 }
 \arguments{
-\item{.datos}{.datos}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P a imputar}
 }
 \value{
-datos imputados
+\code{tibble}. Conjunto de datos P con valores imputados
 }
 \description{
-Title
+Imputa el tamaño del establecimiento
 }

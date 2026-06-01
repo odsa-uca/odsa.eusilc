@@ -2,16 +2,16 @@
 % Please edit documentation in R/imputar_personas.R
 \name{imputar_sectorpp}
 \alias{imputar_sectorpp}
-\title{Title}
+\title{Imputa el sector de actividad (público o privado)}
 \usage{
 imputar_sectorpp(.datos)
 }
 \arguments{
-\item{.datos}{.datos}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos P a imputar}
 }
 \value{
-datos imputados
+\code{tibble}. Conjunto de datos P con valores imputados
 }
 \description{
-Title
+Imputa el sector de actividad (público o privado)
 }

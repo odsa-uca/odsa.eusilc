@@ -1,34 +1,147 @@
-#' Title
+#' Estandariza el conjunto H de la EU-SILC para el proceso de armonización
+#' 
+#' @description
+#' Aplica transformaciones sobre las variables de los conjuntos H y P (expandido)
+#' según el año, el país y si se proveyó el conjunto D. El conjunto final tiene
+#' las variables necesarias para aplicar [calcular_hogares()]. Las variables
+#' que no están disponibles quedan como `NA`.
 #'
-#' @param .H Conjunto de datos H
-#' @param .P Conjunto de datos P
-#' @param .D Conjunto de datos D
-#'
-#' @returns Conjunto de datos H estandarizado
+#' @param .H `data.frame`o `tibble`. Conjunto de datos H de la EU-SILC
+#' @param .P `data.frame`o `tibble`. Conjunto de datos P de la EU-SILC expandido por [expandir_personas()]
+#' @param .D `data.frame`o `tibble`. Conjunto de datos D de la EU-SILC
+#' 
+#' @returns `tibble`. Conjunto de datos H de la EU-SILC con variables adicionales armonizadas
 #' @export
 estandarizar_hogares <- function(
     .H,
     .P,
     .D = NULL
 ) {
-  # TODO: chequeos args
-
+  # Chequeos args ------------------------------------------------------------
+  if (!is.data.frame(.H)) {
+    cli::cli_abort(
+      c(".H debe ser un data.frame o tibble.",
+        "x" = "Se paso un {class(.H)}"
+      ),
+      class = "no_data_frame"
+    )
+  }
+  
   anio <- unique(.H$HB010)
   pais <- unique(.H$HB020)
+
+  if (length(anio) > 1) {
+    cli::cli_abort(
+      c("Solo se aceptan bases H de un unico anio",
+        "x" = "Se proporciono una base para {anio}."
+      ),
+      class = "varios_anios"
+    )
+  }
+  if (length(pais) > 1) {
+    cli::cli_abort(
+      c("Solo se aceptan bases H de un unico pais",
+        "x" = "Se proporciono una base para {pais}."
+      ),
+      class = "varios_paises"
+    )
+  }
   
-  estandarizar_hogares_(.H, .P, .D, anio, pais)
+  if (!is.data.frame(.P)) {
+    cli::cli_abort(
+      c(".P debe ser un data.frame o tibble.",
+        "x" = "Se paso un {class(.P)}"
+      ),
+      class = "no_data_frame"
+    )
+  } else if (is.null(attr(.P, "base"))) {
+    cli::cli_abort(
+      ".P debe ser una base P expandida con expandir_personas().",
+      class = "no_expandida"
+    )
+  } else if (attr(.P, "base") != "P") {
+    cli::cli_abort(
+      ".P debe ser una base P.",
+      class = "no_p"
+    )
+  }
+
+  anio_p <- unique(.P$pi01)
+  pais_p <- unique(.P$pi02)
+  
+  if (!(anio %in% anio_p)) {
+    cli::cli_abort(
+      c(".H y .P deben corresponder al mismo anio",
+        "x" = ".H corresponde a {anio} y .P a {anio_p}"),
+      class = "p_dif_anio"
+    )
+  }
+  if (!(pais %in% pais_p)) {
+    cli::cli_abort(
+      c(".H y .P deben corresponder al mismo pais",
+        "x" = ".H corresponde a {pais} y .P a {pais_p}"),
+      class = "p_dif_pais"
+    )
+  }
+
+  if (!is.null(.D)) {
+    if (!is.data.frame(.D)) {
+      cli::cli_abort(
+        c(".D debe ser un data.frame o tibble.",
+          "x" = "Se paso un {class(.D)}"
+        ),
+        class = "no_data_frame"
+      )
+    }
+
+    anio_d <- unique(.D$DB010)
+    pais_d <- unique(.D$DB020)
+
+    if (!(anio %in% anio_d)) {
+      cli::cli_abort(
+        c(".H y .D deben corresponder al mismo anio",
+          "x" = ".H corresponde a {anio} y .D a {anio_d}"),
+        class = "d_dif_anio"
+      )
+    }
+    if (!(pais %in% pais_d)) {
+      cli::cli_abort(
+        c(".H y .D deben corresponder al mismo pais",
+          "x" = ".H corresponde a {pais} y .D a {pais_d}"),
+        class = "d_dif_pais"
+      )
+    }
+  }
+
+  .H <- estandarizar_hogares_(.H, .P, .D, anio, pais)
+  
+  .H <- structure(
+    .H,
+    "base"      = "H",
+    "estandar"  = TRUE,
+    "vbles. D"  = !is.null(.D),
+    "vbles. LMH"= attr(.P, "vble. PL230")
+  )
+  
+  return(.H)
 }
 
 # ============================================================================
-#' Title
+#' Estandariza el conjunto H de la EU-SILC para el proceso de armonización
+#' 
+#' @description
+#' Aplica transformaciones sobre las variables de los conjuntos H y P (expandido)
+#' según el año, el país y si se proveyó el conjunto D. El conjunto final tiene
+#' las variables necesarias para aplicar [calcular_hogares()]. Las variables
+#' que no están disponibles quedan como `NA`.
 #'
-#' @param .H Conjunto de datos H
-#' @param .P Conjunto de datos P
-#' @param .D Conjunto de datos D
-#' @param .anio Año de la encuesta
-#' @param .pais Pais de la encuesta
-#'
-#' @returns Conjunto de datos H estandarizado
+#' @param .H `data.frame`o `tibble`. Conjunto de datos H de la EU-SILC
+#' @param .P `data.frame`o `tibble`. Conjunto de datos P de la EU-SILC expandido por [expandir_personas()]
+#' @param .D `data.frame`o `tibble`. Conjunto de datos D de la EU-SILC
+#' @param .anio `numeric`. Año al que corresponde el conjunto H
+#' @param .pais `character`. País al que corresponde el conjunto H
+#' 
+#' @returns `tibble`. Conjunto de datos H de la EU-SILC con variables adicionales armonizadas
 estandarizar_hogares_ <- function(.H, .P, .D, .anio, .pais) {
   if (!is.null(.D)) {
     .H <- dplyr::left_join(

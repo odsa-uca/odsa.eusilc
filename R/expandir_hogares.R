@@ -1,93 +1,153 @@
-#' Construir variables adicionales en los conjuntos de datos H de la EU-SILC
+#' Armoniza el conjunto de datos H de la EU-SILC
+#' 
+#' @description
+#' Aplica una serie de transformaciones sobre los conjuntos de datos H y P de
+#' la EU-SILC y devuelve un conjunto de datos de nivel hogar con variables
+#' armonizadas. Las transformaciones tienen en cuenta el país y el año de la
+#' encuesta y si se proporciona el conjunto de datos D.
 #'
-#' @param .H Conjunto de datos H de la EU-SILC.
-#' @param .P Conjunto de datos P de la EU-SILC expandido por [expandir_personas()].
-#' @param .D Conjunto de datos D de la EU-SILC.
-#' @param .expandir Conservar las variables originales en el conjunto de datos final o eliminarlas.
-#' @param .etiquetar Aplicar etiquetas a las variables y sus valores
-#' @param ... ...
+#' @param .H `data.frame`o `tibble`. Conjunto de datos H de la EU-SILC
+#' @param .P `data.frame`o `tibble`. Conjunto de datos P de la EU-SILC expandido por [expandir_personas()]
+#' @param .D `data.frame`o `tibble`. Conjunto de datos D de la EU-SILC
+#' @param .expandir `TRUE` o `FALSE` (por defecto). ¿Conservar las variables originales en el conjunto de datos final?
+#' @param .etiquetar `TRUE` (por defecto) o `FALSE`. ¿Aplicar etiquetas a las variables y sus valores?
 #'
-#' @returns Conjunto de datos de la EU-SILC con variables adicionales de uso habitual
+#' @returns `tibble`. Conjunto de datos de la EU-SILC con variables adicionales armonizadas
 #' @export
 expandir_hogares <- function(
     .H,
     .P,
     .D = NULL,
     .expandir = FALSE,
-    .etiquetar = TRUE,
-    ...
+    .etiquetar = TRUE
 ) {
   # Chequeos args ------------------------------------------------------------
-  errores <- NULL
-
   if (!is.data.frame(.H)) {
-    errores <- c(errores, "x" = "`.H` debe ser un data.frame o tibble.")
+    cli::cli_abort(
+      c(".H debe ser un data.frame o tibble.",
+        "x" = "Se paso un {class(.H)}"
+      ),
+      class = "no_data_frame"
+    )
   }
-  if (!is.data.frame(.P)) {
-    errores <- c(errores, "x" = "`.P` debe ser un data.frame o tibble.")
-  } else if (is.null(attr(.P, "base"))) {
-    errores <- c(errores, "x" = "`.P` debe ser una base P expandida con expandir_personas().")
-  } else if (attr(.P, "base") != "P") {
-    errores <- c(errores, "x" = "`.P` debe ser una base P.")
-  }
-  if (!is.null(.D) & !is.data.frame(.D)) {
-    errores <- c(errores, "x" = "`.D` debe ser un data.frame o tibble.")
-  }
-  if (!is.logical(.expandir)) {
-    errores <- c(errores, "x" = "`.expandir` debe ser `TRUE` o `FALSE`.")
-  }
-  if (!is.logical(.etiquetar)) {
-    errores <- c(errores, "x" = "`.etiquetar` debe ser `TRUE` o `FALSE`.")
-  }
-
-  if(!is.null(errores)) cli::cli_abort(c("Problemas en los argumentos:", errores))
-
+  
   anio <- unique(.H$HB010)
   pais <- unique(.H$HB020)
 
   if (length(anio) > 1) {
-    cli::cli_abort(c(
-      "Solo se aceptan bases de un unico anio",
-      "x" = "Se proporciono una base para {anio}."
-    ))
+    cli::cli_abort(
+      c("Solo se aceptan bases H de un unico anio",
+        "x" = "Se proporciono una base para {anio}."
+      ),
+      class = "varios_anios"
+    )
   }
   if (length(pais) > 1) {
-    cli::cli_abort(c(
-      "Solo se aceptan bases de un unico pais",
-      "x" = "Se proporciono una base para {pais}"
-    ))
+    cli::cli_abort(
+      c("Solo se aceptan bases H de un unico pais",
+        "x" = "Se proporciono una base para {pais}."
+      ),
+      class = "varios_paises"
+    )
+  }
+  
+  if (!is.data.frame(.P)) {
+    cli::cli_abort(
+      c(".P debe ser un data.frame o tibble.",
+        "x" = "Se paso un {class(.P)}"
+      ),
+      class = "no_data_frame"
+    )
+  } else if (is.null(attr(.P, "base"))) {
+    cli::cli_abort(
+      ".P debe ser una base P expandida con expandir_personas().",
+      class = "no_expandida"
+    )
+  } else if (attr(.P, "base") != "P") {
+    cli::cli_abort(
+      ".P debe ser una base P.",
+      class = "no_p"
+    )
+  }
+
+  anio_p <- unique(.P$pi01)
+  pais_p <- unique(.P$pi02)
+  
+  if (!(anio %in% anio_p)) {
+    cli::cli_abort(
+      c(".H y .P deben corresponder al mismo anio",
+        "x" = ".H corresponde a {anio} y .P a {anio_p}"),
+      class = "p_dif_anio"
+    )
+  }
+  if (!(pais %in% pais_p)) {
+    cli::cli_abort(
+      c(".H y .P deben corresponder al mismo pais",
+        "x" = ".H corresponde a {pais} y .P a {pais_p}"),
+      class = "p_dif_pais"
+    )
+  }
+
+  if (!is.null(.D)) {
+    if (!is.data.frame(.D)) {
+      cli::cli_abort(
+        c(".D debe ser un data.frame o tibble.",
+          "x" = "Se paso un {class(.D)}"
+        ),
+        class = "no_data_frame"
+      )
+    }
+
+    anio_d <- unique(.D$DB010)
+    pais_d <- unique(.D$DB020)
+
+    if (!(anio %in% anio_d)) {
+      cli::cli_abort(
+        c(".H y .D deben corresponder al mismo anio",
+          "x" = ".H corresponde a {anio} y .D a {anio_d}"),
+        class = "d_dif_anio"
+      )
+    }
+    if (!(pais %in% pais_d)) {
+      cli::cli_abort(
+        c(".H y .D deben corresponder al mismo pais",
+          "x" = ".H corresponde a {pais} y .D a {pais_d}"),
+        class = "d_dif_pais"
+      )
+    }
+  }
+
+  if (!is.logical(.expandir)) {
+    cli::cli_abort(
+      c(".etiquetar debe ser TRUE o FALSE.",
+        "x" = "Se paso un {class(.expandir)}"
+      ),
+      class = "no_logical"
+    )
+  }
+  if (!is.logical(.etiquetar)) {
+    cli::cli_abort(
+      c(".etiquetar debe ser TRUE o FALSE.",
+        "x" = "Se paso un {class(.etiquetar)}"
+      ),
+      class = "no_logical"
+    )
   }
 
   # Estandarización ----------------------------------------------------------
   cli::cli_h1("Estandarizacion")
-
   .H <- estandarizar_hogares_(.H, .P, .D, anio, pais)
 
   # Calcular vbles -----------------------------------------------------------
   cli::cli_h1("Calcular variables nuevas")
-
-  cli::cli_h2("Agregando ingresos personales")
   P <- agregar_personas(.P)
   .H <- dplyr::left_join(
     x = .H, y = P,
     by = dplyr::join_by(HB010 == pi01, HB020 == pi02, HB030 == pi04)
   )
-
-  cli::cli_h2("Calculando variables nuevas")
-  .H <- dplyr::left_join(
-    x = .H,
-    y = tabla_ppa,
-    by = dplyr::join_by(HB010 == PB010, HB020 == PB020)
-  )
-
   .H <- calcular_hogares_(.H)
 
   # Arreglos y devolver ------------------------------------------------------
-  attr(.H, "base") <- "H"
-  attr(.H, "vbles. D") <- !is.null(.D)
-  attr(.H, "vbles. LMH") <- attr(.P, "vble. PL230")
-  attr(.H, "expandida") <- .expandir
-
   if (!.expandir) {
     .H <- dplyr::select(.H, dplyr::any_of(names(etq$H$variables)))
   } else {
@@ -97,6 +157,14 @@ expandir_hogares <- function(
   if (.etiquetar) {
     .H <- etiquetar_eusilc_(.H, .base = "H")
   }
+  
+  .H <- structure(
+    .H,
+    "base"      = "H",
+    "vbles. D"  = !is.null(.D),
+    "vbles. LMH"= attr(.P, "vble. PL230"),
+    "expandida" = .expandir
+  )
 
   return(.H)
 }
