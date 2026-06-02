@@ -72,6 +72,7 @@ estandarizar_personas <- function(
     .flags = FALSE
 ) {
   chequear_bases_personas(.P, .D, .R)
+  
   if (!is.logical(.flags)) {
     cli::cli_abort(
       c(".flags debe ser TRUE o FALSE.",

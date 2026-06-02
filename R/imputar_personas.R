@@ -81,7 +81,6 @@
 #'
 #' @export
 imputar_personas <- function(.P) {
-  # TODO: chequear argumentos
   if (!is.data.frame(.P)) {
     cli::cli_abort(
       c(".P debe ser un data.frame o tibble.",
@@ -102,6 +101,7 @@ imputar_personas <- function(.P) {
       class = "no_p"
     )
   }
+  
   if (!is.null(attr(.P, "imputada"))) {
     cli::cli_alert_success("La base ya fue imputada!")
     return(.P)

@@ -122,6 +122,7 @@ calcular_personas <- function(.P, .expandir = FALSE) {
       class = "no_p"
     )
   }
+  
   if (!is.logical(.expandir)) {
     cli::cli_abort(
       c(".expandir debe ser TRUE o FALSE.",
@@ -132,6 +133,16 @@ calcular_personas <- function(.P, .expandir = FALSE) {
   }
   
   .P <- calcular_personas_(.P)
+  
+  perdidas <- sapply(names(etq$P$variables), \(.v) {
+    if (.v %in% names(.P)) all(is.na(.P[.v])) else FALSE
+  })
+  perdidas <- names(which(perdidas))
+  cli::cli_bullets(c(
+    "!" = "Las siguientes variables estan perdidas:",
+    " " = "{perdidas}",
+    "i" = "Si alguna no esta mencionada en la estandarizacion, puede haber problemas!"
+  ))
   
   if (!.expandir) {
     .P <- dplyr::select(.P, dplyr::any_of(names(etq$P$variables)))

@@ -69,7 +69,6 @@ expandir_personas <- function(
     .etiquetar = TRUE
 ) {
   # Chequeos args ------------------------------------------------------------
-  # TODO: Simplificar!
   chequear_bases_personas(.P, .D, .R)
 
   if (!is.logical(.imputar)) {
@@ -97,13 +96,14 @@ expandir_personas <- function(
     )
   }
   
+  # --------------------------------------------------------------------------
+  
   anio <- unique(.P$PB010)
   pais <- unique(.P$PB020)
   
   vble_PL130 <- "PL130" %in% names(.P)
   vble_PL230 <- "PL230" %in% names(.P)
 
-  # --------------------------------------------------------------------------
   cli::cli_h1("Estandarizacion")
   .P <- estandarizar_personas_(.P, .R, .D, anio, pais)
 
@@ -112,7 +112,6 @@ expandir_personas <- function(
     
     .P <- calc_flags_imputacion(.P, anio, pais)
   
-    # Imputaciones -----------------------------
     .P <-  imputar_meses(.P)
     .P <-  imputar_horas(.P)
     .P <-  imputar_laboral_a(.P)
@@ -127,6 +126,16 @@ expandir_personas <- function(
 
   cli::cli_h1("Calcular variables nuevas")
   .P <- calcular_personas_(.P)
+  
+  perdidas <- sapply(names(etq$P$variables), \(.v) {
+    if (.v %in% names(.P)) all(is.na(.P[.v])) else FALSE
+  })
+  perdidas <- names(which(perdidas))
+  cli::cli_bullets(c(
+    "!" = "Las siguientes variables estan perdidas:",
+    " " = "{perdidas}",
+    "i" = "Si alguna no esta mencionada en la estandarizacion, puede haber problemas!"
+  ))
 
   if (!.expandir) {
     .P <- dplyr::select(.P, dplyr::any_of(names(etq$P$variables)))
@@ -151,101 +160,4 @@ expandir_personas <- function(
   )
 
   return(.P)
-}
-
-# ============================================================================
-#' Chequea que los conjuntos P, D y R sean adecuados
-#'
-#' @param .P Argumento .P
-#' @param .D Argumento .D
-#' @param .R Argumento .R
-#'
-#' @returns NULL
-chequear_bases_personas <- function(.P, .D, .R) {
-  if (!is.data.frame(.P)) {
-    cli::cli_abort(
-      c(".P debe ser un data.frame o tibble.",
-        "x" = "Se paso un {class(.P)}"
-      ),
-      class = "no_data_frame"
-    )
-  }
-
-  anio <- unique(.P$PB010)
-  pais <- unique(.P$PB020)
-
-  if (length(anio) > 1) {
-    cli::cli_abort(
-      c("Solo se aceptan bases P de un unico anio",
-        "x" = "Se proporciono una base para {anio}."
-      ),
-      class = "varios_anios"
-    )
-  }
-  if (length(pais) > 1) {
-    cli::cli_abort(
-      c("Solo se aceptan bases P de un unico pais",
-        "x" = "Se proporciono una base para {pais}."
-      ),
-      class = "varios_paises"
-    )
-  }
-
-  if (!is.null(.D)) {
-    if (!is.data.frame(.D)) {
-      cli::cli_abort(
-        c(".D debe ser un data.frame o tibble.",
-          "x" = "Se paso un {class(.D)}"
-        ),
-        class = "no_data_frame"
-      )
-    }
-
-    anio_d <- unique(.D$DB010)
-    pais_d <- unique(.D$DB020)
-
-    if (!(anio %in% anio_d)) {
-      cli::cli_abort(
-        c(".P y .D deben corresponder al mismo anio",
-          "x" = ".P corresponde a {anio} y .D a {anio_d}"),
-        class = "d_dif_anio"
-      )
-    }
-    if (!(pais %in% pais_d)) {
-      cli::cli_abort(
-        c(".P y .D deben corresponder al mismo pais",
-          "x" = ".P corresponde a {pais} y .D a {pais_d}"),
-        class = "d_dif_pais"
-      )
-    }
-  }
-
-  if (!is.null(.R)) {
-    if (!is.data.frame(.R)) {
-      cli::cli_abort(
-        c(".R debe ser un data.frame o tibble.",
-          "x" = "Se paso un {class(.R)}"
-        ),
-        class = "no_data_frame"
-      )
-    }
-
-    anio_r <- unique(.R$RB010)
-    pais_r <- unique(.R$RB020)
-
-    if (!(anio %in% anio_r)) {
-      cli::cli_abort(
-        c(".P y .R deben corresponder al mismo anio",
-          "x" = ".P corresponde a {anio} y .R a {anio_r}"),
-        class = "r_dif_anio"
-      )
-    }
-    if (!(pais %in% pais_r)) {
-      cli::cli_abort(
-        c(".P y .R deben corresponder al mismo pais",
-          "x" = ".P corresponde a {pais} y .R a {pais_r}"),
-        class = "r_dif_pais"
-      )
-    }
-  }
 }
