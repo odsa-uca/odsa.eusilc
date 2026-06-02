@@ -43,7 +43,7 @@ expandir_hogares <- function(
 
   # Estandarización ----------------------------------------------------------
   cli::cli_h1("Estandarizacion")
-  .H <- estandarizar_hogares_(.H, .P, .D, anio, pais)
+  .H <- estandarizar_hogares_(.H, .D, anio, pais)
 
   # Calcular vbles -----------------------------------------------------------
   cli::cli_h1("Calcular variables nuevas")
@@ -114,41 +114,43 @@ chequear_bases_hogares <- function(.H, .P, .D) {
     )
   }
   
-  if (!is.data.frame(.P)) {
-    cli::cli_abort(
-      c(".P debe ser un data.frame o tibble.",
-        "x" = "Se paso un {class(.P)}"
-      ),
-      class = "no_data_frame"
-    )
-  } else if (is.null(attr(.P, "base"))) {
-    cli::cli_abort(
-      ".P debe ser una base P expandida con expandir_personas().",
-      class = "no_expandida"
-    )
-  } else if (attr(.P, "base") != "P") {
-    cli::cli_abort(
-      ".P debe ser una base P.",
-      class = "no_p"
-    )
-  }
-
-  anio_p <- unique(.P$pi01)
-  pais_p <- unique(.P$pi02)
+  if (!is.null(.P)) {
+    if (!is.data.frame(.P)) {
+      cli::cli_abort(
+        c(".P debe ser un data.frame o tibble.",
+          "x" = "Se paso un {class(.P)}"
+        ),
+        class = "no_data_frame"
+      )
+    } else if (is.null(attr(.P, "base"))) {
+      cli::cli_abort(
+        ".P debe ser una base P expandida con expandir_personas().",
+        class = "no_expandida"
+      )
+    } else if (attr(.P, "base") != "P") {
+      cli::cli_abort(
+        ".P debe ser una base P.",
+        class = "no_p"
+      )
+    }
   
-  if (!(anio %in% anio_p)) {
-    cli::cli_abort(
-      c(".H y .P deben corresponder al mismo anio",
-        "x" = ".H corresponde a {anio} y .P a {anio_p}"),
-      class = "p_dif_anio"
-    )
-  }
-  if (!(pais %in% pais_p)) {
-    cli::cli_abort(
-      c(".H y .P deben corresponder al mismo pais",
-        "x" = ".H corresponde a {pais} y .P a {pais_p}"),
-      class = "p_dif_pais"
-    )
+    anio_p <- unique(.P$pi01)
+    pais_p <- unique(.P$pi02)
+    
+    if (!(anio %in% anio_p)) {
+      cli::cli_abort(
+        c(".H y .P deben corresponder al mismo anio",
+          "x" = ".H corresponde a {anio} y .P a {anio_p}"),
+        class = "p_dif_anio"
+      )
+    }
+    if (!(pais %in% pais_p)) {
+      cli::cli_abort(
+        c(".H y .P deben corresponder al mismo pais",
+          "x" = ".H corresponde a {pais} y .P a {pais_p}"),
+        class = "p_dif_pais"
+      )
+    }
   }
 
   if (!is.null(.D)) {

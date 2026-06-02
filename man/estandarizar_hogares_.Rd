@@ -4,12 +4,10 @@
 \alias{estandarizar_hogares_}
 \title{Estandariza el conjunto H de la EU-SILC para el proceso de armonización}
 \usage{
-estandarizar_hogares_(.H, .P, .D, .anio, .pais)
+estandarizar_hogares_(.H, .D, .anio, .pais)
 }
 \arguments{
 \item{.H}{\code{data.frame}o \code{tibble}. Conjunto de datos H de la EU-SILC}
-
-\item{.P}{\code{data.frame}o \code{tibble}. Conjunto de datos P de la EU-SILC expandido por \code{\link[=expandir_personas]{expandir_personas()}}}
 
 \item{.D}{\code{data.frame}o \code{tibble}. Conjunto de datos D de la EU-SILC}
 
@@ -18,11 +16,11 @@ estandarizar_hogares_(.H, .P, .D, .anio, .pais)
 \item{.pais}{\code{character}. País al que corresponde el conjunto H}
 }
 \value{
-\code{tibble}. Conjunto de datos H de la EU-SILC con variables adicionales armonizadas
+\code{tibble}. Conjunto de datos H de la EU-SILC estandarizado
 }
 \description{
-Aplica transformaciones sobre las variables de los conjuntos H y P (expandido)
-según el año, el país y si se proveyó el conjunto D. El conjunto final tiene
-las variables necesarias para aplicar \code{\link[=calcular_hogares]{calcular_hogares()}}. Las variables
-que no están disponibles quedan como \code{NA}.
+Aplica transformaciones sobre las variables del conjunto H según el año, el
+país y si se proveyó el conjunto D. El conjunto final tiene las variables
+necesarias para aplicar \code{\link[=calcular_hogares]{calcular_hogares()}}. Las variables que no están
+disponibles quedan como \code{NA}.
 }

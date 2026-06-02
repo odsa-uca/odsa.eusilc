@@ -79,15 +79,8 @@
 #' 
 #' @export
 calcular_hogares <- function(.H, .P, .expandir = FALSE) {
-  # TODO: chequear argumentos
-  if (!is.data.frame(.H)) {
-    cli::cli_abort(
-      c(".H debe ser un data.frame o tibble.",
-        "x" = "Se paso un {class(.H)}"
-      ),
-      class = "no_data_frame"
-    )
-  }
+  chequear_bases_hogares(.H, .P, NULL)
+  
   if (is.null(attr(.H, "estandar"))) {
     cli::cli_abort(
       ".H debe ser una base H estandarizada con estandarizar_hogares().",
@@ -97,47 +90,7 @@ calcular_hogares <- function(.H, .P, .expandir = FALSE) {
   if (attr(.H, "base") != "H") {
     cli::cli_abort(
       ".H debe ser una base H.",
-      class = "no_p"
-    )
-  }
-  
-  anio <- unique(.H$HB010)
-  pais <- unique(.H$HB020)
-  
-  if (!is.data.frame(.P)) {
-    cli::cli_abort(
-      c(".P debe ser un data.frame o tibble.",
-        "x" = "Se paso un {class(.P)}"
-      ),
-      class = "no_data_frame"
-    )
-  } else if (is.null(attr(.P, "base"))) {
-    cli::cli_abort(
-      ".P debe ser una base P expandida con expandir_personas().",
-      class = "no_expandida"
-    )
-  } else if (attr(.P, "base") != "P") {
-    cli::cli_abort(
-      ".P debe ser una base P.",
-      class = "no_p"
-    )
-  }
-
-  anio_p <- unique(.P$pi01)
-  pais_p <- unique(.P$pi02)
-  
-  if (!(anio %in% anio_p)) {
-    cli::cli_abort(
-      c(".H y .P deben corresponder al mismo anio",
-        "x" = ".H corresponde a {anio} y .P a {anio_p}"),
-      class = "p_dif_anio"
-    )
-  }
-  if (!(pais %in% pais_p)) {
-    cli::cli_abort(
-      c(".H y .P deben corresponder al mismo pais",
-        "x" = ".H corresponde a {pais} y .P a {pais_p}"),
-      class = "p_dif_pais"
+      class = "no_h"
     )
   }
   
