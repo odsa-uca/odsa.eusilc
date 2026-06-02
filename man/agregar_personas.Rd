@@ -2,16 +2,17 @@
 % Please edit documentation in R/calcular_hogares.R
 \name{agregar_personas}
 \alias{agregar_personas}
-\title{Agrega variables de ingreso de la base P de la EU-SILC a nivel hogar.}
+\title{Agrega variables de ingreso de la base P de la EU-SILC a nivel hogar}
 \usage{
 agregar_personas(.personas)
 }
 \arguments{
-\item{.personas}{Conjunto P de la EU-SILC expandido con \code{\link[=calcular_personas]{calcular_personas()}}.}
+\item{.personas}{\code{data.frame} o \code{tibble}. Conjunto P de la EU-SILC expandido con \code{\link[=expandir_personas]{expandir_personas()}}.}
 }
 \value{
-Conjunto de datos con ingresos individuales agregados a nivel hogar.
+\code{tibble}. Conjunto de datos con ingresos individuales agregados a nivel hogar y número de perceptores
 }
 \description{
-Agrega variables de ingreso de la base P de la EU-SILC a nivel hogar.
+Agrega las variables de ingreso de la base P (expandida con \code{\link[=expandir_personas]{expandir_personas()}})
+por hogar y cuenta la cantidad de perceptores de cada variable de ingreso.
 }

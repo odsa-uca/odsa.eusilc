@@ -69,92 +69,10 @@ estandarizar_personas <- function(
     .D = NULL,
     .R = NULL
 ) {
-  if (!is.data.frame(.P)) {
-    cli::cli_abort(
-      c(".P debe ser un data.frame o tibble.",
-        "x" = "Se paso un {class(.P)}"
-      ),
-      class = "no_data_frame"
-    )
-  }
+  chequear_bases_personas(.P, .D, .R)
 
   anio <- unique(.P$PB010)
   pais <- unique(.P$PB020)
-
-  if (length(anio) > 1) {
-    cli::cli_abort(
-      c("Solo se aceptan bases P de un unico anio",
-        "x" = "Se proporciono una base para {anio}."
-      ),
-      class = "varios_anios"
-    )
-  }
-  if (length(pais) > 1) {
-    cli::cli_abort(
-      c("Solo se aceptan bases P de un unico pais",
-        "x" = "Se proporciono una base para {pais}."
-      ),
-      class = "varios_paises"
-    )
-  }
-
-  if (!is.null(.D)) {
-    if (!is.data.frame(.D)) {
-      cli::cli_abort(
-        c(".D debe ser un data.frame o tibble.",
-          "x" = "Se paso un {class(.D)}"
-        ),
-        class = "no_data_frame"
-      )
-    }
-
-    anio_d <- unique(.D$DB010)
-    pais_d <- unique(.D$DB020)
-
-    if (!(anio %in% anio_d)) {
-      cli::cli_abort(
-        c(".P y .D deben corresponder al mismo anio",
-          "x" = ".P corresponde a {anio} y .D a {anio_d}"),
-        class = "d_dif_anio"
-      )
-    }
-    if (!(pais %in% pais_d)) {
-      cli::cli_abort(
-        c(".P y .D deben corresponder al mismo pais",
-          "x" = ".P corresponde a {pais} y .D a {pais_d}"),
-        class = "d_dif_pais"
-      )
-    }
-  }
-
-  if (!is.null(.R)) {
-    if (!is.data.frame(.R)) {
-      cli::cli_abort(
-        c(".R debe ser un data.frame o tibble.",
-          "x" = "Se paso un {class(.R)}"
-        ),
-        class = "no_data_frame"
-      )
-    }
-
-    anio_r <- unique(.R$RB010)
-    pais_r <- unique(.R$RB020)
-
-    if (!(anio %in% anio_r)) {
-      cli::cli_abort(
-        c(".P y .R deben corresponder al mismo anio",
-          "x" = ".P corresponde a {anio} y .R a {anio_r}"),
-        class = "r_dif_anio"
-      )
-    }
-    if (!(pais %in% pais_r)) {
-      cli::cli_abort(
-        c(".P y .R deben corresponder al mismo pais",
-          "x" = ".P corresponde a {pais} y .R a {pais_r}"),
-        class = "r_dif_pais"
-      )
-    }
-  }
 
   .P <- estandarizar_personas_(.P, .R, .D, anio, pais)
   

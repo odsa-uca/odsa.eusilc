@@ -1,4 +1,4 @@
 ^odsa\.eusilc\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
-^tests$
+^tests/tests_informales\.R$

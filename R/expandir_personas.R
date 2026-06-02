@@ -70,6 +70,98 @@ expandir_personas <- function(
 ) {
   # Chequeos args ------------------------------------------------------------
   # TODO: Simplificar!
+  chequear_bases_personas(.P, .D, .R)
+
+  if (!is.logical(.imputar)) {
+    cli::cli_abort(
+      c(".imputar debe ser TRUE o FALSE.",
+        "x" = "Se paso un {class(.imputar)}"
+      ),
+      class = "no_logical"
+    )
+  }
+  if (!is.logical(.expandir)) {
+    cli::cli_abort(
+      c(".etiquetar debe ser TRUE o FALSE.",
+        "x" = "Se paso un {class(.expandir)}"
+      ),
+      class = "no_logical"
+    )
+  }
+  if (!is.logical(.etiquetar)) {
+    cli::cli_abort(
+      c(".etiquetar debe ser TRUE o FALSE.",
+        "x" = "Se paso un {class(.etiquetar)}"
+      ),
+      class = "no_logical"
+    )
+  }
+  
+  anio <- unique(.P$PB010)
+  pais <- unique(.P$PB020)
+  
+  vble_PL130 <- "PL130" %in% names(.P)
+  vble_PL230 <- "PL230" %in% names(.P)
+
+  # --------------------------------------------------------------------------
+  cli::cli_h1("Estandarizacion")
+  .P <- estandarizar_personas_(.P, .R, .D, anio, pais)
+
+  if (.imputar) {
+    cli::cli_h1("Imputacion")
+    
+    .P <- calc_flags_imputacion(.P, anio, pais)
+  
+    # Imputaciones -----------------------------
+    .P <-  imputar_meses(.P)
+    .P <-  imputar_horas(.P)
+    .P <-  imputar_laboral_a(.P)
+    .P <-  imputar_laboral_b(.P, anio)
+    if (vble_PL130) {
+      .P <- imputar_tamanio(.P)
+    }
+    if (vble_PL230) {
+      .P <- imputar_sectorpp(.P)
+    }
+  }
+
+  cli::cli_h1("Calcular variables nuevas")
+  .P <- calcular_personas_(.P)
+
+  if (!.expandir) {
+    .P <- dplyr::select(.P, dplyr::any_of(names(etq$P$variables)))
+  } else {
+    .P <- dplyr::relocate(.P, dplyr::any_of(names(etq$P$variables)))
+  }
+
+  if (.etiquetar) {
+    .P <- etiquetar_eusilc_(.P, .base = "P")
+  }
+  
+  .P <- structure(
+    .P,
+    "base"        = "P",
+    "pre. 2021"   = anio < 2021,
+    "vbles. D"    = !is.null(.D),
+    "vbles. R"    = !is.null(.R),
+    "vble. PL130" = vble_PL130,
+    "vble. PL230" = vble_PL230,
+    "expandida"   = .expandir,
+    "imputada"    = .imputar
+  )
+
+  return(.P)
+}
+
+# ============================================================================
+#' Chequea que los conjuntos P, D y R sean adecuados
+#'
+#' @param .P Argumento .P
+#' @param .D Argumento .D
+#' @param .R Argumento .R
+#'
+#' @returns NULL
+chequear_bases_personas <- function(.P, .D, .R) {
   if (!is.data.frame(.P)) {
     cli::cli_abort(
       c(".P debe ser un data.frame o tibble.",
@@ -156,81 +248,4 @@ expandir_personas <- function(
       )
     }
   }
-
-  if (!is.logical(.imputar)) {
-    cli::cli_abort(
-      c(".imputar debe ser TRUE o FALSE.",
-        "x" = "Se paso un {class(.imputar)}"
-      ),
-      class = "no_logical"
-    )
-  }
-  if (!is.logical(.expandir)) {
-    cli::cli_abort(
-      c(".etiquetar debe ser TRUE o FALSE.",
-        "x" = "Se paso un {class(.expandir)}"
-      ),
-      class = "no_logical"
-    )
-  }
-  if (!is.logical(.etiquetar)) {
-    cli::cli_abort(
-      c(".etiquetar debe ser TRUE o FALSE.",
-        "x" = "Se paso un {class(.etiquetar)}"
-      ),
-      class = "no_logical"
-    )
-  }
-  
-  vble_PL130 <- "PL130" %in% names(.P)
-  vble_PL230 <- "PL230" %in% names(.P)
-
-  # --------------------------------------------------------------------------
-  cli::cli_h1("Estandarizacion")
-  .P <- estandarizar_personas_(.P, .R, .D, anio, pais)
-
-  if (.imputar) {
-    cli::cli_h1("Imputacion")
-    
-    .P <- calc_flags_imputacion(.P, anio, pais)
-  
-    # Imputaciones -----------------------------
-    .P <-  imputar_meses(.P)
-    .P <-  imputar_horas(.P)
-    .P <-  imputar_laboral_a(.P)
-    .P <-  imputar_laboral_b(.P, anio)
-    if (vble_PL130) {
-      .P <- imputar_tamanio(.P)
-    }
-    if (vble_PL230) {
-      .P <- imputar_sectorpp(.P)
-    }
-  }
-
-  cli::cli_h1("Calcular variables nuevas")
-  .P <- calcular_personas_(.P)
-
-  if (!.expandir) {
-    .P <- dplyr::select(.P, dplyr::any_of(names(etq$P$variables)))
-  } else {
-    .P <- dplyr::relocate(.P, dplyr::any_of(names(etq$P$variables)))
-  }
-
-  if (.etiquetar) {
-    .P <- etiquetar_eusilc_(.P, .base = "P")
-  }
-  
-  .P <- structure(
-    .P,
-    "base"        = "P",
-    "pre. 2021"   = anio < 2021,
-    "vbles. D"    = !is.null(.D),
-    "vbles. R"    = !is.null(.R),
-    "vble. PL130" = vble_PL130,
-    "vble. PL230" = vble_PL230,
-    "expandida"   = .expandir,
-    "imputada"    = .imputar
-  )
-
-  return(.P)
 }

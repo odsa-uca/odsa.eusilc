@@ -2,16 +2,95 @@
 % Please edit documentation in R/calcular_hogares.R
 \name{calcular_hogares}
 \alias{calcular_hogares}
-\title{Construye variables en la base H de la EU-SILC.}
+\title{Construye variables nuevas a partir de los conjuntos H y P de la EU-SILC}
 \usage{
-calcular_hogares(.H)
+calcular_hogares(.H, .P)
 }
 \arguments{
-\item{.H}{Conjunto H de la EU-SILC.}
+\item{.H}{\code{data.frame}o \code{tibble}. Conjunto H de la EU-SILC}
+
+\item{.P}{\code{data.frame}o \code{tibble}. Conjunto P de la EU-SILC expandido con \code{\link[=expandir_personas]{expandir_personas()}}}
 }
 \value{
-Conjunto H de la EU-SILC con variables adicionales.
+\code{tibble}. Conjunto H de la EU-SILC estandarizado con variables armonizadas
 }
 \description{
-Construye variables en la base H de la EU-SILC.
+Construye variables nuevas de nivel hogar a partir de los conjuntos H y P
+(expandido) de la EU-SILC. Las variables se organizan en cinco bloques: I de
+identificación, D de demográficos, L de laborales, Y de ingresos y P de
+perceptores. Dependiendo del año y el país de la encuesta y si se
+proporcionó en conjunto D, algunas de las variables pueden estar perdidas (\code{NA}).
+}
+\details{
+Las variables construidas, según bloque, son las siguientes
+\subsection{(I) Identificación}{
+\itemize{
+\item hi01. Año de la encuesta
+\item hi02. País
+\item hi03. Región
+\item hi04. Identificador del hogar
+\item hi06. Ponderador
+}
+}
+
+\subsection{(D) Demográficos}{
+\itemize{
+\item hd01. Tamaño del hogar
+\item hd02a. Tipo de hogar desagregado
+\item hd02b. Tipo de hogar dicotómico
+\item hdxx. (a definir...)
+}
+}
+
+\subsection{(L) Laborales}{
+\itemize{
+\item hlxx. (a definir...)
+}
+}
+
+\subsection{(Y) Ingresos}{
+\itemize{
+\item py00. Ingreso total de los miembros
+\item py10. Ingreso total de los miembros por fuentes laborales
+\item py11. Ingreso de los miembros por trabajo asalariado
+\item py12. Ingreso de los miembros por trabajo no asalariado
+\item py13\if{html}{\out{<sup>}}1\if{html}{\out{</sup>}}. Ingreso de los miembros por trabajo en el sector público
+\item py14\if{html}{\out{<sup>}}1\if{html}{\out{</sup>}}. Ingreso de los miembros por trabajo en el sector privado formal
+\item py15\if{html}{\out{<sup>}}1\if{html}{\out{</sup>}}. Ingreso de los miembros por trabajo en el sector microinformal
+\item py20. Ingreso total de los miembros por fuentes no laborales
+\item py21. Ingreso total de los miembros por jubilaciones y pensiones privadas
+\item py22. Ingreso de los miembros por jubilación
+\item py23. Ingreso de los miembros por pensión privada
+\item py24. Ingreso de los miembros por desempleo
+\item py25. Ingreso de los miembros por otras ayudas
+\item hy00. Ingreso total del hogar
+\item hy20. Ingreso total del hogar por fuentes no laborales
+\item hy21. Ingreso total por inversiones y otras transferencias
+\item hy22. Ingreso del hogar por inversiones
+\item hy23. Ingreso del hogar por otras transferencias
+\item hy24. Ingreso total por política social
+\item hy25. Ingreso total por transferencias
+\item hy26. Ingreso del hogar por asistencia social
+}
+
+Nota 1: Dependen de las variables PL130 y PL230 del módulo LMH en la base P
+}
+
+\subsection{(P) Perceptores}{
+\itemize{
+\item hp00. Perceptores de ingreso
+\item hp10. Perceptores de ingreso por fuentes laborales
+\item hp11. Perceptores de ingreso por trabajo asalariado
+\item hp12. Perceptores de ingreso por trabajo no asalariado
+\item hp13. Perceptores de ingreso por trabajo en el sector público
+\item hp14. Perceptores de ingreso por trabajo en el sector privado formal
+\item hp15. Perceptores de ingreso por trabajo en el sector microinformal
+\item hp20. Perceptores de ingreso por fuentes no laborales
+\item hp21. Perceptores de ingreso por jubilaciones o pensiones privadas
+\item hp22. Perceptores de ingreso por jubilación
+\item hp23. Perceptores de ingreso por pensión privada
+\item hp24. Perceptores de ingreso por desempleo
+\item hp25. Perceptores de ingreso por otras ayudas
+}
+}
 }

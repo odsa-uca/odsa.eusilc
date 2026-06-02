@@ -1,22 +1,113 @@
-#' Construye variables en la base H de la EU-SILC.
+#' Construye variables nuevas a partir de los conjuntos H y P de la EU-SILC
+#' 
+#' @description
+#' Construye variables nuevas de nivel hogar a partir de los conjuntos H y P
+#' (expandido) de la EU-SILC. Las variables se organizan en cinco bloques: I de
+#' identificación, D de demográficos, L de laborales, Y de ingresos y P de
+#' perceptores. Dependiendo del año y el país de la encuesta y si se
+#' proporcionó en conjunto D, algunas de las variables pueden estar perdidas (`NA`).
 #'
-#' @param .H Conjunto H de la EU-SILC.
+#' @param .H `data.frame`o `tibble`. Conjunto H de la EU-SILC
+#' @param .P `data.frame`o `tibble`. Conjunto P de la EU-SILC expandido con [expandir_personas()]
 #'
-#' @returns Conjunto H de la EU-SILC con variables adicionales.
+#' @returns `tibble`. Conjunto H de la EU-SILC estandarizado con variables armonizadas
+#' 
+#' @details
+#' Las variables construidas, según bloque, son las siguientes
+#' 
+#' ## (I) Identificación
+#' 
+#' - hi01. Año de la encuesta
+#' - hi02. País
+#' - hi03. Región
+#' - hi04. Identificador del hogar
+#' - hi06. Ponderador
+#' 
+#' ## (D) Demográficos
+#' 
+#' - hd01. Tamaño del hogar
+#' - hd02a. Tipo de hogar desagregado
+#' - hd02b. Tipo de hogar dicotómico
+#' - hdxx. (a definir...)
+#' 
+#' ## (L) Laborales
+#' 
+#' - hlxx. (a definir...)
+#' 
+#' ## (Y) Ingresos
+#' 
+#' - py00. Ingreso total de los miembros
+#' - py10. Ingreso total de los miembros por fuentes laborales
+#' - py11. Ingreso de los miembros por trabajo asalariado
+#' - py12. Ingreso de los miembros por trabajo no asalariado
+#' - py13<sup>1</sup>. Ingreso de los miembros por trabajo en el sector público
+#' - py14<sup>1</sup>. Ingreso de los miembros por trabajo en el sector privado formal
+#' - py15<sup>1</sup>. Ingreso de los miembros por trabajo en el sector microinformal
+#' - py20. Ingreso total de los miembros por fuentes no laborales
+#' - py21. Ingreso total de los miembros por jubilaciones y pensiones privadas
+#' - py22. Ingreso de los miembros por jubilación
+#' - py23. Ingreso de los miembros por pensión privada
+#' - py24. Ingreso de los miembros por desempleo
+#' - py25. Ingreso de los miembros por otras ayudas
+#' - hy00. Ingreso total del hogar
+#' - hy20. Ingreso total del hogar por fuentes no laborales
+#' - hy21. Ingreso total por inversiones y otras transferencias
+#' - hy22. Ingreso del hogar por inversiones
+#' - hy23. Ingreso del hogar por otras transferencias
+#' - hy24. Ingreso total por política social
+#' - hy25. Ingreso total por transferencias
+#' - hy26. Ingreso del hogar por asistencia social
+#' 
+#' Nota 1: Dependen de las variables PL130 y PL230 del módulo LMH en la base P
+#' 
+#' ## (P) Perceptores
+#' 
+#' - hp00. Perceptores de ingreso
+#' - hp10. Perceptores de ingreso por fuentes laborales
+#' - hp11. Perceptores de ingreso por trabajo asalariado
+#' - hp12. Perceptores de ingreso por trabajo no asalariado
+#' - hp13. Perceptores de ingreso por trabajo en el sector público
+#' - hp14. Perceptores de ingreso por trabajo en el sector privado formal
+#' - hp15. Perceptores de ingreso por trabajo en el sector microinformal
+#' - hp20. Perceptores de ingreso por fuentes no laborales
+#' - hp21. Perceptores de ingreso por jubilaciones o pensiones privadas
+#' - hp22. Perceptores de ingreso por jubilación
+#' - hp23. Perceptores de ingreso por pensión privada
+#' - hp24. Perceptores de ingreso por desempleo
+#' - hp25. Perceptores de ingreso por otras ayudas
 #' 
 #' @export
-calcular_hogares <- function(.H) {
+calcular_hogares <- function(.H, .P) {
   # TODO: chequear argumentos
   
-  calcular_hogares_(.H)
+  .P <- agregar_personas(.P)
+  .H <- dplyr::left_join(
+    x = .H, y = .P,
+    by = dplyr::join_by(HB010 == pi01, HB020 == pi02, HB030 == pi04)
+  )
+  .H <- calcular_hogares_(.H)
+  
+  return(.H)
 }
 
 # ============================================================================
-#' Construye variables en la base H de la EU-SILC.
+#' Construye variables nuevas a partir de los conjuntos H y P de la EU-SILC (interna)
+#' 
+#' @description
+#' ¡Esta función es interna! Construye variables nuevas de nivel hogar a partir
+#' de los conjuntos H y P (expandido con [expandir_personas()]) de la EU-SILC.
+#' Las variables se organizan en cinco bloques: I de identificación, D de
+#' demográficos, L de laborales, Y de ingresos y P de perceptores. Dependiendo
+#' del año y el país de la encuesta y si se proporcionó en conjunto D, algunas
+#' de las variables pueden estar perdidas (`NA`).
+#' 
+#' @details
+#' Esta función es el núcleo interno de [calcular_hogares()]. Para más detalles
+#' consultar la documentación de esa función.
 #'
-#' @param .H Conjunto H de la EU-SILC.
-#'
-#' @returns Conjunto H de la EU-SILC con variables adicionales.
+#' @param .H `data.frame`o `tibble`. Conjunto H de la EU-SILC
+#' 
+#' @returns `tibble`. Conjunto H de la EU-SILC estandarizado con variables armonizadas
 calcular_hogares_ <- function(.H) {
   # Lookup -----------------------------------
   .H <- dplyr::left_join(
@@ -64,11 +155,15 @@ calcular_hogares_ <- function(.H) {
 }
 
 # ============================================================================
-#' Agrega variables de ingreso de la base P de la EU-SILC a nivel hogar.
+#' Agrega variables de ingreso de la base P de la EU-SILC a nivel hogar
+#' 
+#' @description
+#' Agrega las variables de ingreso de la base P (expandida con [expandir_personas()])
+#' por hogar y cuenta la cantidad de perceptores de cada variable de ingreso.
 #'
-#' @param .personas Conjunto P de la EU-SILC expandido con [calcular_personas()].
+#' @param .personas `data.frame` o `tibble`. Conjunto P de la EU-SILC expandido con [expandir_personas()].
 #'
-#' @returns Conjunto de datos con ingresos individuales agregados a nivel hogar.
+#' @returns `tibble`. Conjunto de datos con ingresos individuales agregados a nivel hogar y número de perceptores
 agregar_personas <- function(.personas) {
   personas <- .personas |>
     dplyr::select(pi01, pi02, pi04, py00:py25) |>

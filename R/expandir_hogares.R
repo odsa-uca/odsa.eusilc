@@ -22,6 +22,69 @@ expandir_hogares <- function(
     .etiquetar = TRUE
 ) {
   # Chequeos args ------------------------------------------------------------
+  chequear_bases_hogares(.H, .P, .D)
+
+  if (!is.logical(.expandir)) {
+    cli::cli_abort(
+      c(".etiquetar debe ser TRUE o FALSE.",
+        "x" = "Se paso un {class(.expandir)}"
+      ),
+      class = "no_logical"
+    )
+  }
+  if (!is.logical(.etiquetar)) {
+    cli::cli_abort(
+      c(".etiquetar debe ser TRUE o FALSE.",
+        "x" = "Se paso un {class(.etiquetar)}"
+      ),
+      class = "no_logical"
+    )
+  }
+
+  # Estandarización ----------------------------------------------------------
+  cli::cli_h1("Estandarizacion")
+  .H <- estandarizar_hogares_(.H, .P, .D, anio, pais)
+
+  # Calcular vbles -----------------------------------------------------------
+  cli::cli_h1("Calcular variables nuevas")
+  P <- agregar_personas(.P)
+  .H <- dplyr::left_join(
+    x = .H, y = P,
+    by = dplyr::join_by(HB010 == pi01, HB020 == pi02, HB030 == pi04)
+  )
+  .H <- calcular_hogares_(.H)
+
+  # Arreglos y devolver ------------------------------------------------------
+  if (!.expandir) {
+    .H <- dplyr::select(.H, dplyr::any_of(names(etq$H$variables)))
+  } else {
+    .H <- dplyr::relocate(.H, dplyr::any_of(names(etq$H$variables)))
+  }
+
+  if (.etiquetar) {
+    .H <- etiquetar_eusilc_(.H, .base = "H")
+  }
+  
+  .H <- structure(
+    .H,
+    "base"      = "H",
+    "vbles. D"  = !is.null(.D),
+    "vbles. LMH"= attr(.P, "vble. PL230"),
+    "expandida" = .expandir
+  )
+
+  return(.H)
+}
+
+# ============================================================================
+#' Chequea que los conjuntos H, P y D sean adecuados
+#'
+#' @param .H Argumento .H
+#' @param .P Argumento .P
+#' @param .D Argumento .D
+#'
+#' @returns NULL
+chequear_bases_hogares <- function(.H, .P, .D) {
   if (!is.data.frame(.H)) {
     cli::cli_abort(
       c(".H debe ser un data.frame o tibble.",
@@ -116,55 +179,4 @@ expandir_hogares <- function(
       )
     }
   }
-
-  if (!is.logical(.expandir)) {
-    cli::cli_abort(
-      c(".etiquetar debe ser TRUE o FALSE.",
-        "x" = "Se paso un {class(.expandir)}"
-      ),
-      class = "no_logical"
-    )
-  }
-  if (!is.logical(.etiquetar)) {
-    cli::cli_abort(
-      c(".etiquetar debe ser TRUE o FALSE.",
-        "x" = "Se paso un {class(.etiquetar)}"
-      ),
-      class = "no_logical"
-    )
-  }
-
-  # Estandarización ----------------------------------------------------------
-  cli::cli_h1("Estandarizacion")
-  .H <- estandarizar_hogares_(.H, .P, .D, anio, pais)
-
-  # Calcular vbles -----------------------------------------------------------
-  cli::cli_h1("Calcular variables nuevas")
-  P <- agregar_personas(.P)
-  .H <- dplyr::left_join(
-    x = .H, y = P,
-    by = dplyr::join_by(HB010 == pi01, HB020 == pi02, HB030 == pi04)
-  )
-  .H <- calcular_hogares_(.H)
-
-  # Arreglos y devolver ------------------------------------------------------
-  if (!.expandir) {
-    .H <- dplyr::select(.H, dplyr::any_of(names(etq$H$variables)))
-  } else {
-    .H <- dplyr::relocate(.H, dplyr::any_of(names(etq$H$variables)))
-  }
-
-  if (.etiquetar) {
-    .H <- etiquetar_eusilc_(.H, .base = "H")
-  }
-  
-  .H <- structure(
-    .H,
-    "base"      = "H",
-    "vbles. D"  = !is.null(.D),
-    "vbles. LMH"= attr(.P, "vble. PL230"),
-    "expandida" = .expandir
-  )
-
-  return(.H)
 }

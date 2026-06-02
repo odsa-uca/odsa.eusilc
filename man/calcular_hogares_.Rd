@@ -2,16 +2,25 @@
 % Please edit documentation in R/calcular_hogares.R
 \name{calcular_hogares_}
 \alias{calcular_hogares_}
-\title{Construye variables en la base H de la EU-SILC.}
+\title{Construye variables nuevas a partir de los conjuntos H y P de la EU-SILC (interna)}
 \usage{
 calcular_hogares_(.H)
 }
 \arguments{
-\item{.H}{Conjunto H de la EU-SILC.}
+\item{.H}{\code{data.frame}o \code{tibble}. Conjunto H de la EU-SILC}
 }
 \value{
-Conjunto H de la EU-SILC con variables adicionales.
+\code{tibble}. Conjunto H de la EU-SILC estandarizado con variables armonizadas
 }
 \description{
-Construye variables en la base H de la EU-SILC.
+¡Esta función es interna! Construye variables nuevas de nivel hogar a partir
+de los conjuntos H y P (expandido con \code{\link[=expandir_personas]{expandir_personas()}}) de la EU-SILC.
+Las variables se organizan en cinco bloques: I de identificación, D de
+demográficos, L de laborales, Y de ingresos y P de perceptores. Dependiendo
+del año y el país de la encuesta y si se proporcionó en conjunto D, algunas
+de las variables pueden estar perdidas (\code{NA}).
+}
+\details{
+Esta función es el núcleo interno de \code{\link[=calcular_hogares]{calcular_hogares()}}. Para más detalles
+consultar la documentación de esa función.
 }
