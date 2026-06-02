@@ -4,7 +4,7 @@
 \alias{estandarizar_personas}
 \title{Estandariza el conjunto P de la EU-SILC para el proceso de armonización}
 \usage{
-estandarizar_personas(.P, .D = NULL, .R = NULL)
+estandarizar_personas(.P, .D = NULL, .R = NULL, .flags = FALSE)
 }
 \arguments{
 \item{.P}{\code{data.frame} o \code{tibble}. Conjunto de datos P de la EU-SILC.}
@@ -12,6 +12,8 @@ estandarizar_personas(.P, .D = NULL, .R = NULL)
 \item{.D}{\code{data.frame} o \code{tibble}. Conjunto de datos D de la EU-SILC.}
 
 \item{.R}{\code{data.frame} o \code{tibble}. Conjunto de datos R de la EU-SILC.}
+
+\item{.flags}{\code{TRUE} o \code{FALSE} (por defecto). ¿Construir los flags de imputación en este paso?}
 }
 \value{
 \code{tibble}. Conjunto de datos P estandarizado para \code{\link[=imputar_personas]{imputar_personas()}} y \code{\link[=calcular_personas]{calcular_personas()}}.

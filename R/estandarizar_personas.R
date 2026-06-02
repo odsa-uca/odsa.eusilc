@@ -10,6 +10,7 @@
 #' @param .P `data.frame` o `tibble`. Conjunto de datos P de la EU-SILC.
 #' @param .D `data.frame` o `tibble`. Conjunto de datos D de la EU-SILC.
 #' @param .R `data.frame` o `tibble`. Conjunto de datos R de la EU-SILC.
+#' @param .flags `TRUE` o `FALSE` (por defecto). ¿Construir los flags de imputación en este paso?
 #'
 #' @returns `tibble`. Conjunto de datos P estandarizado para [imputar_personas()] y [calcular_personas()].
 #'
@@ -67,24 +68,38 @@
 estandarizar_personas <- function(
     .P,
     .D = NULL,
-    .R = NULL
+    .R = NULL,
+    .flags = FALSE
 ) {
   chequear_bases_personas(.P, .D, .R)
+  if (!is.logical(.flags)) {
+    cli::cli_abort(
+      c(".flags debe ser TRUE o FALSE.",
+        "x" = "Se paso un {class(.flags)}"
+      ),
+      class = "no_logical"
+    )
+  }
 
   anio <- unique(.P$PB010)
   pais <- unique(.P$PB020)
 
   .P <- estandarizar_personas_(.P, .R, .D, anio, pais)
   
+  if (.flags) {
+    .P <- calc_flags_imputacion(.P, anio, pais)
+  }
+  
   .P <- structure(
     .P,
-    "estandar"    = TRUE,
     "base"        = "P",
+    "estandar"    = TRUE,
     "pre. 2021"   = anio < 2021,
     "vbles. D"    = !is.null(.D),
     "vbles. R"    = !is.null(.R),
     "vble. PL130" = "PL130" %in% names(.P),
-    "vble. PL230" = "PL230" %in% names(.P)
+    "vble. PL230" = "PL230" %in% names(.P),
+    "flags imp."  = .flags
   )
   
   return(.P)

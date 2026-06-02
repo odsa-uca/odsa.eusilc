@@ -102,7 +102,34 @@
 #'
 #' @export
 calcular_personas <- function(.P, .expandir = FALSE) {
-  # TODO: chequear argumentos
+  if (!is.data.frame(.P)) {
+    cli::cli_abort(
+      c(".P debe ser un data.frame o tibble.",
+        "x" = "Se paso un {class(.P)}"
+      ),
+      class = "no_data_frame"
+    )
+  }
+  if (is.null(attr(.P, "estandar"))) {
+    cli::cli_abort(
+      ".P debe ser una base P estandarizada con estandarizar_personas().",
+      class = "no_estandar"
+    )
+  }
+  if (attr(.P, "base") != "P") {
+    cli::cli_abort(
+      ".P debe ser una base P.",
+      class = "no_p"
+    )
+  }
+  if (!is.logical(.expandir)) {
+    cli::cli_abort(
+      c(".expandir debe ser TRUE o FALSE.",
+        "x" = "Se paso un {class(.expandir)}"
+      ),
+      class = "no_logical"
+    )
+  }
   
   .P <- calcular_personas_(.P)
   

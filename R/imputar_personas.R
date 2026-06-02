@@ -82,11 +82,37 @@
 #' @export
 imputar_personas <- function(.P) {
   # TODO: chequear argumentos
+  if (!is.data.frame(.P)) {
+    cli::cli_abort(
+      c(".P debe ser un data.frame o tibble.",
+        "x" = "Se paso un {class(.P)}"
+      ),
+      class = "no_data_frame"
+    )
+  }
+  if (is.null(attr(.P, "estandar"))) {
+    cli::cli_abort(
+      ".P debe ser una base P estandarizada con estandarizar_personas().",
+      class = "no_estandar"
+    )
+  }
+  if (attr(.P, "base") != "P") {
+    cli::cli_abort(
+      ".P debe ser una base P.",
+      class = "no_p"
+    )
+  }
+  if (!is.null(attr(.P, "imputada"))) {
+    cli::cli_alert_success("La base ya fue imputada!")
+    return(.P)
+  }
 
   anio <- unique(.P$PB010)
   pais <- unique(.P$PB020)
 
-  .P <- calc_flags_imputacion(.P, anio, pais)
+  if (!attr(.P, "flags imp.")) {
+    .P <- calc_flags_imputacion(.P, anio, pais)
+  }
 
   .P <-  imputar_meses(.P)
   .P <-  imputar_horas(.P)
@@ -102,47 +128,6 @@ imputar_personas <- function(.P) {
   attr(.P, "imputada") <- TRUE
   
   return(.P)
-}
-
-# ============================================================================
-#' Arma conjunto de datos para imputar
-#' 
-#' @description
-#' Arma un conjunto de datos con los casos a imputar y los casos de referencia
-#' para la imputación con las variables objetivo, las predictoras y los flags.
-#' Convierte las variables indicadas en factores para la imputación y amputa los
-#' valores marcados con -1 en los flags.
-#'
-#' @param .datos `data.frame` o `tibble`. Conjunto de datos original
-#' @param .imputadas `character`. Vector de nombres de variables a imputar
-#' @param .predictoras `character`. Vector de nombres de variables predictoras para la imputación
-#' @param .flags `character`. Vector de nombres de flags de imputación para las variables en `.imputadas`
-#' @param .factores `character`. Vector de nombres de variables a convertir a factor
-#'
-#' @returns `tibble`. Conjunto de datos con casos a imputar amputados y casos de referencia
-armar_imputables <- function(
-  .datos,
-  .imputadas,
-  .predictoras,
-  .flags,
-  .factores = NULL
-) {
-  datos_imp <- .datos[
-    .datos[[.flags[1]]] %in% c(-1, 1),
-    unique(c("PB010", "PB020", "PB030", .predictoras, .imputadas, .flags))
-  ]
-
-  for (.i in 1:length(.imputadas)) {
-    if (!is.na(.flags[.i])) {
-      datos_imp[datos_imp[[.flags[.i]]] == -1, .imputadas[.i]] <- NA
-    }
-  }
-
-  for (.vble in .factores) {
-    datos_imp[.vble] <- factor(datos_imp[[.vble]])
-  }
-
-  return(datos_imp)
 }
 
 # ============================================================================
@@ -235,6 +220,47 @@ calc_flags_imputacion <- function(.datos, .anio, .pais) {
   }
 
   return(.datos)
+}
+
+# ============================================================================
+#' Arma conjunto de datos para imputar
+#' 
+#' @description
+#' Arma un conjunto de datos con los casos a imputar y los casos de referencia
+#' para la imputación con las variables objetivo, las predictoras y los flags.
+#' Convierte las variables indicadas en factores para la imputación y amputa los
+#' valores marcados con -1 en los flags.
+#'
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos original
+#' @param .imputadas `character`. Vector de nombres de variables a imputar
+#' @param .predictoras `character`. Vector de nombres de variables predictoras para la imputación
+#' @param .flags `character`. Vector de nombres de flags de imputación para las variables en `.imputadas`
+#' @param .factores `character`. Vector de nombres de variables a convertir a factor
+#'
+#' @returns `tibble`. Conjunto de datos con casos a imputar amputados y casos de referencia
+armar_imputables <- function(
+  .datos,
+  .imputadas,
+  .predictoras,
+  .flags,
+  .factores = NULL
+) {
+  datos_imp <- .datos[
+    .datos[[.flags[1]]] %in% c(-1, 1),
+    unique(c("PB010", "PB020", "PB030", .predictoras, .imputadas, .flags))
+  ]
+
+  for (.i in 1:length(.imputadas)) {
+    if (!is.na(.flags[.i])) {
+      datos_imp[datos_imp[[.flags[.i]]] == -1, .imputadas[.i]] <- NA
+    }
+  }
+
+  for (.vble in .factores) {
+    datos_imp[.vble] <- factor(datos_imp[[.vble]])
+  }
+
+  return(datos_imp)
 }
 
 # ============================================================================

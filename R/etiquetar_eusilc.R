@@ -11,8 +11,8 @@
 #' @returns `tibble`. Conjunto de datos armonizado P o H con variables y valores etiquetados
 #' @export
 etiquetar_eusilc <- function(.datos) {
-  if (is.null(attr(.datos, "base"))) {
-    rlang::abort("`.datos` debe ser un conjunto de datos EUSILC expandido.")
+  if (is.null(attr(.datos, "expandida"))) {
+    cli::cli_abort(".datos debe ser un conjunto de datos EUSILC expandido.")
   }
   base <- attr(.datos, "base")
 

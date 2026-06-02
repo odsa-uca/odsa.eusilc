@@ -4,12 +4,14 @@
 \alias{calcular_hogares}
 \title{Construye variables nuevas a partir de los conjuntos H y P de la EU-SILC}
 \usage{
-calcular_hogares(.H, .P)
+calcular_hogares(.H, .P, .expandir = FALSE)
 }
 \arguments{
 \item{.H}{\code{data.frame}o \code{tibble}. Conjunto H de la EU-SILC}
 
 \item{.P}{\code{data.frame}o \code{tibble}. Conjunto P de la EU-SILC expandido con \code{\link[=expandir_personas]{expandir_personas()}}}
+
+\item{.expandir}{\code{TRUE} o \code{FALSE} (por defecto). ¿Mantener las variables originales?}
 }
 \value{
 \code{tibble}. Conjunto H de la EU-SILC estandarizado con variables armonizadas
