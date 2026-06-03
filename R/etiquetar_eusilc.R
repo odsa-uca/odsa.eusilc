@@ -65,7 +65,7 @@ etiquetar_eusilc_ <- function(.datos, .base) {
 #' @returns `list`. Lista anidada con etiquetas para [etiquetar_eusilc()].
 armar_etiquetas <- function(.etq) {
   etq <- tidyr::nest(.etq, valores = c(etiqueta, valor))
-  etq$valores <- purrr::map(etq$valores, tibble::deframe)
+  etq$valores <- lapply(etq$valores, tibble::deframe)
 
   etq_p <- dplyr::filter(etq, conjunto == "P")
   etq_h <- dplyr::filter(etq, conjunto == "H")

@@ -3,10 +3,10 @@ Title: Funciones para trabajar con los datos de la encuesta EU-SILC
 Version: 0.1.0
 Authors@R: 
     person("Fernando", "Piderit", , "fgpiderit@gmail.com", role = c("aut", "cre"))
-Description: |
-  | Se proporcionan funciones para construir nuevas variables, imputar datos
-  | faltantes y asignar etiquetas a los conjuntos de datos de la encuesta
-  | EU-SILC de acuerdo con el uso habitual que se les da en el ODSA.
+Description: 
+  Se proporcionan funciones para construir nuevas variables, imputar datos
+  faltantes y asignar etiquetas a los conjuntos de datos de la encuesta
+  EU-SILC de acuerdo con el uso habitual que se les da en el ODSA.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -16,8 +16,6 @@ Imports:
     dplyr,
     labelled,
     missRanger,
-    purrr,
-    rlang,
     tibble,
     tidyr
 Depends: 

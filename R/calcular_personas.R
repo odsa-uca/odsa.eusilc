@@ -402,8 +402,6 @@ agrupar_nac <- function(.anio, .nac) {
 #'
 #' @returns `numeric`. Clasificador de heterogeneidad estructural
 calc_heterogeneidad <- function(.PL040A, .PL032, .pl20, .pl21b, .pl22, .pl13, .nivel) {
-  rlang::arg_match(.nivel, c("a", "b"))
-
   if (.nivel == "a") {
     pl3x <- dplyr::case_when(
       .PL040A == 1 & .pl21b > 1 ~ 1,
@@ -471,8 +469,6 @@ calc_egp <- function(.PL051A, .PL040A, .PL150) {
 #'
 #' @returns `numeric`. Clasificador de informalidad laboral
 calc_informalidad <- function(.PL040A, .PY030G, .PY035G, .nivel) {
-  rlang::arg_match(.nivel, c("a", "b"))
-
   if (.nivel == "a") {
     pl40 <- dplyr::case_when(
       .PL040A == 3 & .PY030G != 0 ~ 1,
