@@ -103,12 +103,28 @@ calcular_hogares <- function(.H, .P, .expandir = FALSE) {
     )
   }
   
+  # --------------------------------------------------------------------------
+  cli::cli_h1("Calcular variables nuevas")
   .P <- agregar_personas(.P)
   .H <- dplyr::left_join(
     x = .H, y = .P,
     by = dplyr::join_by(HB010 == pi01, HB020 == pi02, HB030 == pi04)
   )
   .H <- calcular_hogares_(.H)
+  
+  chequear_perdidas(.H, "H")
+  
+  if (!.expandir) {
+    .H <- dplyr::select(.H, dplyr::any_of(names(etq$H$variables)))
+  } else {
+    .H <- dplyr::relocate(.H, dplyr::any_of(names(etq$H$variables)))
+  }
+  
+  .H <- structure(
+    .H,
+    "vbles. LMH"= attr(.P, "vble. PL230"),
+    "expandida" = .expandir
+  )
   
   return(.H)
 }
@@ -167,7 +183,7 @@ calcular_hogares_ <- function(.H) {
       ),
       dplyr::across(
         .cols = c(py00:py25, hy00:hy26),
-        .fns = \(y) y / ppa,
+        .fns = \(y) y / ppa_factor * ppa_factor_us,
         .names = "{.col}ppa"
       ),
       .keep = "all"

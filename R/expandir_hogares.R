@@ -40,12 +40,14 @@ expandir_hogares <- function(
       class = "no_logical"
     )
   }
+  
+  # --------------------------------------------------------------------------
+  anio <- unique(.H$HB010)
+  pais <- unique(.H$HB020)
 
-  # Estandarización ----------------------------------------------------------
   cli::cli_h1("Estandarizacion")
   .H <- estandarizar_hogares_(.H, .D, anio, pais)
 
-  # Calcular vbles -----------------------------------------------------------
   cli::cli_h1("Calcular variables nuevas")
   P <- agregar_personas(.P)
   .H <- dplyr::left_join(
@@ -53,8 +55,9 @@ expandir_hogares <- function(
     by = dplyr::join_by(HB010 == pi01, HB020 == pi02, HB030 == pi04)
   )
   .H <- calcular_hogares_(.H)
+  
+  chequear_perdidas(.H, "H")
 
-  # Arreglos y devolver ------------------------------------------------------
   if (!.expandir) {
     .H <- dplyr::select(.H, dplyr::any_of(names(etq$H$variables)))
   } else {

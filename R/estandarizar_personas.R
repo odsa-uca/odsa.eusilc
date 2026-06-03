@@ -82,9 +82,11 @@ estandarizar_personas <- function(
     )
   }
 
+  # --------------------------------------------------------------------------
   anio <- unique(.P$PB010)
   pais <- unique(.P$PB020)
-
+  
+  cli::cli_h1("Estandarizacion")
   .P <- estandarizar_personas_(.P, .R, .D, anio, pais)
   
   if (.flags) {

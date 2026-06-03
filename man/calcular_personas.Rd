@@ -83,13 +83,13 @@ Nota 1: Dependen de las variables PL130 y PL230 del módulo LMH
 
 \subsection{(Y) Ingresos}{
 \itemize{
-\item py00. Ingreso total
-\item py10. Ingreso total por fuentes laborales
+\item py00\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}}. Ingreso total
+\item py10\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}}. Ingreso total por fuentes laborales
 \item py11. Ingreso por trabajo asalariado
-\item py12. Ingreso por trabajo no asalariado
-\item py13\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}}. Ingreso por trabajo en el sector público
-\item py14\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}}. Ingreso por trabajo en el sector privado formal
-\item py15\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}}. Ingreso por trabajo en el sector microinformal
+\item py12\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}}. Ingreso por trabajo no asalariado
+\item py13\if{html}{\out{<sup>}}3\if{html}{\out{</sup>}}. Ingreso por trabajo en el sector público
+\item py14\if{html}{\out{<sup>}}3\if{html}{\out{</sup>}}. Ingreso por trabajo en el sector privado formal
+\item py15\if{html}{\out{<sup>}}3\if{html}{\out{</sup>}}. Ingreso por trabajo en el sector microinformal
 \item py20. Ingreso total por fuentes no laborales
 \item py21. Ingreso total por jubilaciones y pensiones privadas
 \item py22. Ingreso por jubilación
@@ -98,7 +98,12 @@ Nota 1: Dependen de las variables PL130 y PL230 del módulo LMH
 \item py25. Ingreso por otras ayudas
 }
 
-Nota 2: Dependen de las variables PL130 y PL230 del módulo LMH
+Nota 2: Puede tener valores negativos!
+Nota 3: Dependen de las variables PL130 y PL230 del módulo LMH
+
+Las variables de ingreso se presentan en la moneda nacional del país
+correspondiente mensualizados (sin sufijo) y en dólares paridad de poder
+adquisitivo (sufijo \code{ppa}). Para más detalles ver \link{tabla_ppa}.
 }
 
 \subsection{Auxiliares}{
@@ -107,7 +112,8 @@ Además de las variables incluidas en los cuatro bloques principales, se
 incluyen algunas auxiliares. Estas son insumos de otras pero se conservan
 en el conjunto final por si son de utilidad.
 \itemize{
-\item ppa. Factor de conversión a PPA de la Unión Europea de 2020
+\item ppa_factor. Factor de conversión a PPA de la Unión Europea 27 países
+\item ppa_factor_us. Factor de conversión de dólares a PPA de la Unión Europea 27 países
 \item haa. Horas habitualmente trabajadas anuales, trabajadores asalariados
 \item han. Horas habitualmente trabajadas anuales, trabajadores no asalariados
 \item maa. Meses con ingresos por trabajo asalariado en el IRP

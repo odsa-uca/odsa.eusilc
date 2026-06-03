@@ -69,13 +69,13 @@
 #'
 #' ## (Y) Ingresos
 #'
-#' - py00. Ingreso total
-#' - py10. Ingreso total por fuentes laborales
+#' - py00<sup>2</sup>. Ingreso total
+#' - py10<sup>2</sup>. Ingreso total por fuentes laborales
 #' - py11. Ingreso por trabajo asalariado
-#' - py12. Ingreso por trabajo no asalariado
-#' - py13<sup>2</sup>. Ingreso por trabajo en el sector público
-#' - py14<sup>2</sup>. Ingreso por trabajo en el sector privado formal
-#' - py15<sup>2</sup>. Ingreso por trabajo en el sector microinformal
+#' - py12<sup>2</sup>. Ingreso por trabajo no asalariado
+#' - py13<sup>3</sup>. Ingreso por trabajo en el sector público
+#' - py14<sup>3</sup>. Ingreso por trabajo en el sector privado formal
+#' - py15<sup>3</sup>. Ingreso por trabajo en el sector microinformal
 #' - py20. Ingreso total por fuentes no laborales
 #' - py21. Ingreso total por jubilaciones y pensiones privadas
 #' - py22. Ingreso por jubilación
@@ -83,7 +83,12 @@
 #' - py24. Ingreso por desempleo
 #' - py25. Ingreso por otras ayudas
 #'
-#' Nota 2: Dependen de las variables PL130 y PL230 del módulo LMH
+#' Nota 2: Puede tener valores negativos!
+#' Nota 3: Dependen de las variables PL130 y PL230 del módulo LMH
+#' 
+#' Las variables de ingreso se presentan en la moneda nacional del país
+#' correspondiente mensualizados (sin sufijo) y en dólares paridad de poder
+#' adquisitivo (sufijo `ppa`). Para más detalles ver [tabla_ppa].
 #'
 #' ## Auxiliares
 #'
@@ -91,7 +96,8 @@
 #' incluyen algunas auxiliares. Estas son insumos de otras pero se conservan
 #' en el conjunto final por si son de utilidad.
 #'
-#' - ppa. Factor de conversión a PPA de la Unión Europea de 2020
+#' - ppa_factor. Factor de conversión a PPA de la Unión Europea 27 países
+#' - ppa_factor_us. Factor de conversión de dólares a PPA de la Unión Europea 27 países
 #' - haa. Horas habitualmente trabajadas anuales, trabajadores asalariados
 #' - han. Horas habitualmente trabajadas anuales, trabajadores no asalariados
 #' - maa. Meses con ingresos por trabajo asalariado en el IRP
@@ -132,17 +138,11 @@ calcular_personas <- function(.P, .expandir = FALSE) {
     )
   }
   
+  # --------------------------------------------------------------------------
+  cli::cli_h1("Calcular variables nuevas")
   .P <- calcular_personas_(.P)
   
-  perdidas <- sapply(names(etq$P$variables), \(.v) {
-    if (.v %in% names(.P)) all(is.na(.P[.v])) else FALSE
-  })
-  perdidas <- names(which(perdidas))
-  cli::cli_bullets(c(
-    "!" = "Las siguientes variables estan perdidas:",
-    " " = "{perdidas}",
-    "i" = "Si alguna no esta mencionada en la estandarizacion, puede haber problemas!"
-  ))
+  chequear_perdidas(.P, "P")
   
   if (!.expandir) {
     .P <- dplyr::select(.P, dplyr::any_of(names(etq$P$variables)))
@@ -352,8 +352,15 @@ calcular_personas_ <- function(.P) {
   # Ingresos mensuales y ppa -----------------
   .P <- dplyr::mutate(
     .data = .P,
-    dplyr::across(c(py00:py25, py13:py15), \(y) (y * PX010) / 12),
-    dplyr::across(c(py00:py25, py13:py15, py11h, py12h), \(y) y / ppa, .names = "{.col}ppa"),
+    dplyr::across(
+      c(py00:py25, py13:py15),
+      \(y) (y * PX010) / 12
+    ),
+    dplyr::across(
+      c(py00:py25, py13:py15, py11h, py12h),
+      \(y) y / ppa_factor * ppa_factor_us,
+      .names = "{.col}ppa"
+    ),
     .keep = "all"
   )
 

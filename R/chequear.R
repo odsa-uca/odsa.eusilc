@@ -34,6 +34,15 @@ chequear_bases_personas <- function(.P, .D, .R) {
       class = "varios_paises"
     )
   }
+  
+  if (!(pais %in% paises_probados)) {
+    cli::cli_h1("Ojo!")
+    cli::cli_bullets(c(
+      "!" = "{pais} no ha sido testeado!",
+      "i" = "Por ahora se han testeado {paises_probados}",
+      "i" = "Revisa las SILC Disclosure Control Rules de {anio} para ver las diferencias especificas de {pais}"
+    ))
+  }
 
   if (!is.null(.D)) {
     if (!is.data.frame(.D)) {
@@ -132,6 +141,15 @@ chequear_bases_hogares <- function(.H, .P, .D) {
     )
   }
   
+  if (!(pais %in% paises_probados)) {
+    cli::cli_h1("Ojo!")
+    cli::cli_bullets(c(
+      "!" = "{pais} no ha sido testeado!",
+      "i" = "Por ahora se han testeado {paises_probados}",
+      "i" = "Revisa las SILC Disclosure Control Rules de {anio} para ver las diferencias especificas de {pais}"
+    ))
+  }
+  
   if (!is.null(.P)) {
     if (!is.data.frame(.P)) {
       cli::cli_abort(
@@ -198,5 +216,29 @@ chequear_bases_hogares <- function(.H, .P, .D) {
         class = "d_dif_pais"
       )
     }
+  }
+}
+
+# ============================================================================
+#' Chequea y avisa qué variables están completamente perdidas
+#'
+#' @param .datos `tibble`. Conjunto de datos
+#' @param .base `character`. Qué tipo de base es, P o H
+#'
+#' @returns Nada
+chequear_perdidas <- function(.datos, .base) {
+  perdidas <- sapply(names(etq[[.base]]$variables), \(.v) {
+    if (.v %in% names(.datos)) all(is.na(.datos[.v])) else FALSE
+  })
+  perdidas <- names(which(perdidas))
+  
+  if (length(perdidas) == 0) {
+    cli::cli_alert_success("No hay variables perdidas!")
+  } else {
+    cli::cli_bullets(c(
+      "!" = "Las siguientes variables estan perdidas:",
+      " " = "{perdidas}",
+      "i" = "Si alguna no esta mencionada en la estandarizacion, puede haber problemas!"
+    ))
   }
 }

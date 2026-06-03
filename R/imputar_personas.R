@@ -107,6 +107,8 @@ imputar_personas <- function(.P) {
     return(.P)
   }
 
+  # --------------------------------------------------------------------------
+  cli::cli_h1("Imputacion")
   anio <- unique(.P$PB010)
   pais <- unique(.P$PB020)
 

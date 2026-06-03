@@ -97,7 +97,6 @@ expandir_personas <- function(
   }
   
   # --------------------------------------------------------------------------
-  
   anio <- unique(.P$PB010)
   pais <- unique(.P$PB020)
   
@@ -127,15 +126,7 @@ expandir_personas <- function(
   cli::cli_h1("Calcular variables nuevas")
   .P <- calcular_personas_(.P)
   
-  perdidas <- sapply(names(etq$P$variables), \(.v) {
-    if (.v %in% names(.P)) all(is.na(.P[.v])) else FALSE
-  })
-  perdidas <- names(which(perdidas))
-  cli::cli_bullets(c(
-    "!" = "Las siguientes variables estan perdidas:",
-    " " = "{perdidas}",
-    "i" = "Si alguna no esta mencionada en la estandarizacion, puede haber problemas!"
-  ))
+  chequear_perdidas(.P, "P")
 
   if (!.expandir) {
     .P <- dplyr::select(.P, dplyr::any_of(names(etq$P$variables)))
