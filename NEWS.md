@@ -1,12 +1,12 @@
 # odsa.eusilc (development version)
 
-- Se incorporan `tabla_advertencias` y `tabla_cobertura`.
-- Las funciones de estandarización consultan las advertencias documentadas y
-  separan su resumen de los diagnósticos sobre insumos y módulos rotativos.
 - Se incorpora la creación de la variable `pl41` empleo de calidad.
 - Se modifican algunas etiquetas de las variables `pl20a/b/c`.
 - Se cambia la recodificación `PE041 -> pd03`; el nivel 4 ISCED pasa a
 "secundario completo" y los niveles 5 a 8 de ISCED a "terciario incompleto o más".
+- Se incorporan `tabla_advertencias` y `tabla_cobertura`.
+- Se incorpora la función `ver_advertencias`, que permite revisar las advertencias
+  correspondientes al país y año que se encontraron en `tabla_advertencias`.
 
 # odsa.eusilc 0.1.1
 

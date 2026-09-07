@@ -92,41 +92,41 @@ variables y etiqueta el conjunto de datos **P**.
 
 ``` r
 expandir_personas(
-    .P,                # Conjunto de datos P de la EU-SILC
-    .R = NULL,         # Conjunto de datos R de la EU-SILC (opcional)
-    .D = NULL,         # Conjunto de datos D de la EU-SILC (opcional)
-    .imputar = FALSE,  # ¿Se imputan valores faltantes? (opcional)
-    .expandir = FALSE, # ¿Se retienen las variables originales? (opcional)
-    .etiquetar = TRUE  # ¿Se etiquetan las variables y sus valores? (opcional)
-  )
+  .P,                # Conjunto de datos P de la EU-SILC
+  .R = NULL,         # Conjunto de datos R de la EU-SILC (opcional)
+  .D = NULL,         # Conjunto de datos D de la EU-SILC (opcional)
+  .imputar = FALSE,  # ¿Se imputan valores faltantes? (opcional)
+  .expandir = FALSE, # ¿Se retienen las variables originales? (opcional)
+  .etiquetar = TRUE  # ¿Se etiquetan las variables y sus valores? (opcional)
+)
   
 ```
 
 `expandir_personas` encadena cuatro operaciones principales sobre los
 datos:
 
-1.  **Estandarizar.** Según el año, el país y los conjuntos
-    proporcionados (**R** y **D**), se reorganizan los datos para
-    adoptar un formato estándar.
-2.  **Imputar.** (Opcional) Se imputan valores faltantes o
-    inconsistentes en las variables originales, de acuerdo con los
-    criterios utilizados en los *scripts* de SPSS.
-3.  **Construir variables.** Se construyen variables nuevas a partir de
-    las originales.
-4.  **Etiquetar.** (Opcional) Se asignan etiquetas a las variables
-    nuevas y sus valores.
+1. **Estandarizar.** Según el año, el país y los conjuntos
+   proporcionados (**R** y **D**), se reorganizan los datos para
+   adoptar un formato estándar.
+2. **Imputar.** (Opcional) Se imputan valores faltantes o
+   inconsistentes en las variables originales, de acuerdo con los
+   criterios utilizados en los *scripts* de SPSS.
+3. **Construir variables.** Se construyen variables nuevas a partir de
+   las originales.
+4. **Etiquetar.** (Opcional) Se asignan etiquetas a las variables
+   nuevas y sus valores.
 
 
 El resultado es un conjunto de datos de nivel persona con variables nuevas (y,
 opcionalmente, variables originales) organizadas en bloques:
 
--   **I** *(Identificación)* Variables de ID, ponderadores, región, etc.
--   **D** *(Demográficos)* Edad, sexo, nivel educativo, jefatura del
-    hogar, etc.
--   **L** *(Laborales)* Condición de actividad, ocupación,
-    características del lugar de trabajo, etc.
--   **Y** *(Ingresos)* Ingresos totales y según fuente.
--   **(aux.)** *(Auxiliares)* Flags de imputación, principalmente.
+- **I** *(Identificación)* Variables de ID, ponderadores, región, etc.
+- **D** *(Demográficos)* Edad, sexo, nivel educativo, jefatura del
+  hogar, etc.
+- **L** *(Laborales)* Condición de actividad, ocupación,
+  características del lugar de trabajo, etc.
+- **Y** *(Ingresos)* Ingresos totales y según fuente.
+- **(aux.)** *(Auxiliares)* Flags de imputación, principalmente.
 
 ## `expandir_hogares`
 
@@ -146,24 +146,24 @@ expandir_hogares(
 
 `expandir_hogares` encadena operaciones similares:
 
-1.  **Estandarizar.** De forma análoga a `expandir_personas`.
-2.  **Agregar.** Agrega la información de ingresos de nivel persona a
-    nivel hogar. La función requiere el conjunto **P** previamente
-    procesado por `expandir_personas`.
-3.  **Construir variables.** Se construyen variables nuevas,
-    fundamentalmente de ingresos.
-4.  **Etiquetar.** De forma análoga a `expandir_personas`.
+1. **Estandarizar.** De forma análoga a `expandir_personas`.
+2. **Agregar.** Agrega la información de ingresos de nivel persona a
+   nivel hogar. La función requiere el conjunto **P** previamente
+   procesado por `expandir_personas`.
+3. **Construir variables.** Se construyen variables nuevas,
+   fundamentalmente de ingresos.
+4. **Etiquetar.** De forma análoga a `expandir_personas`.
 
 El resultado es un conjunto de datos de nivel hogar con variables nuevas,
 información agregada de ingresos personales organizadas en bloques:
 
--   **I** *(Identificación)* Variables de ID, ponderadores, etc.
--   **D** *(Demográficos)* Tamaño del hogar, tipo de hogar, etc.
--   **L** *(Laborales)* A definir.
--   **Y** *(Ingresos)* Ingresos totales y por fuente **de nivel
-    individual y de nivel hogar**.
--   **P** *(Perceptores)* Perceptores de ingresos totales y por fuente.
--   **(aux.)** *(Auxiliares)* A definir.
+- **I** *(Identificación)* Variables de ID, ponderadores, etc.
+- **D** *(Demográficos)* Tamaño del hogar, tipo de hogar, etc.
+- **L** *(Laborales)* A definir.
+- **Y** *(Ingresos)* Ingresos totales y por fuente **de nivel
+  individual y de nivel hogar**.
+- **P** *(Perceptores)* Perceptores de ingresos totales y por fuente.
+- **(aux.)** *(Auxiliares)* A definir.
 
 # Otras funciones
 
@@ -175,13 +175,14 @@ se pueden aplicar de forma independiente.
 estandarizar_personas(.P, .R, .D)
 imputar_personas(.P)
 calcular_personas(.P)
-etiquetar_personas(.P)
 
 # Hogares
 estandarizar_hogares(.H, .D)
 agregar_personas(.P)
 calcular_hogares(.H, .P)
-etiquetar_hogares(.H)
+
+# General
+etiquetar_eusilc(.H)
 ```
 
 Esto permite verificar los resultados de cada paso y aporta mayor
@@ -192,15 +193,17 @@ flexibilidad al proceso.
 El paquete también ofrece tablas auxiliares con información
 potencialmente relevante:
 
--   `tabla_ppa`. Contiene los factores de conversión a PPA en dólares de
-    Estados Unidos para un gran número de países europeos.
--   `etiquetas`. El diseño de registro de las bases de datos que
-    construyen `expandir_personas` y `expandir_hogares`.
--   `tabla_advertencias`. Pérdidas de información, problemas UDB y
-    diferencias de comparabilidad documentadas para las variables que usa el
-    paquete.
--   `tabla_cobertura`. Países y años incluidos en la revisión
-    documental de las advertencias.
+- `tabla_ppa`. Contiene los factores de conversión a PPA en dólares de
+  Estados Unidos para un gran número de países europeos.
+- `etiquetas`. El diseño de registro de las bases de datos que
+  construyen `expandir_personas` y `expandir_hogares`.
+- `tabla_advertencias`. Pérdidas de información, problemas UDB y
+  diferencias de comparabilidad documentadas para las variables que usa el paquete.
+- `tabla_cobertura`. Países y años incluidos en la revisión
+  documental de las advertencias.
+
+Las advertencias correspondientes a una base de un año y país específicos pueden
+consultares con la función `ver_advertencias(base)`.
 
 # Ejemplo de uso
 
