@@ -101,7 +101,7 @@ informar_insumos_hogares <- function(.D) {
   if (is.null(.D)) {
     cli::cli_bullets(c(
       "!" = "No se proporciono el conjunto D.",
-      " " = "Se pierde hi06."
+      " " = "Se pierden hi06 y hi07."
     ))
   }
 }

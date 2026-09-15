@@ -23,6 +23,7 @@
 #' - pi04. Identificador del hogar
 #' - pi05. Identificador de la persona
 #' - pi06. Ponderador
+#' - pi07. Urbanización
 #'
 #' ## (D) Demográficos
 #'

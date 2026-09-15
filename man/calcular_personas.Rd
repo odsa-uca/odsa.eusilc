@@ -31,6 +31,7 @@ A continuación se listan las variables construidas según bloque
 \item pi04. Identificador del hogar
 \item pi05. Identificador de la persona
 \item pi06. Ponderador
+\item pi07. Urbanización
 }
 }
 

@@ -23,6 +23,7 @@
 #' - hi03. Región
 #' - hi04. Identificador del hogar
 #' - hi06. Ponderador
+#' - hi07. Urbanización
 #' 
 #' ## (D) Demográficos
 #' 
@@ -148,11 +149,22 @@ calcular_hogares <- function(.H, .P, .expandir = FALSE) {
 #' 
 #' @returns `tibble`. Conjunto H de la EU-SILC estandarizado con variables armonizadas
 calcular_hogares_ <- function(.H) {
-  # Lookup -----------------------------------
+  # PPA --------------------------------------
   .H <- dplyr::left_join(
     x = .H,
     y = tabla_ppa_,
     by = dplyr::join_by(HB010 == PB010, HB020 == PB020)
+  )
+  
+  # Lookup -----------------------------------
+  .H <- dplyr::mutate(
+    .H,
+    hi07 = dplyr::recode_values(
+      DB100,
+      from = tabla_pi07$DB100,
+      to = tabla_pi07$pi07,
+      default = NA_integer_
+    )
   )
   
   # Núcleo -----------------------------------

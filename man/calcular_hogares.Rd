@@ -32,6 +32,7 @@ Las variables construidas, según bloque, son las siguientes
 \item hi03. Región
 \item hi04. Identificador del hogar
 \item hi06. Ponderador
+\item hi07. Urbanización
 }
 }
 
