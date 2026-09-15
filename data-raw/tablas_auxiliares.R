@@ -8,6 +8,7 @@ devtools::load_all()
 
 etiquetas <- read_xlsx("data-raw/xlsx/tabla_etiquetas.xlsx")
 tabla_isco <- read_xlsx("data-raw/xlsx/tabla_isco.xlsx")
+tabla_pi07 <- read_xlsx("data-raw/xlsx/tabla_pi07.xlsx")
 tabla_pd03 <- read_xlsx("data-raw/xlsx/tabla_pd03.xlsx")
 tabla_pl01 <- read_xlsx("data-raw/xlsx/tabla_pl01.xlsx")
 tabla_pl20 <- read_xlsx("data-raw/xlsx/tabla_pl20.xlsx")
@@ -73,6 +74,7 @@ usethis::use_data(
   etiquetas_,
   tabla_ppa_,
   tabla_isco,
+  tabla_pi07,
   tabla_pd03,
   tabla_pl01,
   tabla_pl20,

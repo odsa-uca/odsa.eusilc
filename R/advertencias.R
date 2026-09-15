@@ -77,7 +77,7 @@ informar_insumos_personas <- function(.P, .D, .R, .anio) {
   if (is.null(.D)) {
     cli::cli_bullets(c(
       "!" = "No se proporciono el conjunto D.",
-      " " = "Se pierde pi03."
+      " " = "Se pierden pi03 y pi07."
     ))
   }
 

@@ -239,11 +239,11 @@ agregar_r_personas <- function(.P, .R) {
 #' @returns `tibble`. Conjunto P de la EU-SILC con algunas variables del conjunto D
 agregar_d_personas <- function(.P, .D) {
   if (is.null(.D)) {
-    .P <- dplyr::mutate(.P, DB040 = NA_character_)
+    .P <- dplyr::mutate(.P, DB040 = NA_character_, DB100 = NA_integer_)
   } else {
     .P <- dplyr::left_join(
       x = .P,
-      y = dplyr::select(.D, DB010, DB020, DB030, DB040),
+      y = dplyr::select(.D, DB010, DB020, DB030, DB040, DB100),
       by = dplyr::join_by(PB010 == DB010, PB020 == DB020, PX030 == DB030)
     )
   }
@@ -262,6 +262,11 @@ agregar_d_personas <- function(.P, .D) {
 estandarizar_paises_personas <- function(.P, .anio, .pais) {
   if (.pais == "IT" & all(.P$PY120N_F == -4)) {
     .P <- dplyr::mutate(.P, PY120N = 0)
+  }
+  
+  # Puede haber sido leído como logical
+  if (.pais == "DE" & .anio < 2021 & all(is.na(.P$DB100))) {
+    .P <- dplyr::mutate(.P, DB100 = NA_integer_)
   }
 
   return(.P)

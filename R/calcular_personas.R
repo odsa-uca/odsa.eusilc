@@ -185,6 +185,12 @@ calcular_personas_ <- function(.P) {
   # Lookup -----------------------------------
   .P <- dplyr::mutate(
     .P,
+    pi07 = dplyr::recode_values(
+      DB100,
+      from = tabla_pi07$DB100,
+      to = tabla_pi07$pi07,
+      default = NA_integer_
+    ),
     pd03 = dplyr::recode_values(
       PE041,
       from = tabla_pd03$PE041,
