@@ -37,7 +37,10 @@ test_that("Error, etiquetar no es logical", {
     PB010 = 2023,
     PB020 = "DE",
   )
-  expect_error(expandir_personas(P, NULL, NULL, TRUE, TRUE, ""), class = "no_logical")
+  expect_error(
+    expandir_personas(P, NULL, NULL, TRUE, TRUE, ""),
+    class = "no_logical"
+  )
 })
 
 # Pasar apiladas -------------------------------------------------------------
@@ -100,4 +103,24 @@ test_that("Error, P y R distintos paises", {
     RB020 = c("ES", "ES")
   )
   expect_error(expandir_personas(P, NULL, R), class = "r_dif_pais")
+})
+
+test_that("expandir valida las columnas antes de transformar los conjuntos", {
+  personas <- tibble::tibble(PB010 = 2023, PB020 = "DE")
+  expect_error(expandir_personas(NULL), "\\.P", class = "no_data_frame")
+  expect_error(
+    expandir_personas(personas["PB020"]),
+    "PB010",
+    class = "columnas_faltantes"
+  )
+  expect_error(
+    expandir_personas(personas, .D = tibble::tibble(DB010 = 2023)),
+    "DB020",
+    class = "columnas_faltantes"
+  )
+  expect_error(
+    expandir_personas(personas, .R = tibble::tibble(RB020 = "DE")),
+    "RB010",
+    class = "columnas_faltantes"
+  )
 })

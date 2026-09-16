@@ -1,3 +1,4 @@
+# ----------------------------------------------------------------------------
 #' Estandariza el conjunto P de la EU-SILC para el proceso de armonización
 #'
 #' @description
@@ -77,12 +78,7 @@ estandarizar_personas <- function(
 ) {
   chequear_bases_personas(.P, .D, .R)
 
-  if (!is.logical(.flags)) {
-    cli::cli_abort(
-      c(".flags debe ser TRUE o FALSE.", "x" = "Se paso un {class(.flags)}"),
-      class = "no_logical"
-    )
-  }
+  rlang::check_bool(.flags, class = "no_logical")
 
   # --------------------------------------------------------------------------
   anio <- unique(.P$PB010)
@@ -263,7 +259,7 @@ estandarizar_paises_personas <- function(.P, .anio, .pais) {
   if (.pais == "IT" & all(.P$PY120N_F == -4)) {
     .P <- dplyr::mutate(.P, PY120N = 0)
   }
-  
+
   # Puede haber sido leído como logical
   if (.pais == "DE" & .anio < 2021 & all(is.na(.P$DB100))) {
     .P <- dplyr::mutate(.P, DB100 = NA_integer_)
