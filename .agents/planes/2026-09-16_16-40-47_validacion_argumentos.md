@@ -27,3 +27,15 @@ Verificar con datos sintéticos: tipos inválidos, booleanos inválidos, columna
 - devtools::test(): 93 expectativas aprobadas, sin fallas, advertencias ni omisiones. R emite advertencias de configuración regional al iniciar, fuera de los tests.
 - git diff --check sin errores de espacios.
 - Pendiente: las entregas posteriores y la concordancia estricta. No se cambiaron ramas ni se hicieron commits.
+
+## Segunda entrega ejecutada: expandir_personas()
+
+Solicitud: «Bien, pasemos a la próxima entrega.»
+
+- Se reemplazaron los controles manuales de .imputar, .expandir y .etiquetar por rlang::check_bool(), conservando la clase no_logical.
+- Los tres argumentos exigen un único TRUE o FALSE. El mensaje de .expandir identifica ahora correctamente ese argumento.
+- Los tests cubren texto, 0, 1, NA, NULL, logical() y vectores lógicos de longitud mayor que uno para cada argumento; verifican la clase y el nombre del argumento en el mensaje.
+- Código formateado con air. No cambiaron las firmas ni el contenido de la documentación.
+- devtools::test(): 132 expectativas aprobadas, sin fallas, advertencias ni omisiones. Persisten las advertencias de configuración regional al iniciar R, fuera de los tests.
+- git diff --check sin errores.
+- Próxima entrega: estandarizar_hogares(). La concordancia estricta continúa reservada para la tercera etapa.
