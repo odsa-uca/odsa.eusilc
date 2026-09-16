@@ -66,3 +66,16 @@ Solicitud: «Bien, pasemos a la siguiente entrega».
 - devtools::test(): 251 expectativas aprobadas, sin fallas, advertencias ni omisiones. R sigue emitiendo advertencias regionales al iniciar, fuera de los tests.
 - git diff --check sin errores.
 - Próxima entrega: calcular_personas(). La concordancia continúa pendiente para la etapa acordada.
+
+## Quinta entrega ejecutada: calcular_personas()
+
+Solicitud: «Bien, pasemos a la siguiente entrega».
+
+- Se reemplazaron los controles manuales de tipo de .P y .expandir por check_data_frame() y check_bool(), conservando no_data_frame y no_logical.
+- Se exige que los atributos exactos estandar y base sean TRUE y "P", respectivamente, conservando no_estandar y no_p. Se rechazan atributos ausentes, NA, vectores y coincidencias parciales de nombres.
+- Se comprueba la presencia de PB010 y PB020 mediante chequear_columnas(). No se agregó todavía validación de sus valores ni concordancia.
+- Nuevo archivo test-calcular_personas.R con 53 expectativas: tipos, atributos, columnas, booleanos y aceptación de data frames/tibbles con ambas opciones de expansión. Para las entradas válidas se simula el cálculo interno y el informe, sin utilizar datos de encuesta.
+- Documentación actualizada y regenerada; código formateado con air. Se corrigió el BOM del nuevo archivo de tests para permitir su lectura por R y air.
+- devtools::test(): 304 expectativas aprobadas, sin fallas, advertencias ni omisiones. Persisten las advertencias regionales al iniciar R, fuera de los tests.
+- git diff --check sin errores.
+- Próxima entrega: imputar_personas().

@@ -1,3 +1,4 @@
+# ----------------------------------------------------------------------------
 #' Construye variables nuevas a partir del conjunto P de la EU-SILC
 #'
 #' @description
@@ -112,34 +113,22 @@
 #'
 #' @export
 calcular_personas <- function(.P, .expandir = FALSE) {
-  if (!is.data.frame(.P)) {
-    cli::cli_abort(
-      c(".P debe ser un data.frame o tibble.", "x" = "Se paso un {class(.P)}"),
-      class = "no_data_frame"
-    )
-  }
-  if (is.null(attr(.P, "estandar"))) {
+  rlang::check_data_frame(.P, class = "no_data_frame")
+  if (!identical(attr(.P, "estandar", exact = TRUE), TRUE)) {
     cli::cli_abort(
       ".P debe ser una base P estandarizada con estandarizar_personas().",
       class = "no_estandar"
     )
   }
-  if (attr(.P, "base") != "P") {
+  if (!identical(attr(.P, "base", exact = TRUE), "P")) {
     cli::cli_abort(
       ".P debe ser una base P.",
       class = "no_p"
     )
   }
 
-  if (!is.logical(.expandir)) {
-    cli::cli_abort(
-      c(
-        ".expandir debe ser TRUE o FALSE.",
-        "x" = "Se paso un {class(.expandir)}"
-      ),
-      class = "no_logical"
-    )
-  }
+  chequear_columnas(.P, c("PB010", "PB020"))
+  rlang::check_bool(.expandir, class = "no_logical")
 
   # --------------------------------------------------------------------------
   cli::cli_h1("Calcular variables nuevas")
