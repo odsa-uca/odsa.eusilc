@@ -12,7 +12,7 @@ chequear_bases_personas <- function(.P, .D, .R) {
   rlang::check_data_frame(.R, allow_null = TRUE, class = "no_data_frame")
 
   chequear_columnas(.P, c("PB010", "PB020"))
-  
+
   if (!is.null(.D)) {
     chequear_columnas(.D, c("DB010", "DB020"))
   }
@@ -114,7 +114,7 @@ chequear_columnas <- function(
   .argumento = rlang::caller_arg(.datos)
 ) {
   faltantes <- setdiff(.columnas, names(.datos))
-  
+
   if (length(faltantes) > 0L) {
     cli::cli_abort(
       "En {.arg {(.argumento)}} faltan las columnas requeridas: {.field {faltantes}}.",
@@ -133,11 +133,16 @@ chequear_columnas <- function(
 #'
 #' @returns NULL
 chequear_bases_hogares <- function(.H, .P, .D) {
-  if (!is.data.frame(.H)) {
-    cli::cli_abort(
-      c(".H debe ser un data.frame o tibble.", "x" = "Se paso un {class(.H)}"),
-      class = "no_data_frame"
-    )
+  rlang::check_data_frame(.H, class = "no_data_frame")
+  rlang::check_data_frame(.P, allow_null = TRUE, class = "no_data_frame")
+  rlang::check_data_frame(.D, allow_null = TRUE, class = "no_data_frame")
+
+  chequear_columnas(.H, c("HB010", "HB020"))
+  if (!is.null(.P)) {
+    chequear_columnas(.P, c("pi01", "pi02"))
+  }
+  if (!is.null(.D)) {
+    chequear_columnas(.D, c("DB010", "DB020"))
   }
 
   anio <- unique(.H$HB010)
@@ -172,15 +177,7 @@ chequear_bases_hogares <- function(.H, .P, .D) {
   }
 
   if (!is.null(.P)) {
-    if (!is.data.frame(.P)) {
-      cli::cli_abort(
-        c(
-          ".P debe ser un data.frame o tibble.",
-          "x" = "Se paso un {class(.P)}"
-        ),
-        class = "no_data_frame"
-      )
-    } else if (is.null(attr(.P, "base"))) {
+    if (is.null(attr(.P, "base"))) {
       cli::cli_abort(
         ".P debe ser una base P expandida con expandir_personas().",
         class = "no_expandida"
@@ -216,16 +213,6 @@ chequear_bases_hogares <- function(.H, .P, .D) {
   }
 
   if (!is.null(.D)) {
-    if (!is.data.frame(.D)) {
-      cli::cli_abort(
-        c(
-          ".D debe ser un data.frame o tibble.",
-          "x" = "Se paso un {class(.D)}"
-        ),
-        class = "no_data_frame"
-      )
-    }
-
     anio_d <- unique(.D$DB010)
     pais_d <- unique(.D$DB020)
 

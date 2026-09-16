@@ -149,3 +149,33 @@ test_that("Error, H y D distintos paises", {
   )
   expect_error(expandir_hogares(H, P, D), class = "d_dif_pais")
 })
+
+test_that("se validan las columnas de identificacion antes de expandir hogares", {
+  conjuntos <- list(
+    .H = tibble::tibble(HB010 = 2023, HB020 = "DE"),
+    .D = tibble::tibble(DB010 = 2023, DB020 = "DE"),
+    .P = structure(tibble::tibble(pi01 = 2023, pi02 = "DE"), base = "P")
+  )
+  
+  for (argumento in names(conjuntos)) {
+    columnas <- names(conjuntos[[argumento]])
+    
+    for (faltantes in list(columnas[1], columnas[2], columnas)) {
+      argumentos <- conjuntos
+      argumentos[[argumento]] <- conjuntos[[argumento]][setdiff(
+        columnas,
+        faltantes
+      )]
+      
+      error <- expect_error(
+        do.call(expandir_hogares, argumentos),
+        class = "columnas_faltantes"
+      )
+      expect_match(conditionMessage(error), argumento, fixed = TRUE)
+      
+      for (columna in faltantes) {
+        expect_match(conditionMessage(error), columna, fixed = TRUE)
+      }
+    }
+  }
+})

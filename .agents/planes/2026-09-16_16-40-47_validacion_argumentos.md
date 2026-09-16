@@ -39,3 +39,16 @@ Solicitud: «Bien, pasemos a la próxima entrega.»
 - devtools::test(): 132 expectativas aprobadas, sin fallas, advertencias ni omisiones. Persisten las advertencias de configuración regional al iniciar R, fuera de los tests.
 - git diff --check sin errores.
 - Próxima entrega: estandarizar_hogares(). La concordancia estricta continúa reservada para la tercera etapa.
+
+## Tercera entrega ejecutada: estandarizar_hogares()
+
+Solicitud: «Genial, pasemos a la siguiente entrega».
+
+- Se reemplazaron los controles manuales de tipo en chequear_bases_hogares() por rlang::check_data_frame(), conservando no_data_frame. H es obligatorio; el auxiliar permite P y D nulos porque estandarizar_hogares() no necesita P y D es opcional.
+- Se reutiliza chequear_columnas() para HB010/HB020, pi01/pi02 y DB010/DB020 antes de acceder a ellas. Se conserva columnas_faltantes, indicando argumento y columnas.
+- El cambio es efectivo en estandarizar_hogares(), expandir_hogares() y calcular_hogares(). Se ampliaron sus tests con ausencias individuales y conjuntas de columnas; se comprobaron H omitido o NULL, tipos invalidos y aceptación de data frames, tibbles y auxiliares opcionales en el validador.
+- La concordancia y los controles de atributos no cambiaron. La obligatoriedad de P en las entradas que lo necesitan se abordará en sus entregas.
+- Código formateado con air; no cambió el contenido de la documentación ni las firmas.
+- devtools::test(): 209 expectativas aprobadas, sin fallas, advertencias ni omisiones. Persisten las advertencias regionales al iniciar R, fuera de los tests.
+- git diff --check sin errores.
+- Próxima entrega: expandir_hogares().
