@@ -52,3 +52,17 @@ Solicitud: «Genial, pasemos a la siguiente entrega».
 - devtools::test(): 209 expectativas aprobadas, sin fallas, advertencias ni omisiones. Persisten las advertencias regionales al iniciar R, fuera de los tests.
 - git diff --check sin errores.
 - Próxima entrega: expandir_hogares().
+
+## Cuarta entrega ejecutada: expandir_hogares()
+
+Solicitud: «Bien, pasemos a la siguiente entrega».
+
+- .expandir y .etiquetar usan rlang::check_bool(), conservando no_logical e identificando correctamente el argumento.
+- Se exige .P como data frame, rechazando NULL y el argumento omitido con no_data_frame.
+- Se comprueba que el atributo exacto expandida de P sea un único TRUE o FALSE, con clase no_expandida. FALSE es válido: expresa que se descartaron variables originales.
+- El chequeo compartido del atributo base usa coincidencia exacta del nombre e identical() con "P", evitando errores incidentales ante NA o vectores y conservando no_p y no_expandida.
+- Se actualizaron los insumos sintéticos y los tests de argumentos lógicos, P obligatorio y atributos inválidos; se comprueba que ambos valores de expandida superan ese control y alcanzan el chequeo siguiente.
+- Documentación de .P actualizada y regenerada con devtools::document(); código formateado con air.
+- devtools::test(): 251 expectativas aprobadas, sin fallas, advertencias ni omisiones. R sigue emitiendo advertencias regionales al iniciar, fuera de los tests.
+- git diff --check sin errores.
+- Próxima entrega: calcular_personas(). La concordancia continúa pendiente para la etapa acordada.

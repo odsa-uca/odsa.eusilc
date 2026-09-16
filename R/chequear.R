@@ -177,12 +177,12 @@ chequear_bases_hogares <- function(.H, .P, .D) {
   }
 
   if (!is.null(.P)) {
-    if (is.null(attr(.P, "base"))) {
+    if (is.null(attr(.P, "base", exact = TRUE))) {
       cli::cli_abort(
         ".P debe ser una base P expandida con expandir_personas().",
         class = "no_expandida"
       )
-    } else if (attr(.P, "base") != "P") {
+    } else if (!identical(attr(.P, "base", exact = TRUE), "P")) {
       cli::cli_abort(
         ".P debe ser una base P.",
         class = "no_p"

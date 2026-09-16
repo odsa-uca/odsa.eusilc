@@ -19,39 +19,72 @@ test_that("Error, D no es data.frame", {
       pi01 = 2023,
       pi02 = "DE"
     ),
-    base = "P"
+    base = "P",
+    expandida = FALSE
   )
   expect_error(expandir_hogares(H, P, ""), class = "no_data_frame")
 })
 
-# No pasar logicals ----------------------------------------------------------
-test_that("Error, expandir no es logical", {
-  H <- tibble::tibble(
-    HB010 = 2023,
-    HB020 = "DE"
-  )
+# Argumentos logicos ---------------------------------------------------------
+test_that("los argumentos logicos requieren un unico TRUE o FALSE", {
+  H <- tibble::tibble(HB010 = 2023, HB020 = "DE")
   P <- structure(
-    tibble::tibble(
-      pi01 = 2023,
-      pi02 = "DE"
-    ),
-    base = "P"
+    tibble::tibble(pi01 = 2023, pi02 = "DE"),
+    base = "P",
+    expandida = FALSE
   )
-  expect_error(expandir_hogares(H, P, NULL, ""), class = "no_logical")
+  
+  for (argumento in c(".expandir", ".etiquetar")) {
+    for (valor in list("", 0, 1, NA, NULL, logical(), c(TRUE, FALSE))) {
+      argumentos <- list(.H = H, .P = P)
+      argumentos[argumento] <- list(valor)
+      
+      error <- expect_error(
+        do.call(expandir_hogares, argumentos),
+        class = "no_logical"
+      )
+      expect_match(conditionMessage(error), argumento, fixed = TRUE)
+    }
+  }
 })
-test_that("Error, expandir no es logical", {
-  H <- tibble::tibble(
-    HB010 = 2023,
-    HB020 = "DE"
-  )
-  P <- structure(
-    tibble::tibble(
-      pi01 = 2023,
-      pi02 = "DE"
-    ),
-    base = "P"
-  )
-  expect_error(expandir_hogares(H, P, NULL, TRUE, ""), class = "no_logical")
+
+test_that("P es obligatorio", {
+  H <- tibble::tibble(HB010 = 2023, HB020 = "DE")
+  
+  expect_error(expandir_hogares(H), "\\.P", class = "no_data_frame")
+  expect_error(expandir_hogares(H, NULL), "\\.P", class = "no_data_frame")
+})
+
+test_that("P debe identificar una base de personas armonizada", {
+  H <- tibble::tibble(HB010 = 2023, HB020 = "DE")
+  P <- tibble::tibble(pi01 = 2023, pi02 = "DE")
+  
+  expect_error(expandir_hogares(H, P), class = "no_expandida")
+  
+  for (valor in list("H", NA, character(), c("P", "H"))) {
+    attr(P, "base") <- valor
+    expect_error(expandir_hogares(H, P), class = "no_p")
+  }
+  
+  attr(P, "base") <- "P"
+  
+  for (valor in list(NULL, NA, 1, "TRUE", logical(), c(TRUE, FALSE))) {
+    attr(P, "expandida") <- valor
+    expect_error(expandir_hogares(H, P), class = "no_expandida")
+  }
+  
+  attr(P, "expandida_extra") <- TRUE
+  attr(P, "expandida") <- NULL
+  expect_error(expandir_hogares(H, P), class = "no_expandida")
+  
+  for (valor in c(TRUE, FALSE)) {
+    attr(P, "expandida") <- valor
+    expect_error(
+      expandir_hogares(H, P, .etiquetar = NA),
+      "\\.etiquetar",
+      class = "no_logical"
+    )
+  }
 })
 
 # Pasar apiladas -------------------------------------------------------------
@@ -65,7 +98,8 @@ test_that("Error, varios anios", {
       pi01 = 2023,
       pi02 = "DE"
     ),
-    base = "P"
+    base = "P",
+    expandida = FALSE
   )
   expect_error(expandir_hogares(H, P), class = "varios_anios")
 })
@@ -79,7 +113,8 @@ test_that("Error, varios paises", {
       pi01 = 2023,
       pi02 = "DE"
     ),
-    base = "P"
+    base = "P",
+    expandida = FALSE
   )
   expect_error(expandir_hogares(H, P), class = "varios_paises")
 })
@@ -95,7 +130,8 @@ test_that("Error, H y P distintos anios", {
       pi01 = 2022,
       pi02 = "DE"
     ),
-    base = "P"
+    base = "P",
+    expandida = FALSE
   )
   expect_error(expandir_hogares(H, P), class = "p_dif_anio")
 })
@@ -109,7 +145,8 @@ test_that("Error, H y P distintos paises", {
       pi01 = 2023,
       pi02 = "ES"
     ),
-    base = "P"
+    base = "P",
+    expandida = FALSE
   )
   expect_error(expandir_hogares(H, P), class = "p_dif_pais")
 })
@@ -123,7 +160,8 @@ test_that("Error, H y D distintos anios", {
       pi01 = 2023,
       pi02 = "DE"
     ),
-    base = "P"
+    base = "P",
+    expandida = FALSE
   )
   D <- tibble::tibble(
     DB010 = 2022,
@@ -141,7 +179,8 @@ test_that("Error, H y D distintos paises", {
       pi01 = 2023,
       pi02 = "DE"
     ),
-    base = "P"
+    base = "P",
+    expandida = FALSE
   )
   D <- tibble::tibble(
     DB010 = 2023,
@@ -154,25 +193,29 @@ test_that("se validan las columnas de identificacion antes de expandir hogares",
   conjuntos <- list(
     .H = tibble::tibble(HB010 = 2023, HB020 = "DE"),
     .D = tibble::tibble(DB010 = 2023, DB020 = "DE"),
-    .P = structure(tibble::tibble(pi01 = 2023, pi02 = "DE"), base = "P")
+    .P = structure(
+      tibble::tibble(pi01 = 2023, pi02 = "DE"),
+      base = "P",
+      expandida = FALSE
+    )
   )
-  
+
   for (argumento in names(conjuntos)) {
     columnas <- names(conjuntos[[argumento]])
-    
+
     for (faltantes in list(columnas[1], columnas[2], columnas)) {
       argumentos <- conjuntos
       argumentos[[argumento]] <- conjuntos[[argumento]][setdiff(
         columnas,
         faltantes
       )]
-      
+
       error <- expect_error(
         do.call(expandir_hogares, argumentos),
         class = "columnas_faltantes"
       )
       expect_match(conditionMessage(error), argumento, fixed = TRUE)
-      
+
       for (columna in faltantes) {
         expect_match(conditionMessage(error), columna, fixed = TRUE)
       }
