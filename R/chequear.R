@@ -1,4 +1,102 @@
 # ----------------------------------------------------------------------------
+#' Obtiene el unico anio y pais validos de una base
+#'
+#' @param .datos Data frame de una base suministrada.
+#' @param .columnas Nombres de las columnas de anio y pais, en ese orden.
+#' @param .argumento Nombre del argumento para los mensajes.
+#'
+#' @returns Lista con anio y pais.
+obtener_periodo_base <- function(
+  .datos,
+  .columnas,
+  .argumento = rlang::caller_arg(.datos)
+) {
+  chequear_columnas(.datos, .columnas, .argumento)
+
+  if (nrow(.datos) == 0L) {
+    cli::cli_abort(
+      "{.arg {(.argumento)}} no debe estar vacia.",
+      class = "base_vacia"
+    )
+  }
+
+  periodo <- list()
+  for (indice in seq_along(.columnas)) {
+    campo <- c("anio", "pais")[[indice]]
+    columna <- .columnas[[indice]]
+    valores <- unique(.datos[[columna]])
+
+    if (anyNA(valores)) {
+      cli::cli_abort(
+        "{.arg {(.argumento)}} contiene valores faltantes en {.field {columna}} ({.field {campo}}).",
+        class = "valores_faltantes"
+      )
+    }
+
+    if (length(valores) != 1L) {
+      cli::cli_abort(
+        "{.arg {(.argumento)}} debe contener un unico valor en {.field {columna}} ({.field {campo}}); se encontraron {valores}.",
+        class = c("varios_anios", "varios_paises")[[indice]]
+      )
+    }
+
+    periodo[[campo]] <- valores
+  }
+
+  return(periodo)
+}
+
+# ----------------------------------------------------------------------------
+#' Chequea la concordancia de una base auxiliar con la principal
+#'
+#' @param .referencia Lista con anio y pais validos de la base principal.
+#' @param .auxiliar Lista con anio y pais validos de la auxiliar.
+#' @param .principal Nombre del argumento de la base principal.
+#' @param .argumento Nombre del argumento de la base auxiliar.
+#' @param .prefijo Prefijo de las clases de discrepancia: p, d o r.
+#'
+#' @returns NULL, invisiblemente.
+chequear_concordancia <- function(
+  .referencia,
+  .auxiliar,
+  .principal,
+  .argumento,
+  .prefijo
+) {
+  for (campo in c("anio", "pais")) {
+    if (.referencia[[campo]] != .auxiliar[[campo]]) {
+      cli::cli_abort(
+        c(
+          "{.arg {(.principal)}} y {.arg {(.argumento)}} deben corresponder al mismo {campo}.",
+          "x" = "{.arg {(.principal)}} corresponde a {(.referencia[[campo]])} y {.arg {(.argumento)}} a {(.auxiliar[[campo]])}."
+        ),
+        class = paste0(.prefijo, "_dif_", campo)
+      )
+    }
+  }
+
+  invisible(NULL)
+}
+
+# ----------------------------------------------------------------------------
+#' Informa si el pais validado no fue probado con el paquete
+#'
+#' @param .periodo Lista con anio y pais validos.
+#'
+#' @returns NULL, invisiblemente.
+informar_pais_no_probado <- function(.periodo) {
+  if (!(.periodo$pais %in% paises_probados)) {
+    cli::cli_h1("Ojo!")
+    cli::cli_bullets(c(
+      "!" = "{(.periodo$pais)} no ha sido testeado!",
+      "i" = "Por ahora se han testeado {paises_probados}",
+      "i" = "Revisa las SILC Disclosure Control Rules de {(.periodo$anio)} para ver las diferencias especificas de {(.periodo$pais)}"
+    ))
+  }
+
+  invisible(NULL)
+}
+# ----------------------------------------------------------------------------
 #' Chequea que los conjuntos P, D y R sean adecuados
 #'
 #' @param .P Argumento .P
@@ -11,93 +109,20 @@ chequear_bases_personas <- function(.P, .D, .R) {
   rlang::check_data_frame(.D, allow_null = TRUE, class = "no_data_frame")
   rlang::check_data_frame(.R, allow_null = TRUE, class = "no_data_frame")
 
-  chequear_columnas(.P, c("PB010", "PB020"))
-
+  referencia <- obtener_periodo_base(.P, c("PB010", "PB020"))
+  
   if (!is.null(.D)) {
-    chequear_columnas(.D, c("DB010", "DB020"))
+    periodo_d <- obtener_periodo_base(.D, c("DB010", "DB020"))
+    chequear_concordancia(referencia, periodo_d, ".P", ".D", "d")
   }
   if (!is.null(.R)) {
-    chequear_columnas(.R, c("RB010", "RB020"))
+    periodo_r <- obtener_periodo_base(.R, c("RB010", "RB020"))
+    chequear_concordancia(referencia, periodo_r, ".P", ".R", "r")
   }
+  
+  informar_pais_no_probado(referencia)
 
-  anio <- unique(.P$PB010)
-  pais <- unique(.P$PB020)
-
-  if (length(anio) > 1) {
-    cli::cli_abort(
-      c(
-        "Solo se aceptan bases P de un unico anio",
-        "x" = "Se proporciono una base para {anio}."
-      ),
-      class = "varios_anios"
-    )
-  }
-  if (length(pais) > 1) {
-    cli::cli_abort(
-      c(
-        "Solo se aceptan bases P de un unico pais",
-        "x" = "Se proporciono una base para {pais}."
-      ),
-      class = "varios_paises"
-    )
-  }
-
-  if (!(pais %in% paises_probados)) {
-    cli::cli_h1("Ojo!")
-    cli::cli_bullets(c(
-      "!" = "{pais} no ha sido testeado!",
-      "i" = "Por ahora se han testeado {paises_probados}",
-      "i" = "Revisa las SILC Disclosure Control Rules de {anio} para ver las diferencias especificas de {pais}"
-    ))
-  }
-
-  if (!is.null(.D)) {
-    anio_d <- unique(.D$DB010)
-    pais_d <- unique(.D$DB020)
-
-    if (!(anio %in% anio_d)) {
-      cli::cli_abort(
-        c(
-          ".P y .D deben corresponder al mismo anio",
-          "x" = ".P corresponde a {anio} y .D a {anio_d}"
-        ),
-        class = "d_dif_anio"
-      )
-    }
-    if (!(pais %in% pais_d)) {
-      cli::cli_abort(
-        c(
-          ".P y .D deben corresponder al mismo pais",
-          "x" = ".P corresponde a {pais} y .D a {pais_d}"
-        ),
-        class = "d_dif_pais"
-      )
-    }
-  }
-
-  if (!is.null(.R)) {
-    anio_r <- unique(.R$RB010)
-    pais_r <- unique(.R$RB020)
-
-    if (!(anio %in% anio_r)) {
-      cli::cli_abort(
-        c(
-          ".P y .R deben corresponder al mismo anio",
-          "x" = ".P corresponde a {anio} y .R a {anio_r}"
-        ),
-        class = "r_dif_anio"
-      )
-    }
-    if (!(pais %in% pais_r)) {
-      cli::cli_abort(
-        c(
-          ".P y .R deben corresponder al mismo pais",
-          "x" = ".P corresponde a {pais} y .R a {pais_r}"
-        ),
-        class = "r_dif_pais"
-      )
-    }
-  }
+  invisible(NULL)
 }
 
 # ----------------------------------------------------------------------------
@@ -121,6 +146,7 @@ chequear_columnas <- function(
       class = "columnas_faltantes"
     )
   }
+
   invisible(NULL)
 }
 
@@ -137,104 +163,30 @@ chequear_bases_hogares <- function(.H, .P, .D) {
   rlang::check_data_frame(.P, allow_null = TRUE, class = "no_data_frame")
   rlang::check_data_frame(.D, allow_null = TRUE, class = "no_data_frame")
 
-  chequear_columnas(.H, c("HB010", "HB020"))
-  if (!is.null(.P)) {
-    chequear_columnas(.P, c("pi01", "pi02"))
-  }
-  if (!is.null(.D)) {
-    chequear_columnas(.D, c("DB010", "DB020"))
-  }
-
-  anio <- unique(.H$HB010)
-  pais <- unique(.H$HB020)
-
-  if (length(anio) > 1) {
-    cli::cli_abort(
-      c(
-        "Solo se aceptan bases H de un unico anio",
-        "x" = "Se proporciono una base para {anio}."
-      ),
-      class = "varios_anios"
-    )
-  }
-  if (length(pais) > 1) {
-    cli::cli_abort(
-      c(
-        "Solo se aceptan bases H de un unico pais",
-        "x" = "Se proporciono una base para {pais}."
-      ),
-      class = "varios_paises"
-    )
-  }
-
-  if (!(pais %in% paises_probados)) {
-    cli::cli_h1("Ojo!")
-    cli::cli_bullets(c(
-      "!" = "{pais} no ha sido testeado!",
-      "i" = "Por ahora se han testeado {paises_probados}",
-      "i" = "Revisa las SILC Disclosure Control Rules de {anio} para ver las diferencias especificas de {pais}"
-    ))
-  }
+  referencia <- obtener_periodo_base(.H, c("HB010", "HB020"))
 
   if (!is.null(.P)) {
+    periodo_p <- obtener_periodo_base(.P, c("pi01", "pi02"))
+    
     if (is.null(attr(.P, "base", exact = TRUE))) {
       cli::cli_abort(
         ".P debe ser una base P expandida con expandir_personas().",
         class = "no_expandida"
       )
     } else if (!identical(attr(.P, "base", exact = TRUE), "P")) {
-      cli::cli_abort(
-        ".P debe ser una base P.",
-        class = "no_p"
-      )
+      cli::cli_abort(".P debe ser una base P.", class = "no_p")
     }
-
-    anio_p <- unique(.P$pi01)
-    pais_p <- unique(.P$pi02)
-
-    if (!(anio %in% anio_p)) {
-      cli::cli_abort(
-        c(
-          ".H y .P deben corresponder al mismo anio",
-          "x" = ".H corresponde a {anio} y .P a {anio_p}"
-        ),
-        class = "p_dif_anio"
-      )
-    }
-    if (!(pais %in% pais_p)) {
-      cli::cli_abort(
-        c(
-          ".H y .P deben corresponder al mismo pais",
-          "x" = ".H corresponde a {pais} y .P a {pais_p}"
-        ),
-        class = "p_dif_pais"
-      )
-    }
+    
+    chequear_concordancia(referencia, periodo_p, ".H", ".P", "p")
   }
-
   if (!is.null(.D)) {
-    anio_d <- unique(.D$DB010)
-    pais_d <- unique(.D$DB020)
-
-    if (!(anio %in% anio_d)) {
-      cli::cli_abort(
-        c(
-          ".H y .D deben corresponder al mismo anio",
-          "x" = ".H corresponde a {anio} y .D a {anio_d}"
-        ),
-        class = "d_dif_anio"
-      )
-    }
-    if (!(pais %in% pais_d)) {
-      cli::cli_abort(
-        c(
-          ".H y .D deben corresponder al mismo pais",
-          "x" = ".H corresponde a {pais} y .D a {pais_d}"
-        ),
-        class = "d_dif_pais"
-      )
-    }
+    periodo_d <- obtener_periodo_base(.D, c("DB010", "DB020"))
+    chequear_concordancia(referencia, periodo_d, ".H", ".D", "d")
   }
+  
+  informar_pais_no_probado(referencia)
+
+  invisible(NULL)
 }
 
 # ============================================================================
@@ -277,48 +229,4 @@ chequear_perdidas <- function(.datos, .base) {
       "i" = "Si alguna no esta mencionada en la estandarizacion, puede haber problemas!"
     ))
   }
-}
-
-# ============================================================================
-obtener_contexto_advertencias <- function(.datos) {
-  identificadores <- list(
-    P = list(c("PB010", "PB020"), c("pi01", "pi02")),
-    H = list(c("HB010", "HB020"), c("hi01", "hi02"))
-  )
-
-  contexto <- NULL
-  for (base in names(identificadores)) {
-    for (columnas in identificadores[[base]]) {
-      if (all(columnas %in% names(.datos))) {
-        contexto <- list(
-          base = base,
-          anio = unique(.datos[[columnas[1]]]),
-          pais = unique(.datos[[columnas[2]]])
-        )
-        break
-      }
-    }
-    if (!is.null(contexto)) break
-  }
-
-  if (is.null(contexto)) {
-    rlang::abort(
-      "No se pudo identificar si .datos es una base P o H.",
-      class = "base_desconocida"
-    )
-  }
-  if (length(contexto$anio) != 1 || is.na(contexto$anio)) {
-    rlang::abort(
-      ".datos debe corresponder a un unico anio.",
-      class = "varios_anios"
-    )
-  }
-  if (length(contexto$pais) != 1 || is.na(contexto$pais)) {
-    rlang::abort(
-      ".datos debe corresponder a un unico pais.",
-      class = "varios_paises"
-    )
-  }
-
-  contexto
 }

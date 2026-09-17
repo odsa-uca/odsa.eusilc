@@ -260,3 +260,50 @@ por entrega, formatear con air y regenerar documentación cuando corresponda.
 - Queda completada la segunda etapa para las funciones enumeradas en el plan.
   Próxima entrega: tercera etapa, concordancia de personas, pendiente de
   confirmación. No se avanzó en esa etapa.
+
+## Tercera etapa ejecutada: concordancia de personas y hogares
+
+- Tras revisar la implementación y explicar el propósito de los validadores
+  de personas y hogares, se autorizó implementar la propuesta compartida.
+- chequear_bases_personas() y chequear_bases_hogares() conservan los controles
+  de tipo y coordinan las bases y columnas propias de cada entrada. El control
+  del atributo base de las personas armonizadas se conserva en hogares.
+- Nuevo auxiliar obtener_periodo_base(): comprueba columnas, rechaza bases sin
+  filas con base_vacia, valores NA con valores_faltantes y múltiples años o
+  países con varios_anios/varios_paises. Identifica el argumento y, cuando
+  corresponde, la columna. Los auxiliares opcionales NULL siguen siendo válidos.
+- Nuevo auxiliar chequear_concordancia(): compara los valores únicos ya
+  validados y conserva las clases p_dif_anio/pais, d_dif_anio/pais y
+  r_dif_anio/pais. La comparación admite años enteros y numéricos equivalentes.
+- informar_pais_no_probado() concentra el aviso y sólo se ejecuta después de
+  validar la concordancia. No se modificaron las restricciones de cobertura
+  de individuos u hogares ni se agregó validación de todas las variables.
+- Nuevo archivo test-concordancia.R con 367 expectativas. Recorre las entradas
+  de estandarización y expansión de personas y hogares, y calcular_hogares(),
+  con vacíos, NA solos o mezclados y valores adicionales en cada base. Cubre
+  discrepancias, combinaciones año-país sin coincidencia, auxiliares NULL,
+  repeticiones válidas, data frames/tibbles y años enteros/numéricos equivalentes.
+- Auxiliares documentados con roxygen y documentación regenerada mediante
+  devtools::document(); código formateado con air.
+- devtools::test(): 1071 expectativas aprobadas, sin fallas, advertencias ni
+  omisiones. Persisten las advertencias regionales al iniciar R, fuera de los
+  tests. git diff --check sin errores.
+- No se cambiaron ramas ni se hicieron commits. La implementación queda
+  disponible para revisión; no se avanzó con cambios adicionales.
+
+### Ajuste posterior: bases opcionales en los coordinadores
+
+- El manejo de auxiliares NULL se trasladó a chequear_bases_personas() y
+  chequear_bases_hogares(). Cada auxiliar presente completa sus controles de
+  columnas, valores y concordancia antes de pasar a la siguiente. En hogares,
+  el bloque de .P reúne también el control de su atributo base.
+- obtener_periodo_base() y chequear_concordancia() ya no tienen salidas por
+  NULL. Su documentación refleja que reciben bases presentes y períodos válidos.
+  Los controles de tipo iniciales permanecen en los coordinadores.
+- Se conservaron los mensajes mejorados por el usuario y el uso de aspecto
+  para nombrar los componentes anio y pais.
+- Los tests existentes cubren las combinaciones de auxiliares NULL. Se agregan
+  dos expectativas para el orden de errores entre auxiliares.
+- Documentación regenerada, código formateado con air y git diff --check sin
+  errores. devtools::test(): 1073 expectativas aprobadas, sin fallas,
+  advertencias ni omisiones en los tests.
