@@ -187,3 +187,28 @@ por entrega, formatear con air y regenerar documentación cuando corresponda.
   tests.
 - git diff --check sin errores. Se conservaron los cambios previos del plan.
 - Próxima entrega: calcular_hogares(), pendiente de confirmación.
+
+## Séptima entrega ejecutada: calcular_hogares()
+
+- Se exige .P como data frame con rlang::check_data_frame(), rechazando NULL
+  y el argumento omitido con no_data_frame. Se conserva el validador compartido.
+- Se requieren los atributos exactos estandar = TRUE y base = "H" en .H,
+  conservando no_estandar y no_h.
+- El atributo exacto expandida de .P debe ser un único TRUE o FALSE, con clase
+  no_expandida. Ambos valores son válidos. .expandir usa check_bool(),
+  conservando no_logical e identificando el argumento en el mensaje.
+- Se comprueban HB030 y pi04 con chequear_columnas() antes de agregar personas
+  y unir las bases. Los controles de año, país y base de .P siguen a cargo del
+  validador compartido; no se modificó la concordancia.
+- Los tests de la función contienen 147 expectativas. Cubren argumentos
+  obligatorios, tipos, atributos exactos, booleanos e identificadores ausentes.
+  Las entradas válidas combinan data frames y tibbles con ambos estados de
+  expansión de .P y ambas opciones de .expandir. Se simulan la agregación, el
+  cálculo y el informe, comprobando la unión real con datos sintéticos.
+- Documentación de .H y .P actualizada y regenerada con devtools::document();
+  código formateado con air, incluidos ajustes de formato en los auxiliares.
+- devtools::test(): 535 expectativas aprobadas, sin fallas, advertencias ni
+  omisiones. Persisten las advertencias regionales al iniciar R, fuera de los
+  tests.
+- git diff --check sin errores. No se cambiaron ramas ni se hicieron commits.
+- Próxima entrega: etiquetar_eusilc(), pendiente de confirmación.
