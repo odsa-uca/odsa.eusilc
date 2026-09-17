@@ -62,7 +62,7 @@ tabla_ppa_ <- tablas_ppa$interna
 
 tabla_advertencias <- transformar_advertencias(tabla_advertencias)
 
-paises_probados <- c("ES", "IT", "DE", "PL")
+paises_probados <- c("ES", "IT", "DE", "PL", "PT")
 
 # Guardar ------------------------------------------------------------------
 

@@ -166,8 +166,6 @@ chequear_bases_hogares <- function(.H, .P, .D) {
   referencia <- obtener_periodo_base(.H, c("HB010", "HB020"))
 
   if (!is.null(.P)) {
-    periodo_p <- obtener_periodo_base(.P, c("pi01", "pi02"))
-    
     if (is.null(attr(.P, "base", exact = TRUE))) {
       cli::cli_abort(
         ".P debe ser una base P expandida con expandir_personas().",
@@ -177,6 +175,7 @@ chequear_bases_hogares <- function(.H, .P, .D) {
       cli::cli_abort(".P debe ser una base P.", class = "no_p")
     }
     
+    periodo_p <- obtener_periodo_base(.P, c("pi01", "pi02"))
     chequear_concordancia(referencia, periodo_p, ".H", ".P", "p")
   }
   if (!is.null(.D)) {
