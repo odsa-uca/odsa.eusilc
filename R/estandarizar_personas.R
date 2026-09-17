@@ -87,6 +87,8 @@ estandarizar_personas <- function(
   # --------------------------------------------------------------------------
   anio <- unique(.P$PB010)
   pais <- unique(.P$PB020)
+  vble_PL130 <- "PL130" %in% names(.P)
+  vble_PL230 <- "PL230" %in% names(.P)
 
   cli::cli_h1("Estandarizacion")
   advertencias <- obtener_advertencias("P", anio, pais)
@@ -105,8 +107,8 @@ estandarizar_personas <- function(
     "pre. 2021" = anio < 2021,
     "vbles. D" = !is.null(.D),
     "vbles. R" = !is.null(.R),
-    "vble. PL130" = "PL130" %in% names(.P),
-    "vble. PL230" = "PL230" %in% names(.P),
+    "vble. PL130" = vble_PL130,
+    "vble. PL230" = vble_PL230,
     "flags imp." = .flags,
     "advertencias" = advertencias
   )
@@ -136,6 +138,10 @@ estandarizar_personas <- function(
 #'
 #' @returns `tibble`. Conjunto de datos P estandarizado para [imputar_personas()] y [calcular_personas()].
 estandarizar_personas_ <- function(.P, .R, .D, .anio, .pais) {
+  for (variable in setdiff(c("PL130", "PL230"), names(.P))) {
+    .P[[variable]] <- rep(NA_integer_, nrow(.P))
+  }
+
   .P <- estandarizar_anio_personas(.P, .anio)
 
   if (.anio >= 2021) {
@@ -263,7 +269,7 @@ estandarizar_paises_personas <- function(.P, .anio, .pais) {
   if (.pais == "IT" & all(.P$PY120N_F == -4)) {
     .P <- dplyr::mutate(.P, PY120N = 0)
   }
-  
+
   # Puede haber sido leído como logical
   if (.pais == "DE" & .anio < 2021 & all(is.na(.P$DB100))) {
     .P <- dplyr::mutate(.P, DB100 = NA_integer_)

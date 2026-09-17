@@ -120,10 +120,10 @@ imputar_personas <- function(.P) {
   .P <-  imputar_horas(.P)
   .P <-  imputar_laboral_a(.P)
   .P <-  imputar_laboral_b(.P, anio)
-  if ("PL130" %in% names(.P)) {
+  if (!chequear_insumos_perdidos(.P$PL130)) {
     .P <- imputar_tamanio(.P)
   }
-  if ("PL230" %in% names(.P)) {
+  if (!chequear_insumos_perdidos(.P$PL230)) {
     .P <- imputar_sectorpp(.P)
   }
 
@@ -189,7 +189,7 @@ calc_flags_imputacion <- function(.datos, .anio, .pais) {
     )
   }
 
-  if ("PL130" %in% names(.datos)) {
+  if (!chequear_insumos_perdidos(.datos$PL130)) {
     .datos <- dplyr::mutate(
       .datos,
       .fa_PL130 = dplyr::case_when(
@@ -210,7 +210,7 @@ calc_flags_imputacion <- function(.datos, .anio, .pais) {
     )
   }
 
-  if ("PL230" %in% names(.datos)) {
+  if (!chequear_insumos_perdidos(.datos$PL230)) {
     .datos <- dplyr::mutate(
       .datos,
       .f_PL230 = dplyr::case_when(

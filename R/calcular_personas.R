@@ -240,6 +240,18 @@ calcular_personas_ <- function(.P) {
       to = tabla_pl20$pl20,
       default = NA_integer_
     ),
+    pl21a = dplyr::recode_values(
+      PL130,
+      from = tabla_pl21$PL130,
+      to = tabla_pl21$pl21a,
+      default = NA_integer_
+    ),
+    pl21b = dplyr::recode_values(
+      PL130,
+      from = tabla_pl21$PL130,
+      to = tabla_pl21$pl21b,
+      default = NA_integer_
+    )
   )
 
   # Núcleo -----------------------------------
@@ -273,6 +285,9 @@ calcular_personas_ <- function(.P) {
     pl12c = calc_variante_c(PL032, pl12a, pl12b),
     pl13c = calc_variante_c(PL032, pl13a, pl13b),
     pl20c = calc_variante_c(PL032, pl20a, pl20b),
+    pl22 = dplyr::if_else(PL230 != 99, PL230, NA_integer_),
+    pl30 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "a"),
+    pl31 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "b"),
     pl50 = calc_egp(PL051A, PL040A, PL150),
     pl40a = calc_informalidad(PL040A, PY030G, PY035G, "a"),
     pl40b = calc_informalidad(PL040A, PY030G, PY035G, "b"),
@@ -288,6 +303,9 @@ calcular_personas_ <- function(.P) {
       PY100N +
       PY080N,
     py10 = PY010N + PY050N,
+    py13 = calc_y_sector(py10, pl31, 1),
+    py14 = calc_y_sector(py10, pl31, 2),
+    py15 = calc_y_sector(py10, pl31, 3),
     py11 = PY010N,
     py12 = PY050N,
     py20 = PY090N + PY110N + PY120N + PY130N + PY140N + PY100N + PY080N,
@@ -311,76 +329,15 @@ calcular_personas_ <- function(.P) {
     .keep = "all"
   )
 
-  if ("PL130" %in% names(.P)) {
-    .P <- dplyr::mutate(
-      .data = .P,
-      pl21a = dplyr::recode_values(
-        PL130,
-        from = tabla_pl21$PL130,
-        to = tabla_pl21$pl21a,
-        default = NA_integer_
-      ),
-      pl21b = dplyr::recode_values(
-        PL130,
-        from = tabla_pl21$PL130,
-        to = tabla_pl21$pl21b,
-        default = NA_integer_
-      ),
-      .keep = "all"
-    )
-  } else {
-    .P <- dplyr::mutate(
-      .data = .P,
-      pl21a = NA_integer_,
-      pl21b = NA_integer_,
-      pl30 = NA_integer_,
-      pl31 = NA_integer_,
-      py13 = NA_real_,
-      py14 = NA_real_,
-      py15 = NA_real_,
-      .keep = "all"
-    )
-  }
-
-  if ("PL230" %in% names(.P)) {
-    .P <- dplyr::mutate(
-      .data = .P,
-      pl22 = dplyr::if_else(PL230 != 99, PL230, NA_integer_)
-    )
-  } else {
-    .P <- dplyr::mutate(
-      .data = .P,
-      pl22 = NA_integer_,
-      pl30 = NA_integer_,
-      pl31 = NA_integer_,
-      py13 = NA_real_,
-      py14 = NA_real_,
-      py15 = NA_real_,
-      .keep = "all"
-    )
-  }
-
-  if (all(c("PL130", "PL230") %in% names(.P))) {
-    .P <- dplyr::mutate(
-      .data = .P,
-      pl30 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "a"),
-      pl31 = calc_heterogeneidad(PL040A, PL032, pl20a, pl21b, pl22, pl13a, "b"),
-      py13 = calc_y_sector(py10, pl31, 1),
-      py14 = calc_y_sector(py10, pl31, 2),
-      py15 = calc_y_sector(py10, pl31, 3),
-      .keep = "all"
-    )
-  }
-
   # Ingresos mensuales y ppa -----------------
   .P <- dplyr::mutate(
     .data = .P,
     dplyr::across(
-      c(py00:py25, py13:py15),
+      py00:py25,
       \(y) (y * PX010) / 12
     ),
     dplyr::across(
-      c(py00:py25, py13:py15, py11h, py12h),
+      c(py00:py25, py11h, py12h),
       \(y) y / ppa_factor * ppa_factor_us,
       .names = "{.col}ppa"
     ),

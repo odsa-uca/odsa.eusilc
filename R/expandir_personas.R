@@ -109,7 +109,7 @@ expandir_personas <- function(
   cli::cli_h1("Estandarizacion")
   advertencias <- obtener_advertencias("P", anio, pais)
   informar_insumos_personas(.P, .D, .R, anio)
-  
+
   .P <- estandarizar_personas_(.P, .R, .D, anio, pais)
 
   if (.imputar) {
@@ -121,10 +121,10 @@ expandir_personas <- function(
     .P <- imputar_horas(.P)
     .P <- imputar_laboral_a(.P)
     .P <- imputar_laboral_b(.P, anio)
-    if (vble_PL130) {
+    if (!chequear_insumos_perdidos(.P$PL130)) {
       .P <- imputar_tamanio(.P)
     }
-    if (vble_PL230) {
+    if (!chequear_insumos_perdidos(.P$PL230)) {
       .P <- imputar_sectorpp(.P)
     }
   }
