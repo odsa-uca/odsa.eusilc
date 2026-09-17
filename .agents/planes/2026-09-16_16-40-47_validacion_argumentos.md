@@ -212,3 +212,27 @@ por entrega, formatear con air y regenerar documentación cuando corresponda.
   tests.
 - git diff --check sin errores. No se cambiaron ramas ni se hicieron commits.
 - Próxima entrega: etiquetar_eusilc(), pendiente de confirmación.
+
+## Octava entrega ejecutada: etiquetar_eusilc()
+
+- Se exige .datos como data frame con rlang::check_data_frame(), rechazando
+  NULL y el argumento omitido con no_data_frame.
+- El atributo exacto expandida debe ser un único TRUE o FALSE; ambos estados
+  son válidos. Se usa check_bool() con clase no_expandida.
+- Se exige el atributo exacto base igual a "P" o "H", con clase no_base y un
+  mensaje que identifica el atributo y .datos. Antes no tenía un control propio.
+- No se exigen columnas específicas: sólo se etiquetan las presentes. Una base
+  sin columnas se devuelve sin cambios después de validar sus atributos,
+  evitando un error incidental de labelled::set_value_labels().
+- Nuevo archivo test-etiquetar_eusilc.R con 112 expectativas: tipos, atributos
+  ausentes o inválidos, coincidencias parciales y etiquetado real de personas y
+  hogares en data frames y tibbles, con ambos estados de expansión. Se comprueba
+  la conservación de valores, columnas originales, clases y atributos, y se
+  prueban conjuntos sin columnas o sin variables para etiquetar.
+- Documentación actualizada y regenerada con devtools::document(); código
+  formateado con air. No se modificó la función interna de etiquetado.
+- devtools::test(): 647 expectativas aprobadas, sin fallas, advertencias ni
+  omisiones. Persisten las advertencias regionales al iniciar R, fuera de los
+  tests.
+- git diff --check sin errores. No se cambiaron ramas ni se hicieron commits.
+- Próxima entrega: ver_advertencias(), pendiente de confirmación.

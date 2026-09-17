@@ -7,7 +7,7 @@
 etiquetar_eusilc(.datos)
 }
 \arguments{
-\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos armonizado P o H de la EU-SILC}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos armonizado P o H de la EU-SILC.}
 }
 \value{
 \code{tibble}. Conjunto de datos armonizado P o H con variables y valores etiquetados
