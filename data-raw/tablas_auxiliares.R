@@ -62,8 +62,6 @@ tabla_ppa_ <- tablas_ppa$interna
 
 tabla_advertencias <- transformar_advertencias(tabla_advertencias)
 
-paises_probados <- c("ES", "IT", "DE", "PL", "PT")
-
 # Guardar ------------------------------------------------------------------
 
 usethis::use_data(etiquetas, overwrite = TRUE)
@@ -79,7 +77,6 @@ usethis::use_data(
   tabla_pl01,
   tabla_pl20,
   tabla_pl21,
-  paises_probados,
   internal = TRUE,
   overwrite = TRUE
 )

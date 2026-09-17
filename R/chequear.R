@@ -85,11 +85,12 @@ chequear_concordancia <- function(
 #'
 #' @returns NULL, invisiblemente.
 informar_pais_no_probado <- function(.periodo) {
-  if (!(.periodo$pais %in% paises_probados)) {
+  paises_revisados <- unique(tabla_cobertura$pais)
+  if (!(.periodo$pais %in% paises_revisados)) {
     cli::cli_h1("Ojo!")
     cli::cli_bullets(c(
-      "!" = "{(.periodo$pais)} no ha sido testeado!",
-      "i" = "Por ahora se han testeado {paises_probados}",
+      "!" = "Las diferencias específicas de {(.periodo$pais)} no han sido revisadas!",
+      "i" = "Por ahora se han revisado {paises_revisados}",
       "i" = "Revisa las SILC Disclosure Control Rules de {(.periodo$anio)} para ver las diferencias especificas de {(.periodo$pais)}"
     ))
   }
