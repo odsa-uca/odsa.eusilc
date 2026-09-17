@@ -236,3 +236,27 @@ por entrega, formatear con air y regenerar documentación cuando corresponda.
   tests.
 - git diff --check sin errores. No se cambiaron ramas ni se hicieron commits.
 - Próxima entrega: ver_advertencias(), pendiente de confirmación.
+
+## Novena entrega ejecutada: ver_advertencias()
+
+- Se exige .datos como data frame con rlang::check_data_frame(), rechazando
+  NULL y el argumento omitido con no_data_frame.
+- Se conserva la lectura exacta del atributo advertencias y la clase
+  advertencias_no_disponibles cuando falta. Si existe, debe ser un data frame
+  o tibble; los tipos inválidos se rechazan con no_data_frame y un mensaje que
+  identifica el atributo de .datos.
+- Se aceptan tablas de advertencias vacías y se devuelve el atributo sin
+  modificar. No se exigen columnas de encuesta ni otros atributos porque la
+  función sólo consulta las advertencias almacenadas.
+- Nuevo archivo test-ver_advertencias.R con 57 expectativas: tipos inválidos,
+  atributo ausente o con nombre parcial, y devolución intacta de data frames y
+  tibbles con contenido, sin filas o sin columnas, incluidos sus atributos.
+- Documentación actualizada y regenerada con devtools::document(); código
+  formateado con air. No se modificaron las funciones internas.
+- devtools::test(): 704 expectativas aprobadas, sin fallas, advertencias ni
+  omisiones. Persisten las advertencias regionales al iniciar R, fuera de los
+  tests.
+- git diff --check sin errores. No se cambiaron ramas ni se hicieron commits.
+- Queda completada la segunda etapa para las funciones enumeradas en el plan.
+  Próxima entrega: tercera etapa, concordancia de personas, pendiente de
+  confirmación. No se avanzó en esa etapa.
