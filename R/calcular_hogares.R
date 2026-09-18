@@ -1,5 +1,6 @@
+# ----------------------------------------------------------------------------
 #' Construye variables nuevas a partir de los conjuntos H y P de la EU-SILC
-#' 
+#'
 #' @description
 #' Construye variables nuevas de nivel hogar a partir de los conjuntos H y P
 #' (expandido) de la EU-SILC. Las variables se organizan en cinco bloques: I de
@@ -7,37 +8,39 @@
 #' perceptores. Dependiendo del año y el país de la encuesta y si se
 #' proporcionó en conjunto D, algunas de las variables pueden estar perdidas (`NA`).
 #'
-#' @param .H `data.frame`o `tibble`. Conjunto H de la EU-SILC
-#' @param .P `data.frame`o `tibble`. Conjunto P de la EU-SILC expandido con [expandir_personas()]
+#' @param .H `data.frame` o `tibble`. Conjunto H de la EU-SILC estandarizado
+#'   con [estandarizar_hogares()].
+#' @param .P `data.frame` o `tibble`. Conjunto P de la EU-SILC expandido con
+#'   [expandir_personas()].
 #' @param .expandir `TRUE` o `FALSE` (por defecto). ¿Mantener las variables originales?
 #'
 #' @returns `tibble`. Conjunto H de la EU-SILC estandarizado con variables armonizadas
-#' 
+#'
 #' @details
 #' Las variables construidas, según bloque, son las siguientes
-#' 
+#'
 #' ## (I) Identificación
-#' 
+#'
 #' - hi01. Año de la encuesta
 #' - hi02. País
 #' - hi03. Región
 #' - hi04. Identificador del hogar
 #' - hi06. Ponderador
 #' - hi07. Urbanización
-#' 
+#'
 #' ## (D) Demográficos
-#' 
+#'
 #' - hd01. Tamaño del hogar
 #' - hd02a. Tipo de hogar desagregado
 #' - hd02b. Tipo de hogar dicotómico
 #' - hdxx. (a definir...)
-#' 
+#'
 #' ## (L) Laborales
-#' 
+#'
 #' - hlxx. (a definir...)
-#' 
+#'
 #' ## (Y) Ingresos
-#' 
+#'
 #' - py00. Ingreso total de los miembros
 #' - py10. Ingreso total de los miembros por fuentes laborales
 #' - py11. Ingreso de los miembros por trabajo asalariado
@@ -59,11 +62,11 @@
 #' - hy24. Ingreso total por política social
 #' - hy25. Ingreso total por transferencias
 #' - hy26. Ingreso del hogar por asistencia social
-#' 
+#'
 #' Nota 1: Dependen de las variables PL130 y PL230 del módulo LMH en la base P
-#' 
+#'
 #' ## (P) Perceptores
-#' 
+#'
 #' - hp00. Perceptores de ingreso
 #' - hp10. Perceptores de ingreso por fuentes laborales
 #' - hp11. Perceptores de ingreso por trabajo asalariado
@@ -77,62 +80,65 @@
 #' - hp23. Perceptores de ingreso por pensión privada
 #' - hp24. Perceptores de ingreso por desempleo
 #' - hp25. Perceptores de ingreso por otras ayudas
-#' 
+#'
 #' @export
 calcular_hogares <- function(.H, .P, .expandir = FALSE) {
   chequear_bases_hogares(.H, .P, NULL)
-  
-  if (is.null(attr(.H, "estandar"))) {
+  rlang::check_data_frame(.P, class = "no_data_frame")
+
+  if (!identical(attr(.H, "estandar", exact = TRUE), TRUE)) {
     cli::cli_abort(
       ".H debe ser una base H estandarizada con estandarizar_hogares().",
       class = "no_estandar"
     )
   }
-  if (attr(.H, "base") != "H") {
+  if (!identical(attr(.H, "base", exact = TRUE), "H")) {
     cli::cli_abort(
       ".H debe ser una base H.",
       class = "no_h"
     )
   }
+
+  rlang::check_bool(
+    attr(.P, "expandida", exact = TRUE),
+    arg = 'attr(.P, "expandida")',
+    class = "no_expandida"
+  )
+  rlang::check_bool(.expandir, class = "no_logical")
   
-  if (!is.logical(.expandir)) {
-    cli::cli_abort(
-      c(".expandir debe ser TRUE o FALSE.",
-        "x" = "Se paso un {class(.expandir)}"
-      ),
-      class = "no_logical"
-    )
-  }
-  
+  chequear_columnas(.H, "HB030")
+  chequear_columnas(.P, "pi04")
+
   # --------------------------------------------------------------------------
   cli::cli_h1("Calcular variables nuevas")
   .P <- agregar_personas(.P)
   .H <- dplyr::left_join(
-    x = .H, y = .P,
+    x = .H,
+    y = .P,
     by = dplyr::join_by(HB010 == pi01, HB020 == pi02, HB030 == pi04)
   )
   .H <- calcular_hogares_(.H)
-  
+
   chequear_perdidas(.H, "H")
-  
+
   if (!.expandir) {
     .H <- dplyr::select(.H, dplyr::any_of(names(etiquetas_$H$variables)))
   } else {
     .H <- dplyr::relocate(.H, dplyr::any_of(names(etiquetas_$H$variables)))
   }
-  
+
   .H <- structure(
     .H,
-    "vbles. LMH"= attr(.P, "vble. PL230"),
+    "vbles. LMH" = attr(.P, "vble. PL230"),
     "expandida" = .expandir
   )
-  
+
   return(.H)
 }
 
 # ============================================================================
 #' Construye variables nuevas a partir de los conjuntos H y P de la EU-SILC (interna)
-#' 
+#'
 #' @description
 #' ¡Esta función es interna! Construye variables nuevas de nivel hogar a partir
 #' de los conjuntos H y P (expandido con [expandir_personas()]) de la EU-SILC.
@@ -140,13 +146,13 @@ calcular_hogares <- function(.H, .P, .expandir = FALSE) {
 #' demográficos, L de laborales, Y de ingresos y P de perceptores. Dependiendo
 #' del año y el país de la encuesta y si se proporcionó en conjunto D, algunas
 #' de las variables pueden estar perdidas (`NA`).
-#' 
+#'
 #' @details
 #' Esta función es el núcleo interno de [calcular_hogares()]. Para más detalles
 #' consultar la documentación de esa función.
 #'
 #' @param .H `data.frame`o `tibble`. Conjunto H de la EU-SILC
-#' 
+#'
 #' @returns `tibble`. Conjunto H de la EU-SILC estandarizado con variables armonizadas
 calcular_hogares_ <- function(.H) {
   # PPA --------------------------------------
@@ -155,7 +161,7 @@ calcular_hogares_ <- function(.H) {
     y = tabla_ppa_,
     by = dplyr::join_by(HB010 == PB010, HB020 == PB020)
   )
-  
+
   # Lookup -----------------------------------
   .H <- dplyr::mutate(
     .H,
@@ -166,7 +172,7 @@ calcular_hogares_ <- function(.H) {
       default = NA_integer_
     )
   )
-  
+
   # Núcleo -----------------------------------
   .H <- .H |>
     dplyr::mutate(
@@ -181,8 +187,10 @@ calcular_hogares_ <- function(.H) {
       hd02b = NA_integer_,
       # Bloque L -----------------------
       # Bloque Y -----------------------
-      hy00 = py00 + (HY040N + HY050N + HY060N + HY070N + HY080N + HY090N + HY110N) / 12,
-      hy20 = py20 + (HY040N + HY050N + HY060N + HY070N + HY080N + HY090N + HY110N) / 12,
+      hy00 = py00 +
+        (HY040N + HY050N + HY060N + HY070N + HY080N + HY090N + HY110N) / 12,
+      hy20 = py20 +
+        (HY040N + HY050N + HY060N + HY070N + HY080N + HY090N + HY110N) / 12,
       hy21 = (HY040N + HY080N + HY090N + HY110N) / 12,
       hy22 = (HY040N + HY090N) / 12,
       hy23 = (HY080N + HY110N) / 12,
@@ -191,7 +199,8 @@ calcular_hogares_ <- function(.H) {
       hy26 = (HY050N + HY060N + HY070N) / 12,
       dplyr::across(
         .cols = c(py00:py25, hy00:hy26),
-        .fns = \(y) y / hd01, .names = "{.col}pc"
+        .fns = \(y) y / hd01,
+        .names = "{.col}pc"
       ),
       dplyr::across(
         .cols = c(py00:py25, hy00:hy26),
@@ -207,7 +216,7 @@ calcular_hogares_ <- function(.H) {
 
 # ============================================================================
 #' Agrega variables de ingreso de la base P de la EU-SILC a nivel hogar
-#' 
+#'
 #' @description
 #' Agrega las variables de ingreso de la base P (expandida con [expandir_personas()])
 #' por hogar y cuenta la cantidad de perceptores de cada variable de ingreso.
@@ -222,10 +231,14 @@ agregar_personas <- function(.personas) {
       dplyr::across(py00:py25, \(y) as.integer(y != 0), .names = "x{.col}")
     ) |>
     collapse::collap(
-      by = ~ pi01 + pi02 + pi04, FUN = collapse::fsum, na.rm = FALSE
+      by = ~ pi01 + pi02 + pi04,
+      FUN = collapse::fsum,
+      na.rm = FALSE
     )
   personas <- personas |>
-    dplyr::rename_with(.cols = dplyr::starts_with("xpy"), .fn = \(n) sub("xpy", "hp", n))
+    dplyr::rename_with(.cols = dplyr::starts_with("xpy"), .fn = \(n) {
+      sub("xpy", "hp", n)
+    })
 
   # ------------------------------------------
   return(personas)

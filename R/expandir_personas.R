@@ -1,3 +1,4 @@
+# ----------------------------------------------------------------------------
 #' Armoniza el conjunto de datos P de la EU-SILC
 #'
 #' @description Aplica una serie de transformaciones sobre el conjunto de datos
@@ -71,33 +72,9 @@ expandir_personas <- function(
   # Chequeos args ------------------------------------------------------------
   chequear_bases_personas(.P, .D, .R)
 
-  if (!is.logical(.imputar)) {
-    cli::cli_abort(
-      c(
-        ".imputar debe ser TRUE o FALSE.",
-        "x" = "Se paso un {class(.imputar)}"
-      ),
-      class = "no_logical"
-    )
-  }
-  if (!is.logical(.expandir)) {
-    cli::cli_abort(
-      c(
-        ".etiquetar debe ser TRUE o FALSE.",
-        "x" = "Se paso un {class(.expandir)}"
-      ),
-      class = "no_logical"
-    )
-  }
-  if (!is.logical(.etiquetar)) {
-    cli::cli_abort(
-      c(
-        ".etiquetar debe ser TRUE o FALSE.",
-        "x" = "Se paso un {class(.etiquetar)}"
-      ),
-      class = "no_logical"
-    )
-  }
+  rlang::check_bool(.imputar, class = "no_logical")
+  rlang::check_bool(.expandir, class = "no_logical")
+  rlang::check_bool(.etiquetar, class = "no_logical")
 
   # --------------------------------------------------------------------------
   anio <- unique(.P$PB010)

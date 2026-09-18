@@ -1,3 +1,4 @@
+# ----------------------------------------------------------------------------
 #' Etiqueta un conjunto de datos EU-SILC armonizado
 #'
 #' @description
@@ -6,15 +7,30 @@
 #' Sólo etiqueta las variables nuevas, no etiqueta las originales. Las
 #' etiquetas aplicadas se pueden ver en [etiquetas].
 #'
-#' @param .datos `data.frame` o `tibble`. Conjunto de datos armonizado P o H de la EU-SILC
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos armonizado P o H de la EU-SILC.
 #'
 #' @returns `tibble`. Conjunto de datos armonizado P o H con variables y valores etiquetados
 #' @export
 etiquetar_eusilc <- function(.datos) {
-  if (is.null(attr(.datos, "expandida"))) {
-    cli::cli_abort(".datos debe ser un conjunto de datos EUSILC expandido.")
+  rlang::check_data_frame(.datos, class = "no_data_frame")
+  rlang::check_bool(
+    attr(.datos, "expandida", exact = TRUE),
+    arg = 'attr(.datos, "expandida")',
+    class = "no_expandida"
+  )
+  
+  base <- attr(.datos, "base", exact = TRUE)
+  
+  if (!identical(base, "P") && !identical(base, "H")) {
+    cli::cli_abort(
+      'El atributo {.code base} de {.arg .datos} debe ser "P" o "H".',
+      class = "no_base"
+    )
   }
-  base <- attr(.datos, "base")
+
+  if (ncol(.datos) == 0L) {
+    return(.datos)
+  }
 
   etiquetar_eusilc_(.datos, base)
 }

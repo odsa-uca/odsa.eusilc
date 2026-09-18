@@ -7,7 +7,7 @@
 ver_advertencias(.datos)
 }
 \arguments{
-\item{.datos}{\code{tibble}. Conjunto de datos EU-SICL expandido o estandarizado.}
+\item{.datos}{\code{data.frame} o \code{tibble}. Conjunto de datos EU-SILC expandido o estandarizado.}
 }
 \value{
 \code{tibble}. Conjunto de datos con información sobre las advertencias.

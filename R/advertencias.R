@@ -1,11 +1,13 @@
-# ============================================================================
+# ----------------------------------------------------------------------------
 #' Muestra las advertencias correspondientes al país, año y tipo de base suministrada
 #'
-#' @param .datos `tibble`. Conjunto de datos EU-SICL expandido o estandarizado.
+#' @param .datos `data.frame` o `tibble`. Conjunto de datos EU-SILC expandido o estandarizado.
 #'
 #' @returns `tibble`. Conjunto de datos con información sobre las advertencias.
 #' @export
 ver_advertencias <- function(.datos) {
+  rlang::check_data_frame(.datos, class = "no_data_frame")
+  
   advertencias <- attr(.datos, "advertencias", exact = TRUE)
 
   if (is.null(advertencias)) {
@@ -14,6 +16,12 @@ ver_advertencias <- function(.datos) {
       class = "advertencias_no_disponibles"
     )
   }
+
+  rlang::check_data_frame(
+    advertencias,
+    arg = 'attr(.datos, "advertencias")',
+    class = "no_data_frame"
+  )
 
   return(advertencias)
 }

@@ -7,9 +7,11 @@
 calcular_hogares(.H, .P, .expandir = FALSE)
 }
 \arguments{
-\item{.H}{\code{data.frame}o \code{tibble}. Conjunto H de la EU-SILC}
+\item{.H}{\code{data.frame} o \code{tibble}. Conjunto H de la EU-SILC estandarizado
+con \code{\link[=estandarizar_hogares]{estandarizar_hogares()}}.}
 
-\item{.P}{\code{data.frame}o \code{tibble}. Conjunto P de la EU-SILC expandido con \code{\link[=expandir_personas]{expandir_personas()}}}
+\item{.P}{\code{data.frame} o \code{tibble}. Conjunto P de la EU-SILC expandido con
+\code{\link[=expandir_personas]{expandir_personas()}}.}
 
 \item{.expandir}{\code{TRUE} o \code{FALSE} (por defecto). ¿Mantener las variables originales?}
 }

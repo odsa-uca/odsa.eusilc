@@ -17,27 +17,22 @@ test_that("Error, R no es data.frame", {
   expect_error(expandir_personas(P, NULL, ""), class = "no_data_frame")
 })
 
-# No pasar logicals ----------------------------------------------------------
-test_that("Error, imputar no es logical", {
-  P <- tibble::tibble(
-    PB010 = 2023,
-    PB020 = "DE"
-  )
-  expect_error(expandir_personas(P, NULL, NULL, ""), class = "no_logical")
-})
-test_that("Error, expandir no es logical", {
-  P <- tibble::tibble(
-    PB010 = 2023,
-    PB020 = "DE"
-  )
-  expect_error(expandir_personas(P, NULL, NULL, TRUE, ""), class = "no_logical")
-})
-test_that("Error, etiquetar no es logical", {
-  P <- tibble::tibble(
-    PB010 = 2023,
-    PB020 = "DE",
-  )
-  expect_error(expandir_personas(P, NULL, NULL, TRUE, TRUE, ""), class = "no_logical")
+# Argumentos logicos ---------------------------------------------------------
+test_that("los argumentos logicos requieren un unico TRUE o FALSE", {
+  P <- tibble::tibble(PB010 = 2023, PB020 = "DE")
+  
+  for (argumento in c(".imputar", ".expandir", ".etiquetar")) {
+    for (valor in list("", 0, 1, NA, NULL, logical(), c(TRUE, FALSE))) {
+      argumentos <- list(.P = P)
+      argumentos[argumento] <- list(valor)
+      
+      error <- expect_error(
+        do.call(expandir_personas, argumentos),
+        class = "no_logical"
+      )
+      expect_match(conditionMessage(error), argumento, fixed = TRUE)
+    }
+  }
 })
 
 # Pasar apiladas -------------------------------------------------------------
@@ -100,4 +95,25 @@ test_that("Error, P y R distintos paises", {
     RB020 = c("ES", "ES")
   )
   expect_error(expandir_personas(P, NULL, R), class = "r_dif_pais")
+})
+
+test_that("expandir valida las columnas antes de transformar los conjuntos", {
+  P <- tibble::tibble(PB010 = 2023, PB020 = "DE")
+  
+  expect_error(expandir_personas(NULL), "\\.P", class = "no_data_frame")
+  expect_error(
+    expandir_personas(P["PB020"]),
+    "PB010",
+    class = "columnas_faltantes"
+  )
+  expect_error(
+    expandir_personas(P, .D = tibble::tibble(DB010 = 2023)),
+    "DB020",
+    class = "columnas_faltantes"
+  )
+  expect_error(
+    expandir_personas(P, .R = tibble::tibble(RB020 = "DE")),
+    "RB010",
+    class = "columnas_faltantes"
+  )
 })

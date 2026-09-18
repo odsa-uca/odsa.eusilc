@@ -1,3 +1,4 @@
+# ----------------------------------------------------------------------------
 #' Estandariza el conjunto P de la EU-SILC para el proceso de armonización
 #'
 #' @description
@@ -77,12 +78,7 @@ estandarizar_personas <- function(
 ) {
   chequear_bases_personas(.P, .D, .R)
 
-  if (!is.logical(.flags)) {
-    cli::cli_abort(
-      c(".flags debe ser TRUE o FALSE.", "x" = "Se paso un {class(.flags)}"),
-      class = "no_logical"
-    )
-  }
+  rlang::check_bool(.flags, class = "no_logical")
 
   # --------------------------------------------------------------------------
   anio <- unique(.P$PB010)
