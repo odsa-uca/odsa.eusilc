@@ -2,7 +2,7 @@
 % Please edit documentation in R/expandir_personas_panel.R
 \name{expandir_personas_panel}
 \alias{expandir_personas_panel}
-\title{Esqueleto de armonización del conjunto P longitudinal de la EU-SILC}
+\title{Armoniza variables mínimas del conjunto P longitudinal de la EU-SILC}
 \usage{
 expandir_personas_panel(
   .P,
@@ -18,10 +18,10 @@ expandir_personas_panel(
 de un único país y varios años, con una fila por persona y año.}
 
 \item{.D}{\code{data.frame} o \code{tibble}, o \code{NULL} (por defecto). Conjunto D
-longitudinal del cual se incorporarán variables auxiliares.}
+longitudinal del cual se incorporan \code{DB075} y \code{DB076}.}
 
 \item{.R}{\code{data.frame} o \code{tibble}, o \code{NULL} (por defecto). Conjunto R
-longitudinal del cual se incorporarán variables auxiliares.}
+longitudinal del cual se incorporan los ponderadores \code{RB062}–\code{RB066}.}
 
 \item{.imputar}{\code{TRUE} o \code{FALSE} (por defecto). ¿Imputar valores faltantes o
 inconsistentes dentro de cada ola? Pendiente de implementación.}
@@ -33,24 +33,46 @@ originales en el resultado? Pendiente de implementación.}
 variables y sus valores? Pendiente de implementación.}
 }
 \value{
-El mismo objeto recibido en \code{.P}, sin cambios en sus filas,
-columnas, orden, clase ni atributos.
+\code{data.frame} o \code{tibble} con las variables originales y las variables
+armonizadas. Conserva las filas y su orden, incluidos paneles desbalanceados.
+Los ponderadores y metadatos panel se renombran y quedan como \code{NA} cuando
+sus insumos no están disponibles.
 }
 \description{
-Define las etapas previstas para armonizar el conjunto P longitudinal de la
-EU-SILC. Esta versión devuelve exactamente \code{.P} sin transformaciones.
-Los conjuntos auxiliares y las flags todavía no tienen efecto.
+Construye variables de identificación, sexo e ingresos netos del conjunto P
+longitudinal de la EU-SILC, suponiendo observaciones de 2021 en adelante.
+Incorpora ponderadores desde R y metadatos panel desde D cuando se suministran.
+Las flags todavía no tienen efecto.
 }
 \details{
-La estructura reserva etapas para estandarización, traspaso de variables,
-imputación dentro de cada ola, construcción y recodificación de variables,
-selección de columnas y etiquetado. Ninguna está implementada todavía.
+Se construyen \code{pi01}, \code{pi02}, \code{pi04}, \code{pi05} y \code{pd02} desde \code{PB010}, \code{PB020},
+\code{PX030}, \code{PB030} y \code{PB150}, respectivamente. Estos insumos deben estar presentes.
 
-La armonización futura conservará las filas y su orden, también en paneles
-desbalanceados. La estandarización considerará el año de cada observación y
-los cruces incluirán país, año e identificador de persona o del hogar actual.
-El hogar actual puede cambiar entre olas. No se balanceará el panel ni se
-crearán observaciones.
+Los ingresos \code{py00}, \code{py10}, \code{py11}, \code{py12}, \code{py20}, \code{py21}, \code{py22}, \code{py23},
+\code{py24} y \code{py25} siguen las definiciones de \code{\link[=calcular_personas]{calcular_personas()}}. Se expresan
+en moneda nacional por mes, convirtiendo los importes netos anuales en euros
+mediante \code{PX010 / 12}. Se conservan los ingresos negativos y los faltantes se
+propagan en las sumas. Si falta una columna de ingresos netos o \code{PX010}, las
+variables que la requieren quedan como \code{NA}, sin impedir los otros cálculos.
+
+En Italia, \code{PY120N} se establece en cero por observación cuando su flag
+\code{PY120N_F} vale -4, indicando su integración en otros componentes. Esta regla
+contable se aplica independientemente de \code{.imputar}. Sin la flag se conserva
+el valor publicado. No se revierten agrupaciones ni perturbaciones publicadas.
+
+Los insumos \code{RB062}, \code{RB063}, \code{RB064}, \code{RB065} y \code{RB066}
+se renombran como \code{pi06a}, \code{pi06b}, \code{pi06c}, \code{pi06d} y \code{pi06e}, para paneles de
+dos a seis años, respectivamente. \code{DB075} y \code{DB076} se renombran como \code{pi08a}
+(grupo de rotación) y \code{pi08b} (número de encuesta). No se elige un ponderador
+automáticamente. Las siete variables armonizadas están siempre presentes;
+los insumos ausentes se completan con \code{NA} durante la estandarización.
+
+Los cruces con \code{.R} incluyen país, año y persona; con \code{.D}, país, año y hogar
+actual, que puede cambiar entre olas. Cada clave debe identificar una única
+fila en el auxiliar. Sin coincidencia, las variables traspasadas quedan como
+\code{NA}. Si se suministra un auxiliar, sus valores reemplazan los insumos
+correspondientes de \code{.P}; si no se suministra, se conservan los insumos ya
+incorporados en \code{.P}. No se balancea el panel ni se crean observaciones.
 
 Los insumos y ponderadores longitudinales requieren un tratamiento propio:
 no debe suponerse la disponibilidad de las variables transversales ni elegirse
@@ -59,10 +81,11 @@ Las agrupaciones, supresiones y perturbaciones documentadas por Eurostat no
 se tratarán automáticamente como inconsistencias imputables. La imputación
 prevista utilizará únicamente información dentro de cada ola.
 
-\code{.expandir} definirá la selección de columnas, siguiendo las funciones
-transversales. No garantiza conservar los valores crudos ante futuras
-transformaciones. Esta versión no agrega atributos de armonización,
-imputación o etiquetado.
+Quedan pendientes el traspaso de otras variables desde \code{.D} y \code{.R}, la imputación,
+la selección mediante \code{.expandir}, el etiquetado mediante \code{.etiquetar} y las
+variantes PPA. Esta versión conserva todas las columnas originales, salvo
+los renombrados y la transformación contable indicada, y no agrega atributos
+de armonización, imputación o etiquetado.
 }
 \seealso{
 \code{\link[=expandir_hogares_panel]{expandir_hogares_panel()}}
