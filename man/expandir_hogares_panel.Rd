@@ -2,7 +2,7 @@
 % Please edit documentation in R/expandir_hogares_panel.R
 \name{expandir_hogares_panel}
 \alias{expandir_hogares_panel}
-\title{Esqueleto de armonización del conjunto H longitudinal de la EU-SILC}
+\title{Armoniza variables del conjunto H longitudinal de la EU-SILC}
 \usage{
 expandir_hogares_panel(
   .H,
@@ -15,56 +15,178 @@ expandir_hogares_panel(
 }
 \arguments{
 \item{.H}{\code{data.frame} o \code{tibble}. Conjunto H longitudinal en formato largo,
-de un único país y varios años, con una fila por hogar y año.}
+de un único país, con una fila por hogar y año.}
 
 \item{.P}{\code{data.frame} o \code{tibble}. Conjunto P longitudinal armonizado por
-\code{\link[=expandir_personas_panel]{expandir_personas_panel()}}. Es un argumento obligatorio en la interfaz
-prevista, aunque esta versión todavía no lo utiliza y la armonización
-de personas también está pendiente de implementación.}
+\code{\link[=expandir_personas_panel]{expandir_personas_panel()}}, del mismo país y de los años correspondientes.}
 
 \item{.D}{\code{data.frame} o \code{tibble}, o \code{NULL} (por defecto). Conjunto D
-longitudinal del cual se incorporarán variables auxiliares.}
+longitudinal del mismo país y de los años correspondientes.}
 
 \item{.imputar}{\code{TRUE} o \code{FALSE} (por defecto). ¿Imputar valores faltantes o
-inconsistentes dentro de cada ola? Pendiente de implementación.}
+inconsistentes dentro de cada ola? Todavía no tiene efecto.}
 
 \item{.expandir}{\code{TRUE} o \code{FALSE} (por defecto). ¿Conservar las columnas
-originales en el resultado? Pendiente de implementación.}
+originales en el resultado? Todavía no tiene efecto: se conservan siempre.}
 
 \item{.etiquetar}{\code{TRUE} (por defecto) o \code{FALSE}. ¿Aplicar etiquetas a las
-variables y sus valores? Pendiente de implementación.}
+variables y sus valores? Todavía no tiene efecto.}
 }
 \value{
-El mismo objeto recibido en \code{.H}, sin cambios en sus filas,
-columnas, orden, clase ni atributos.
+\code{data.frame} o \code{tibble} con las variables armonizadas, las columnas
+originales y los insumos añadidos durante la estandarización. Conserva las
+filas y su orden, incluidos paneles desbalanceados. Reemplaza agregados,
+factores PPA y variables armonizadas homónimos preexistentes. No agrega
+atributos de armonización, imputación o etiquetado.
 }
 \description{
-Define las etapas previstas para armonizar el conjunto H longitudinal de la
-EU-SILC. Esta versión devuelve exactamente \code{.H} sin transformaciones.
-Los conjuntos auxiliares y las flags todavía no tienen efecto.
+Construye variables de identificación, tamaño, ingresos y perceptores del
+conjunto H longitudinal de la EU-SILC, suponiendo observaciones de 2021 en
+adelante. Incorpora ponderador, región y urbanización desde D, y agrega los
+ingresos de las personas cubiertas por P por país, año y hogar actual.
 }
 \details{
-La estructura reserva etapas para estandarización, traspaso de variables,
-imputación dentro de cada ola, construcción y recodificación de variables,
-selección de columnas y etiquetado. Ninguna está implementada todavía.
+A continuación se listan las variables construidas según bloque.
+\subsection{(I) Identificación}{
+\itemize{
+\item \code{hi01}. Año de la encuesta.
+\item \code{hi02}. País.
+\item \code{hi03}. Región.
+\item \code{hi04}. Identificador del hogar.
+\item \code{hi06}. Ponderador longitudinal del hogar (\code{DB095}).
+\item \code{hi07}. Urbanización.
+}
+}
 
-La armonización futura conservará las filas y su orden, también en paneles
-desbalanceados. La estandarización considerará el año de cada observación.
-Los aportes de P se agregarán por país, año y hogar actual antes de su
-incorporación a H; el hogar de una persona puede cambiar entre olas.
-Los cruces con D incluirán país, año e identificador del hogar.
-No se balanceará el panel ni se crearán observaciones.
+\subsection{(D) Demográficos}{
+\itemize{
+\item \code{hd01}. Tamaño total del hogar.
+}
+}
 
-Los insumos y ponderadores longitudinales requieren un tratamiento propio;
-no deben trasladarse automáticamente los procedimientos transversales.
-Las agrupaciones, supresiones y perturbaciones documentadas por Eurostat no
-se tratarán automáticamente como inconsistencias imputables. La imputación
-prevista utilizará únicamente información dentro de cada ola.
+\subsection{(Y) Ingresos}{
 
-\code{.expandir} definirá la selección de columnas, siguiendo las funciones
-transversales. No garantiza conservar los valores crudos ante futuras
-transformaciones. Esta versión no agrega atributos de armonización,
-imputación o etiquetado.
+Todos los ingresos se expresan en moneda nacional por mes. Los \verb{py*} son
+sumas de los ingresos de las personas cubiertas por P, no promedios.
+\itemize{
+\item \code{py00}. Ingreso total de las personas.
+\item \code{py10}. Ingreso personal por fuentes laborales.
+\item \code{py11}. Ingreso personal por trabajo asalariado.
+\item \code{py12}. Ingreso personal por trabajo no asalariado.
+\item \code{py20}. Ingreso personal por fuentes no laborales.
+\item \code{py21}. Ingreso personal por jubilaciones y pensiones privadas.
+\item \code{py22}. Ingreso personal por jubilación.
+\item \code{py23}. Ingreso personal por pensión privada.
+\item \code{py24}. Ingreso personal por desempleo.
+\item \code{py25}. Ingreso personal por otras ayudas.
+\item \code{hy00}. Ingreso total del hogar.
+\item \code{hy20}. Ingreso del hogar por fuentes no laborales.
+\item \code{hy21}. Ingreso por inversiones y otras transferencias.
+\item \code{hy22}. Ingreso por inversiones.
+\item \code{hy23}. Ingreso por otras transferencias.
+\item \code{hy24}. Ingreso total por política social.
+\item \code{hy25}. Ingreso total por transferencias.
+\item \code{hy26}. Ingreso por asistencia social.
+}
+
+Para cada ingreso se construyen variantes con sufijos \code{pc} (moneda nacional
+por persona y mes), \code{ppa} (dólares PPA por mes) y \code{pcppa} (dólares PPA por
+persona y mes). Para más detalles sobre las unidades PPA, ver \link{tabla_ppa}.
+}
+
+\subsection{(P) Perceptores}{
+\itemize{
+\item \code{hp00}. Perceptores de ingreso total.
+\item \code{hp10}. Perceptores de ingreso por fuentes laborales.
+\item \code{hp11}. Perceptores de ingreso por trabajo asalariado.
+\item \code{hp12}. Perceptores de ingreso por trabajo no asalariado.
+\item \code{hp20}. Perceptores de ingreso por fuentes no laborales.
+\item \code{hp21}. Perceptores de jubilaciones y pensiones privadas.
+\item \code{hp22}. Perceptores de jubilación.
+\item \code{hp23}. Perceptores de pensión privada.
+\item \code{hp24}. Perceptores de ingreso por desempleo.
+\item \code{hp25}. Perceptores de ingreso por otras ayudas.
+}
+
+Se cuenta a las personas con ingreso correspondiente distinto de cero,
+incluidos ingresos negativos. Los conteos no están ponderados.
+}
+
+\subsection{Auxiliares}{
+\itemize{
+\item \code{ppa_factor}. Factor de conversión de moneda nacional a PPA.
+\item \code{ppa_factor_us}. Factor de conversión de dólares estadounidenses a PPA.
+}
+
+Ninguna variable actualmente construida requiere el módulo \emph{labor market
+and housing conditions} (LMH).
+}
+
+\subsection{Disponibilidad y valores faltantes}{
+
+El conjunto de variables armonizadas es siempre el mismo, se proporcione
+o no D. El conjunto completo de columnas puede variar porque se conservan
+los insumos originales y los añadidos como \code{NA} durante la estandarización.
+Los identificadores \code{HB010}, \code{HB020}, \code{HB030} en H y \code{pi01}, \code{pi02}, \code{pi04}
+en P deben estar presentes.
+
+Las columnas de insumo opcionales ausentes se completan con \code{NA}. Los
+faltantes se propagan en las sumas y conteos: un ingreso personal faltante
+deja como \code{NA} su agregado y su número de perceptores en ese hogar-año.
+Si no hay personas coincidentes, incluso si P está vacío, ambos quedan
+como \code{NA}, no como cero. No se reconstruyen componentes ausentes desde un
+total oficial ni se sustituye \code{hy00} por el ingreso disponible \code{HY020}.
+}
+
+\subsection{Traspaso y cobertura de personas}{
+
+Desde D se incorporan \code{DB095}, \code{DB040} y \code{DB100} por país, año y hogar:
+\code{HB010/HB020/HB030} en H y \code{DB010/DB020/DB030} en D. Cada clave debe
+identificar una única fila en D. Si se suministra D, sus valores reemplazan
+los insumos correspondientes de H, incluso cuando faltan o no hay
+coincidencia; en esos casos quedan como \code{NA}. Sin D, se conservan los
+insumos ya incorporados en H y se completan los ausentes.
+
+P se agrega por \code{pi01}, \code{pi02} y \code{pi04}, y luego se incorpora a H por país,
+año y hogar. El hogar actual de una persona puede cambiar entre olas. No se
+filtra P por ponderadores positivos ni por trayectorias completas. La
+cobertura de los miembros pertinentes debe evaluarla el usuario: las sumas
+corresponden a las personas disponibles y no acreditan cobertura total.
+\code{hd01} procede del tamaño publicado, no del número de filas de P.
+}
+
+\subsection{Conversión de ingresos}{
+
+Los componentes netos propios de H, publicados en euros anuales, se
+convierten con \code{HX010 / 12} antes de sumarlos a los ingresos personales.
+P ya está en moneda nacional mensual y no se convierte nuevamente. Se
+conservan ingresos negativos y no se imputan componentes faltantes.
+
+Las variantes per cápita dividen el ingreso por \code{hd01} sólo cuando el tamaño
+es positivo y está disponible; en otro caso quedan como \code{NA}. Las variantes
+PPA usan \code{ingreso / ppa_factor * ppa_factor_us}. Los factores se incorporan
+por país y año de encuesta, reemplazando factores homónimos preexistentes.
+La tabla interna cubre 2016–2025; sin coincidencia, factores y variantes PPA
+quedan como \code{NA}, sin extrapolación.
+}
+
+\subsection{Alcance y etapas pendientes}{
+
+La implementación supone datos desde 2021, en continuidad con personas
+panel y los países revisados ES, IT, DE, PL y PT. Se conserva el detalle
+regional y de urbanización publicado, sin equiparar niveles regionales
+nacionales ni recuperar categorías agrupadas o suprimidas. Por ejemplo,
+DE agrupa categorías de urbanización en algunas entregas y suprime región
+para determinados hogares. No se reconstruyen hogares suprimidos.
+
+\code{hi06} conserva el peso longitudinal de D; no usa el ponderador transversal
+\code{DB090}. No se balancea el panel ni se crean observaciones.
+
+Quedan pendientes la tipología del hogar, las variables sectoriales, la
+imputación dentro de cada ola, la selección mediante \code{.expandir} y el
+etiquetado mediante \code{.etiquetar}. Las tres flags todavía no modifican el
+resultado.
+}
 }
 \seealso{
 \code{\link[=expandir_personas_panel]{expandir_personas_panel()}}
