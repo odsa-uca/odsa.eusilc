@@ -97,7 +97,16 @@
 #' por esas horas; conservan cero cuando el ingreso es cero. A diferencia del
 #' cálculo transversal, horas semanales no positivas dejan las horas anuales
 #' como `NA` y no generan un ingreso horario infinito por división por cero.
-#' Los ingresos horarios no se mensualizan ni se convierten nuevamente.
+#' Los ingresos horarios no se mensualizan ni se convierten nuevamente a moneda
+#' nacional.
+#'
+#' `ppa_factor` y `ppa_factor_us` se incorporan desde [tabla_ppa] por país y año
+#' de encuesta, reemplazando factores homónimos preexistentes. Para los diez
+#' ingresos mensuales y los dos horarios se crean variantes con sufijo `ppa`,
+#' mediante `ingreso / ppa_factor * ppa_factor_us`, como en
+#' [calcular_personas()]. Se expresan en dólares PPA mensuales o por hora,
+#' respectivamente. La tabla interna cubre 2016–2025; sin coincidencia de país
+#' y año, los factores y variantes PPA quedan como `NA`, sin extrapolación.
 #'
 #' En Italia, `PY120N` se establece en cero por observación cuando su flag
 #' `PY120N_F` vale -4, indicando su integración en otros componentes. Esta regla
@@ -126,9 +135,9 @@
 #' prevista utilizará únicamente información dentro de cada ola.
 #'
 #' Quedan pendientes el traspaso de otras variables desde `.D` y `.R`, la imputación,
-#' la selección mediante `.expandir`, el etiquetado mediante `.etiquetar` y las
-#' variantes PPA. Esta versión conserva todas las columnas originales, salvo
-#' la transformación contable indicada, y no agrega atributos
+#' la selección mediante `.expandir` y el etiquetado mediante `.etiquetar`.
+#' Esta versión conserva todas las columnas originales, salvo
+#' la transformación contable y el reemplazo de factores PPA indicados, y no agrega atributos
 #' de armonización, imputación o etiquetado.
 #' También queda pendiente `pd01c`.
 #'
@@ -437,11 +446,35 @@ expandir_personas_panel <- function(
     py12h = dplyr::if_else(py12 != 0, (py12 * PX010) / han, 0)
   )
 
+  .P <- dplyr::left_join(
+    x = dplyr::select(.P, -dplyr::any_of(c("ppa_factor", "ppa_factor_us"))),
+    y = tabla_ppa_,
+    by = dplyr::join_by(PB010, PB020),
+    relationship = "many-to-one"
+  )
   .P <- dplyr::mutate(
     .P,
     dplyr::across(
       c(py00, py10, py11, py12, py20, py21, py22, py23, py24, py25),
       \(y) (y * PX010) / 12
+    ),
+    dplyr::across(
+      c(
+        py00,
+        py10,
+        py11,
+        py12,
+        py20,
+        py21,
+        py22,
+        py23,
+        py24,
+        py25,
+        py11h,
+        py12h
+      ),
+      \(y) y / ppa_factor * ppa_factor_us,
+      .names = "{.col}ppa"
     )
   )
 

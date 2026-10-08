@@ -116,7 +116,16 @@ semanales positivas. No reconstruyen las horas históricas de cada empleo.
 por esas horas; conservan cero cuando el ingreso es cero. A diferencia del
 cálculo transversal, horas semanales no positivas dejan las horas anuales
 como \code{NA} y no generan un ingreso horario infinito por división por cero.
-Los ingresos horarios no se mensualizan ni se convierten nuevamente.
+Los ingresos horarios no se mensualizan ni se convierten nuevamente a moneda
+nacional.
+
+\code{ppa_factor} y \code{ppa_factor_us} se incorporan desde \link{tabla_ppa} por país y año
+de encuesta, reemplazando factores homónimos preexistentes. Para los diez
+ingresos mensuales y los dos horarios se crean variantes con sufijo \code{ppa},
+mediante \code{ingreso / ppa_factor * ppa_factor_us}, como en
+\code{\link[=calcular_personas]{calcular_personas()}}. Se expresan en dólares PPA mensuales o por hora,
+respectivamente. La tabla interna cubre 2016–2025; sin coincidencia de país
+y año, los factores y variantes PPA quedan como \code{NA}, sin extrapolación.
 
 En Italia, \code{PY120N} se establece en cero por observación cuando su flag
 \code{PY120N_F} vale -4, indicando su integración en otros componentes. Esta regla
@@ -145,9 +154,9 @@ se tratarán automáticamente como inconsistencias imputables. La imputación
 prevista utilizará únicamente información dentro de cada ola.
 
 Quedan pendientes el traspaso de otras variables desde \code{.D} y \code{.R}, la imputación,
-la selección mediante \code{.expandir}, el etiquetado mediante \code{.etiquetar} y las
-variantes PPA. Esta versión conserva todas las columnas originales, salvo
-la transformación contable indicada, y no agrega atributos
+la selección mediante \code{.expandir} y el etiquetado mediante \code{.etiquetar}.
+Esta versión conserva todas las columnas originales, salvo
+la transformación contable y el reemplazo de factores PPA indicados, y no agrega atributos
 de armonización, imputación o etiquetado.
 También queda pendiente \code{pd01c}.
 }
