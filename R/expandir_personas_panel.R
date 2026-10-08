@@ -81,6 +81,24 @@
 #' propagan en las sumas. Si falta una columna de ingresos netos o `PX010`, las
 #' variables que la requieren quedan como `NA`, sin impedir los otros cálculos.
 #'
+#' `maa` y `man` cuentan los meses con actividad principal asalariada (códigos
+#' 1/2) y no asalariada (3/4, incluidos trabajadores familiares) desde
+#' `PL211A`–`PL211L`, mediante [calcular_meses_actividad()]. No equivalen a meses
+#' de cobro comprobado. Requieren doce códigos entre 1 y 11; un mes ausente,
+#' código desconocido o flag mensual disponible negativa deja ambos conteos
+#' como `NA`. Las flags positivas, incluidas imputaciones de Eurostat, son
+#' aceptadas; flags ausentes o con `NA` no invalidan un código mensual válido.
+#'
+#' `haa` y `han` aproximan las horas anuales como meses de actividad por horas
+#' semanales actuales (`PL060`) por 4,2. Se calculan sólo para ocupados actuales
+#' con ingreso correspondiente distinto de cero, meses positivos y horas
+#' semanales positivas. No reconstruyen las horas históricas de cada empleo.
+#' `py11h` y `py12h` dividen el ingreso neto anual convertido a moneda nacional
+#' por esas horas; conservan cero cuando el ingreso es cero. A diferencia del
+#' cálculo transversal, horas semanales no positivas dejan las horas anuales
+#' como `NA` y no generan un ingreso horario infinito por división por cero.
+#' Los ingresos horarios no se mensualizan ni se convierten nuevamente.
+#'
 #' En Italia, `PY120N` se establece en cero por observación cuando su flag
 #' `PY120N_F` vale -4, indicando su integración en otros componentes. Esta regla
 #' contable se aplica independientemente de `.imputar`. Sin la flag se conserva
@@ -112,7 +130,7 @@
 #' variantes PPA. Esta versión conserva todas las columnas originales, salvo
 #' la transformación contable indicada, y no agrega atributos
 #' de armonización, imputación o etiquetado.
-#' También quedan pendientes `pd01c`, meses trabajados, horas e ingresos horarios.
+#' También queda pendiente `pd01c`.
 #'
 #' @seealso [expandir_hogares_panel()]
 #' @export
@@ -185,7 +203,9 @@ expandir_personas_panel <- function(
     "PL051B",
     "PY030G",
     "PY035G",
-    "PL141"
+    "PL141",
+    "PL060",
+    paste0("PL211", LETTERS[1:12])
   )
   insumos_ausentes <- setdiff(insumos, names(.P))
   for (variable in insumos_ausentes) {
@@ -234,6 +254,12 @@ expandir_personas_panel <- function(
     )
   }
   # Pendiente: incorporar otras variables auxiliares de D y R.
+  # Variables auxiliares necesarias en imputación ------------------------------
+  .P <- dplyr::mutate(
+    .P,
+    maa = calcular_meses_actividad(.P, c(1, 2)),
+    man = calcular_meses_actividad(.P, c(3, 4))
+  )
 
   # Imputación dentro de cada ola --------------------------------------------
   if (.imputar) {
@@ -396,7 +422,19 @@ expandir_personas_panel <- function(
     py22 = PY100N,
     py23 = PY080N,
     py24 = PY090N,
-    py25 = PY110N + PY120N + PY130N + PY140N
+    py25 = PY110N + PY120N + PY130N + PY140N,
+    haa = dplyr::if_else(
+      pl01 == 1 & py11 != 0 & maa > 0 & PL060 > 0,
+      maa * PL060 * 4.2,
+      NA_real_
+    ),
+    han = dplyr::if_else(
+      pl01 == 1 & py12 != 0 & man > 0 & PL060 > 0,
+      man * PL060 * 4.2,
+      NA_real_
+    ),
+    py11h = dplyr::if_else(py11 != 0, (py11 * PX010) / haa, 0),
+    py12h = dplyr::if_else(py12 != 0, (py12 * PX010) / han, 0)
   )
 
   .P <- dplyr::mutate(

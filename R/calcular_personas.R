@@ -358,6 +358,58 @@ agrupar_nac <- function(.anio, .nac) {
   return(nac_agrup)
 }
 
+# ----------------------------------------------------------------------------
+#' Cuenta meses de actividad en el período de referencia de ingresos (interna)
+#'
+#' @description
+#' Cuenta los meses de `PL211A`–`PL211L` cuya actividad principal pertenece a
+#' los códigos solicitados. Requiere doce valores entre 1 y 11; devuelve `NA`
+#' cuando falta un mes o alguna flag mensual disponible es negativa. Flags
+#' ausentes o con `NA` no invalidan por sí solas un valor mensual válido.
+#'
+#' @param .P `data.frame` o `tibble`. Conjunto P de la EU-SILC.
+#' @param .codigos `numeric`. Códigos de actividad a contar: 1/2 para asalariados
+#'   o 3/4 para no asalariados, incluidos trabajadores familiares.
+#'
+#' @returns Vector `integer` de conteos de 0 a 12 o `NA`, en el orden de `.P`.
+#'   Describe meses de actividad principal, no meses de cobro comprobado.
+calcular_meses_actividad <- function(.P, .codigos) {
+  meses <- paste0("PL211", LETTERS[1:12])
+  calendario <- dplyr::select(.P, dplyr::any_of(meses))
+  
+  if (ncol(calendario) != 12L) {
+    return(rep(NA_integer_, nrow(.P)))
+  }
+
+  validos <- dplyr::mutate(
+    calendario,
+    dplyr::across(dplyr::everything(), \(x) x %in% 1:11)
+  )
+  completos <- rowSums(validos) == 12L
+  flags <- dplyr::select(.P, dplyr::any_of(paste0(meses, "_F")))
+  
+  if (ncol(flags) > 0L) {
+    negativas <- dplyr::mutate(
+      flags,
+      dplyr::across(dplyr::everything(), \(x) !is.na(x) & x < 0)
+    )
+    completos <- completos & rowSums(negativas) == 0L
+  }
+
+  seleccionados <- dplyr::mutate(
+    calendario,
+    dplyr::across(dplyr::everything(), \(x) x %in% .codigos)
+  )
+  
+  meses_actividad <- dplyr::if_else(
+    completos,
+    as.integer(rowSums(seleccionados)),
+    NA_integer_
+  )
+  
+  return(meses_actividad)
+}
+
 # ============================================================================
 #' Calcula el clasificador de heterogeneidad estructural
 #'

@@ -100,6 +100,24 @@ mediante \code{PX010 / 12}. Se conservan los ingresos negativos y los faltantes 
 propagan en las sumas. Si falta una columna de ingresos netos o \code{PX010}, las
 variables que la requieren quedan como \code{NA}, sin impedir los otros cálculos.
 
+\code{maa} y \code{man} cuentan los meses con actividad principal asalariada (códigos
+1/2) y no asalariada (3/4, incluidos trabajadores familiares) desde
+\code{PL211A}–\code{PL211L}, mediante \code{\link[=calcular_meses_actividad]{calcular_meses_actividad()}}. No equivalen a meses
+de cobro comprobado. Requieren doce códigos entre 1 y 11; un mes ausente,
+código desconocido o flag mensual disponible negativa deja ambos conteos
+como \code{NA}. Las flags positivas, incluidas imputaciones de Eurostat, son
+aceptadas; flags ausentes o con \code{NA} no invalidan un código mensual válido.
+
+\code{haa} y \code{han} aproximan las horas anuales como meses de actividad por horas
+semanales actuales (\code{PL060}) por 4,2. Se calculan sólo para ocupados actuales
+con ingreso correspondiente distinto de cero, meses positivos y horas
+semanales positivas. No reconstruyen las horas históricas de cada empleo.
+\code{py11h} y \code{py12h} dividen el ingreso neto anual convertido a moneda nacional
+por esas horas; conservan cero cuando el ingreso es cero. A diferencia del
+cálculo transversal, horas semanales no positivas dejan las horas anuales
+como \code{NA} y no generan un ingreso horario infinito por división por cero.
+Los ingresos horarios no se mensualizan ni se convierten nuevamente.
+
 En Italia, \code{PY120N} se establece en cero por observación cuando su flag
 \code{PY120N_F} vale -4, indicando su integración en otros componentes. Esta regla
 contable se aplica independientemente de \code{.imputar}. Sin la flag se conserva
@@ -131,7 +149,7 @@ la selección mediante \code{.expandir}, el etiquetado mediante \code{.etiquetar
 variantes PPA. Esta versión conserva todas las columnas originales, salvo
 la transformación contable indicada, y no agrega atributos
 de armonización, imputación o etiquetado.
-También quedan pendientes \code{pd01c}, meses trabajados, horas e ingresos horarios.
+También queda pendiente \code{pd01c}.
 }
 \seealso{
 \code{\link[=expandir_hogares_panel]{expandir_hogares_panel()}}
