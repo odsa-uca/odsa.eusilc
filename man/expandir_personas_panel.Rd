@@ -2,7 +2,7 @@
 % Please edit documentation in R/expandir_personas_panel.R
 \name{expandir_personas_panel}
 \alias{expandir_personas_panel}
-\title{Armoniza variables mínimas del conjunto P longitudinal de la EU-SILC}
+\title{Armoniza variables del conjunto P longitudinal de la EU-SILC}
 \usage{
 expandir_personas_panel(
   .P,
@@ -18,10 +18,11 @@ expandir_personas_panel(
 de un único país y varios años, con una fila por persona y año.}
 
 \item{.D}{\code{data.frame} o \code{tibble}, o \code{NULL} (por defecto). Conjunto D
-longitudinal del cual se incorporan \code{DB075} y \code{DB076}.}
+longitudinal del cual se incorporan \code{DB040}, \code{DB100}, \code{DB075} y \code{DB076}.}
 
 \item{.R}{\code{data.frame} o \code{tibble}, o \code{NULL} (por defecto). Conjunto R
-longitudinal del cual se incorporan los ponderadores \code{RB062}–\code{RB066}.}
+longitudinal del cual se incorporan los ponderadores \code{RB062}–\code{RB066},
+\code{RB080}, \code{RB081}, \code{RB082}, \code{RX010}, \code{RX020}, \code{RB280} y \code{RB290}.}
 
 \item{.imputar}{\code{TRUE} o \code{FALSE} (por defecto). ¿Imputar valores faltantes o
 inconsistentes dentro de cada ola? Pendiente de implementación.}
@@ -39,14 +40,36 @@ Los ponderadores y metadatos panel se renombran y quedan como \code{NA} cuando
 sus insumos no están disponibles.
 }
 \description{
-Construye variables de identificación, sexo e ingresos netos del conjunto P
+Construye variables de identificación, demográficas, laborales e ingresos del conjunto P
 longitudinal de la EU-SILC, suponiendo observaciones de 2021 en adelante.
-Incorpora ponderadores desde R y metadatos panel desde D cuando se suministran.
+Incorpora ponderadores y demográficos desde R, y región, urbanización y
+metadatos panel desde D cuando se suministran.
 Las flags todavía no tienen efecto.
 }
 \details{
 Se construyen \code{pi01}, \code{pi02}, \code{pi04}, \code{pi05} y \code{pd02} desde \code{PB010}, \code{PB020},
 \code{PX030}, \code{PB030} y \code{PB150}, respectivamente. Estos insumos deben estar presentes.
+
+\code{pi03} conserva la región publicada en \code{DB040}; \code{pi07} recodifica \code{DB100}
+mediante \code{tabla_pi07}. \code{pd01a} prioriza \code{RB082} sobre \code{RX010} y no se
+reconstruye con fechas de nacimiento y entrevista. \code{pd01b} prioriza \code{RB081},
+\code{RX020} y \code{PX020}; si faltan, usa el año de encuesta menos el nacimiento
+(primero \code{RB080}, luego \code{PB140}) menos uno. Esta alternativa se aplica para
+ES, IT y PL, y para PT sólo si el nacimiento es posterior al año de encuesta
+menos 80. No se aplica para DE ni otros países fuera del alcance revisado.
+Las restricciones afectan la reconstrucción, no las edades difundidas.
+
+\code{pd03} recodifica \code{PE041} mediante \code{tabla_pd03}, conservando las limitaciones
+de los códigos publicados: IT agrupa niveles secundarios en 300 y PT niveles
+inferiores en 200. \code{pd04} y \code{pd05} recodifican \code{RB280} y \code{RB290}: LOC como 1,
+EU/OTH como 2 y códigos desconocidos como \code{NA}.
+
+\code{pl01} recodifica \code{PL032} mediante \code{tabla_pl01}; \code{pl02a/b} conservan
+\code{PL040A/B}. \code{pl02c} toma A para ocupados y B para no ocupados según \code{PL032},
+y queda como \code{NA} si falta la actividad. \code{toc} distingue contrato escrito
+(11/21) y verbal (12/22), y \code{pomj} permanente (21/22) y temporal (11/12),
+desde \code{PL141}. Todas estas variables armonizadas se construyen aunque falten
+sus insumos, completados con \code{NA} durante la estandarización.
 
 Los ingresos \code{py00}, \code{py10}, \code{py11}, \code{py12}, \code{py20}, \code{py21}, \code{py22}, \code{py23},
 \code{py24} y \code{py25} siguen las definiciones de \code{\link[=calcular_personas]{calcular_personas()}}. Se expresan
@@ -61,8 +84,8 @@ contable se aplica independientemente de \code{.imputar}. Sin la flag se conserv
 el valor publicado. No se revierten agrupaciones ni perturbaciones publicadas.
 
 Los insumos \code{RB062}, \code{RB063}, \code{RB064}, \code{RB065} y \code{RB066}
-se renombran como \code{pi06a}, \code{pi06b}, \code{pi06c}, \code{pi06d} y \code{pi06e}, para paneles de
-dos a seis años, respectivamente. \code{DB075} y \code{DB076} se renombran como \code{pi08a}
+se copian como \code{pi06a}, \code{pi06b}, \code{pi06c}, \code{pi06d} y \code{pi06e}, para paneles de
+dos a seis años, respectivamente. \code{DB075} y \code{DB076} se copian como \code{pi08a}
 (grupo de rotación) y \code{pi08b} (número de encuesta). No se elige un ponderador
 automáticamente. Las siete variables armonizadas están siempre presentes;
 los insumos ausentes se completan con \code{NA} durante la estandarización.
@@ -84,8 +107,10 @@ prevista utilizará únicamente información dentro de cada ola.
 Quedan pendientes el traspaso de otras variables desde \code{.D} y \code{.R}, la imputación,
 la selección mediante \code{.expandir}, el etiquetado mediante \code{.etiquetar} y las
 variantes PPA. Esta versión conserva todas las columnas originales, salvo
-los renombrados y la transformación contable indicada, y no agrega atributos
+la transformación contable indicada, y no agrega atributos
 de armonización, imputación o etiquetado.
+También quedan pendientes \code{pd01c}, ocupación ISCO, calificación, informalidad,
+calidad del empleo, meses trabajados, horas e ingresos horarios.
 }
 \seealso{
 \code{\link[=expandir_hogares_panel]{expandir_hogares_panel()}}

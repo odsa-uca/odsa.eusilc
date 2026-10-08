@@ -1,18 +1,20 @@
 # ----------------------------------------------------------------------------
-#' Armoniza variables mínimas del conjunto P longitudinal de la EU-SILC
+#' Armoniza variables del conjunto P longitudinal de la EU-SILC
 #'
 #' @description
-#' Construye variables de identificación, sexo e ingresos netos del conjunto P
+#' Construye variables de identificación, demográficas, laborales e ingresos del conjunto P
 #' longitudinal de la EU-SILC, suponiendo observaciones de 2021 en adelante.
-#' Incorpora ponderadores desde R y metadatos panel desde D cuando se suministran.
+#' Incorpora ponderadores y demográficos desde R, y región, urbanización y
+#' metadatos panel desde D cuando se suministran.
 #' Las flags todavía no tienen efecto.
 #'
 #' @param .P `data.frame` o `tibble`. Conjunto P longitudinal en formato largo,
 #'   de un único país y varios años, con una fila por persona y año.
 #' @param .D `data.frame` o `tibble`, o `NULL` (por defecto). Conjunto D
-#'   longitudinal del cual se incorporan `DB075` y `DB076`.
+#'   longitudinal del cual se incorporan `DB040`, `DB100`, `DB075` y `DB076`.
 #' @param .R `data.frame` o `tibble`, o `NULL` (por defecto). Conjunto R
-#'   longitudinal del cual se incorporan los ponderadores `RB062`–`RB066`.
+#'   longitudinal del cual se incorporan los ponderadores `RB062`–`RB066`,
+#'   `RB080`, `RB081`, `RB082`, `RX010`, `RX020`, `RB280` y `RB290`.
 #' @param .imputar `TRUE` o `FALSE` (por defecto). ¿Imputar valores faltantes o
 #'   inconsistentes dentro de cada ola? Pendiente de implementación.
 #' @param .expandir `TRUE` o `FALSE` (por defecto). ¿Conservar las columnas
@@ -29,6 +31,27 @@
 #' Se construyen `pi01`, `pi02`, `pi04`, `pi05` y `pd02` desde `PB010`, `PB020`,
 #' `PX030`, `PB030` y `PB150`, respectivamente. Estos insumos deben estar presentes.
 #'
+#' `pi03` conserva la región publicada en `DB040`; `pi07` recodifica `DB100`
+#' mediante `tabla_pi07`. `pd01a` prioriza `RB082` sobre `RX010` y no se
+#' reconstruye con fechas de nacimiento y entrevista. `pd01b` prioriza `RB081`,
+#' `RX020` y `PX020`; si faltan, usa el año de encuesta menos el nacimiento
+#' (primero `RB080`, luego `PB140`) menos uno. Esta alternativa se aplica para
+#' ES, IT y PL, y para PT sólo si el nacimiento es posterior al año de encuesta
+#' menos 80. No se aplica para DE ni otros países fuera del alcance revisado.
+#' Las restricciones afectan la reconstrucción, no las edades difundidas.
+#'
+#' `pd03` recodifica `PE041` mediante `tabla_pd03`, conservando las limitaciones
+#' de los códigos publicados: IT agrupa niveles secundarios en 300 y PT niveles
+#' inferiores en 200. `pd04` y `pd05` recodifican `RB280` y `RB290`: LOC como 1,
+#' EU/OTH como 2 y códigos desconocidos como `NA`.
+#'
+#' `pl01` recodifica `PL032` mediante `tabla_pl01`; `pl02a/b` conservan
+#' `PL040A/B`. `pl02c` toma A para ocupados y B para no ocupados según `PL032`,
+#' y queda como `NA` si falta la actividad. `toc` distingue contrato escrito
+#' (11/21) y verbal (12/22), y `pomj` permanente (21/22) y temporal (11/12),
+#' desde `PL141`. Todas estas variables armonizadas se construyen aunque falten
+#' sus insumos, completados con `NA` durante la estandarización.
+#'
 #' Los ingresos `py00`, `py10`, `py11`, `py12`, `py20`, `py21`, `py22`, `py23`,
 #' `py24` y `py25` siguen las definiciones de [calcular_personas()]. Se expresan
 #' en moneda nacional por mes, convirtiendo los importes netos anuales en euros
@@ -42,8 +65,8 @@
 #' el valor publicado. No se revierten agrupaciones ni perturbaciones publicadas.
 #'
 #' Los insumos `RB062`, `RB063`, `RB064`, `RB065` y `RB066`
-#' se renombran como `pi06a`, `pi06b`, `pi06c`, `pi06d` y `pi06e`, para paneles de
-#' dos a seis años, respectivamente. `DB075` y `DB076` se renombran como `pi08a`
+#' se copian como `pi06a`, `pi06b`, `pi06c`, `pi06d` y `pi06e`, para paneles de
+#' dos a seis años, respectivamente. `DB075` y `DB076` se copian como `pi08a`
 #' (grupo de rotación) y `pi08b` (número de encuesta). No se elige un ponderador
 #' automáticamente. Las siete variables armonizadas están siempre presentes;
 #' los insumos ausentes se completan con `NA` durante la estandarización.
@@ -65,8 +88,10 @@
 #' Quedan pendientes el traspaso de otras variables desde `.D` y `.R`, la imputación,
 #' la selección mediante `.expandir`, el etiquetado mediante `.etiquetar` y las
 #' variantes PPA. Esta versión conserva todas las columnas originales, salvo
-#' los renombrados y la transformación contable indicada, y no agrega atributos
+#' la transformación contable indicada, y no agrega atributos
 #' de armonización, imputación o etiquetado.
+#' También quedan pendientes `pd01c`, ocupación ISCO, calificación, informalidad,
+#' calidad del empleo, meses trabajados, horas e ingresos horarios.
 #'
 #' @seealso [expandir_hogares_panel()]
 #' @export
@@ -79,24 +104,42 @@ expandir_personas_panel <- function(
   .etiquetar = TRUE
 ) {
   # Estandarización de los conjuntos -----------------------------------------
-  ponderadores <- c("RB062", "RB063", "RB064", "RB065", "RB066")
-  metadatos_panel <- c("DB075", "DB076")
+  insumos_r <- list(
+    RB062 = NA_real_,
+    RB063 = NA_real_,
+    RB064 = NA_real_,
+    RB065 = NA_real_,
+    RB066 = NA_real_,
+    RB080 = NA_integer_,
+    RB081 = NA_integer_,
+    RB082 = NA_integer_,
+    RX010 = NA_integer_,
+    RX020 = NA_integer_,
+    RB280 = NA_character_,
+    RB290 = NA_character_
+  )
+  insumos_d <- list(
+    DB075 = NA_integer_,
+    DB076 = NA_integer_,
+    DB040 = NA_character_,
+    DB100 = NA_integer_
+  )
   if (is.null(.R)) {
-    for (variable in setdiff(ponderadores, names(.P))) {
-      .P[[variable]] <- rep(NA_real_, nrow(.P))
+    for (variable in setdiff(names(insumos_r), names(.P))) {
+      .P[[variable]] <- rep(insumos_r[[variable]], nrow(.P))
     }
   } else {
-    for (variable in setdiff(ponderadores, names(.R))) {
-      .R[[variable]] <- rep(NA_real_, nrow(.R))
+    for (variable in setdiff(names(insumos_r), names(.R))) {
+      .R[[variable]] <- rep(insumos_r[[variable]], nrow(.R))
     }
   }
   if (is.null(.D)) {
-    for (variable in setdiff(metadatos_panel, names(.P))) {
-      .P[[variable]] <- rep(NA_integer_, nrow(.P))
+    for (variable in setdiff(names(insumos_d), names(.P))) {
+      .P[[variable]] <- rep(insumos_d[[variable]], nrow(.P))
     }
   } else {
-    for (variable in setdiff(metadatos_panel, names(.D))) {
-      .D[[variable]] <- rep(NA_integer_, nrow(.D))
+    for (variable in setdiff(names(insumos_d), names(.D))) {
+      .D[[variable]] <- rep(insumos_d[[variable]], nrow(.D))
     }
   }
 
@@ -110,7 +153,14 @@ expandir_personas_panel <- function(
     "PY120N",
     "PY130N",
     "PY140N",
-    "PX010"
+    "PX010",
+    "PB140",
+    "PX020",
+    "PE041",
+    "PL032",
+    "PL040A",
+    "PL040B",
+    "PL141"
   )
   insumos_ausentes <- setdiff(insumos, names(.P))
   for (variable in insumos_ausentes) {
@@ -132,21 +182,27 @@ expandir_personas_panel <- function(
   # Traspaso de variables desde conjuntos auxiliares -------------------------
   if (!is.null(.R)) {
     .P <- dplyr::left_join(
-      x = dplyr::select(.P, -dplyr::any_of(ponderadores)),
-      y = dplyr::select(.R, RB010, RB020, RB030, dplyr::all_of(ponderadores)),
+      x = dplyr::select(.P, -dplyr::any_of(names(insumos_r))),
+      y = dplyr::select(
+        .R,
+        RB010,
+        RB020,
+        RB030,
+        dplyr::all_of(names(insumos_r))
+      ),
       by = dplyr::join_by(PB010 == RB010, PB020 == RB020, PB030 == RB030),
       relationship = "many-to-one"
     )
   }
   if (!is.null(.D)) {
     .P <- dplyr::left_join(
-      x = dplyr::select(.P, -dplyr::any_of(metadatos_panel)),
+      x = dplyr::select(.P, -dplyr::any_of(names(insumos_d))),
       y = dplyr::select(
         .D,
         DB010,
         DB020,
         DB030,
-        dplyr::all_of(metadatos_panel)
+        dplyr::all_of(names(insumos_d))
       ),
       by = dplyr::join_by(PB010 == DB010, PB020 == DB020, PX030 == DB030),
       relationship = "many-to-one"
@@ -165,6 +221,7 @@ expandir_personas_panel <- function(
     # Bloque I --------------------------------------------------------------
     pi01 = PB010,
     pi02 = PB020,
+    pi03 = DB040,
     pi04 = PX030,
     pi05 = PB030,
     pi06a = RB062,
@@ -172,10 +229,69 @@ expandir_personas_panel <- function(
     pi06c = RB064,
     pi06d = RB065,
     pi06e = RB066,
+    pi07 = dplyr::recode_values(
+      DB100,
+      from = tabla_pi07$DB100,
+      to = tabla_pi07$pi07,
+      default = NA_integer_
+    ),
     pi08a = DB075,
     pi08b = DB076,
     # Bloque D --------------------------------------------------------------
+    pd01a = dplyr::coalesce(RB082, RX010),
+    pd01b = dplyr::coalesce(
+      RB081,
+      RX020,
+      PX020,
+      dplyr::case_when(
+        PB020 %in%
+          c("ES", "IT", "PL") |
+          (PB020 == "PT" & dplyr::coalesce(RB080, PB140) > PB010 - 80) ~
+          PB010 - dplyr::coalesce(RB080, PB140) - 1,
+        .default = NA_real_
+      )
+    ),
     pd02 = PB150,
+    pd03 = dplyr::recode_values(
+      PE041,
+      from = tabla_pd03$PE041,
+      to = tabla_pd03$pd03,
+      default = NA_integer_
+    ),
+    pd04 = dplyr::case_when(
+      RB280 == "LOC" ~ 1L,
+      RB280 %in% c("EU", "OTH") ~ 2L,
+      .default = NA_integer_
+    ),
+    pd05 = dplyr::case_when(
+      RB290 == "LOC" ~ 1L,
+      RB290 %in% c("EU", "OTH") ~ 2L,
+      .default = NA_integer_
+    ),
+    # Bloque L --------------------------------------------------------------
+    pl01 = dplyr::recode_values(
+      PL032,
+      from = tabla_pl01$PL032,
+      to = tabla_pl01$pl01,
+      default = NA_integer_
+    ),
+    pl02a = PL040A,
+    pl02b = PL040B,
+    pl02c = dplyr::case_when(
+      PL032 == 1 ~ pl02a,
+      PL032 != 1 ~ pl02b,
+      .default = NA_real_
+    ),
+    toc = dplyr::case_when(
+      PL141 %in% c(11, 21) ~ 1L,
+      PL141 %in% c(12, 22) ~ 2L,
+      .default = NA_integer_
+    ),
+    pomj = dplyr::case_when(
+      PL141 %in% c(21, 22) ~ 1L,
+      PL141 %in% c(11, 12) ~ 2L,
+      .default = NA_integer_
+    ),
     # Bloque Y --------------------------------------------------------------
     py00 = PY010N +
       PY050N +
