@@ -15,156 +15,194 @@ expandir_personas_panel(
 }
 \arguments{
 \item{.P}{\code{data.frame} o \code{tibble}. Conjunto P longitudinal en formato largo,
-de un único país y varios años, con una fila por persona y año.}
+de un único país, con una fila por persona y año.}
 
 \item{.D}{\code{data.frame} o \code{tibble}, o \code{NULL} (por defecto). Conjunto D
-longitudinal del cual se incorporan \code{DB040}, \code{DB100}, \code{DB075} y \code{DB076}.}
+longitudinal del mismo país y de los años correspondientes.}
 
 \item{.R}{\code{data.frame} o \code{tibble}, o \code{NULL} (por defecto). Conjunto R
-longitudinal del cual se incorporan los ponderadores \code{RB062}–\code{RB066},
-\code{RB080}, \code{RB081}, \code{RB082}, \code{RX010}, \code{RX020}, \code{RB280} y \code{RB290}.}
+longitudinal del mismo país y de los años correspondientes.}
 
 \item{.imputar}{\code{TRUE} o \code{FALSE} (por defecto). ¿Imputar valores faltantes o
-inconsistentes dentro de cada ola? Pendiente de implementación.}
+inconsistentes dentro de cada ola? Todavía no tiene efecto.}
 
 \item{.expandir}{\code{TRUE} o \code{FALSE} (por defecto). ¿Conservar las columnas
-originales en el resultado? Pendiente de implementación.}
+originales en el resultado? Todavía no tiene efecto: se conservan siempre.}
 
 \item{.etiquetar}{\code{TRUE} (por defecto) o \code{FALSE}. ¿Aplicar etiquetas a las
-variables y sus valores? Pendiente de implementación.}
+variables y sus valores? Todavía no tiene efecto.}
 }
 \value{
-\code{data.frame} o \code{tibble} con las variables originales y las variables
-armonizadas. Conserva las filas y su orden, incluidos paneles desbalanceados.
-Los ponderadores y metadatos panel se copian y quedan como \code{NA} cuando
-sus insumos no están disponibles.
+\code{data.frame} o \code{tibble} con las variables armonizadas, las columnas
+originales y los insumos añadidos durante la estandarización. Conserva las
+filas y su orden, incluidos paneles desbalanceados. No agrega atributos de
+armonización, imputación o etiquetado.
 }
 \description{
-Construye variables de identificación, demográficas, laborales e ingresos del conjunto P
-longitudinal de la EU-SILC, suponiendo observaciones de 2021 en adelante.
-Incorpora ponderadores y demográficos desde R, y región, urbanización y
-metadatos panel desde D cuando se suministran.
-Las flags todavía no tienen efecto.
+Construye variables de identificación, demográficas, laborales e ingresos del
+conjunto P longitudinal de la EU-SILC, suponiendo observaciones de 2021 en
+adelante. Incorpora ponderadores y demográficos desde R, y región,
+urbanización y metadatos panel desde D cuando se suministran.
 }
 \details{
-La estandarización y el traspaso de variables se realizan mediante
-\code{\link[=estandarizar_personas_panel_]{estandarizar_personas_panel_()}}, y la construcción y transformación
-mediante \code{\link[=calcular_personas_panel_]{calcular_personas_panel_()}}. Se conservan también los insumos
-ausentes que la estandarización añade como \code{NA}.
+A continuación se listan las variables construidas según bloque.
+\subsection{(I) Identificación}{
+\itemize{
+\item \code{pi01}. Año de la encuesta.
+\item \code{pi02}. País.
+\item \code{pi03}. Región.
+\item \code{pi04}. Identificador del hogar actual.
+\item \code{pi05}. Identificador de la persona.
+\item \code{pi06a}. Ponderador longitudinal de dos años.
+\item \code{pi06b}. Ponderador longitudinal de tres años.
+\item \code{pi06c}. Ponderador longitudinal de cuatro años.
+\item \code{pi06d}. Ponderador longitudinal de cinco años.
+\item \code{pi06e}. Ponderador longitudinal de seis años.
+\item \code{pi07}. Urbanización.
+\item \code{pi08a}. Grupo de rotación.
+\item \code{pi08b}. Número de encuesta dentro del panel.
+}
+}
 
-Se construyen \code{pi01}, \code{pi02}, \code{pi04}, \code{pi05} y \code{pd02} desde \code{PB010}, \code{PB020},
-\code{PX030}, \code{PB030} y \code{PB150}, respectivamente. Estos insumos deben estar presentes.
+\subsection{(D) Demográficos}{
+\itemize{
+\item \code{pd01a}. Edad al momento de la entrevista.
+\item \code{pd01b}. Edad al final del período de referencia de ingresos.
+\item \code{pd02}. Sexo.
+\item \code{pd03}. Nivel educativo.
+\item \code{pd04}. Estatus migratorio: nacido en el país o en el exterior.
+\item \code{pd05}. Estatus de ciudadanía: nacional o extranjero.
+}
+}
 
-\code{pi03} conserva la región publicada en \code{DB040}; \code{pi07} recodifica \code{DB100}
-mediante \code{tabla_pi07}. \code{pd01a} prioriza \code{RB082} sobre \code{RX010} y no se
-reconstruye con fechas de nacimiento y entrevista. \code{pd01b} prioriza \code{RB081},
-\code{RX020} y \code{PX020}; si faltan, usa el año de encuesta menos el nacimiento
-(primero \code{RB080}, luego \code{PB140}) menos uno. Esta alternativa se aplica para
-ES, IT y PL, y para PT sólo si el nacimiento es posterior al año de encuesta
-menos 80. No se aplica para DE ni otros países fuera del alcance revisado.
-Las restricciones afectan la reconstrucción, no las edades difundidas.
+\subsection{(L) Laborales}{
 
-\code{pd03} recodifica \code{PE041} mediante \code{tabla_pd03}, conservando las limitaciones
-de los códigos publicados: IT agrupa niveles secundarios en 300 y PT niveles
-inferiores en 200. \code{pd04} y \code{pd05} recodifican \code{RB280} y \code{RB290}: LOC como 1,
-EU/OTH como 2 y códigos desconocidos como \code{NA}.
+Las variantes A corresponden a ocupados; las B, a no ocupados con ocupación
+anterior, y las C combinan A para ocupados y B para no ocupados. En B se
+describe la última ocupación. El sufijo de informalidad distingue categorías,
+no estos grupos.
+\itemize{
+\item \code{pl01}. Condición de actividad.
+\item \code{pl02a}, \code{pl02b}, \code{pl02c}. Categoría ocupacional (A, B y C).
+\item \code{pl10a}, \code{pl10b}, \code{pl10c}. Ocupación ISCO-08 (A, B y C).
+\item \code{pl11a}, \code{pl11b}, \code{pl11c}. Grupo principal ISCO-08 (A, B y C).
+\item \code{pl12a}, \code{pl12b}, \code{pl12c}. Calificación de la ocupación (A, B y C).
+\item \code{pl13a}, \code{pl13b}, \code{pl13c}. Calificación profesional (A, B y C).
+\item \code{pl40a}. Informalidad laboral, cuatro categorías.
+\item \code{pl40b}. Informalidad laboral, dos categorías.
+\item \code{pl41}. Empleo de calidad.
+}
 
-\code{pl01} recodifica \code{PL032} mediante \code{tabla_pl01}; \code{pl02a/b} conservan
-\code{PL040A/B}. \code{pl02c} toma A para ocupados y B para no ocupados según \code{PL032},
-y queda como \code{NA} si falta la actividad. \code{toc} distingue contrato escrito
-(11/21) y verbal (12/22), y \code{pomj} permanente (21/22) y temporal (11/12),
-desde \code{PL141}. Todas estas variables armonizadas se construyen aunque falten
-sus insumos, completados con \code{NA} durante la estandarización.
+Ninguna de las variables actualmente construidas requiere el módulo
+\emph{labor market and housing conditions} (LMH).
+}
 
-\code{pl10a/b} conservan la ocupación publicada en \code{PL051A/B}; \code{pl11a/b}
-identifican el grupo principal ISCO y \code{pl12a/b} y \code{pl13a/b} recodifican
-calificación y calificación profesional mediante \code{tabla_isco}. Las variantes
-C seleccionan A para ocupados y B para no ocupados por observación, sin perder
-valores conocidos porque la otra fuente esté completamente ausente.
+\subsection{(Y) Ingresos}{
 
-Para ES, IT, DE, PL y PT, las reglas longitudinales de las entregas L21–L25
-se interpretan con códigos ISCO de dos dígitos: 1, 2 y 3 representan las
-ocupaciones militares 01, 02 y 03 (grupo principal 0). No se infiere precisión
-por la magnitud del valor ni se extiende a DE la agrupación a un dígito de
-entregas anteriores a 2021. En PT, el código 14 agrupa las ocupaciones 11–14:
-se conserva en \verb{pl10*}, el grupo es 1, \verb{pl12*} queda como \code{NA} por ambigüedad
-y \verb{pl13*} conserva la categoría común 2. No se recupera el detalle eliminado.
-Los códigos desconocidos quedan como \code{NA} en las clasificaciones derivadas.
+Los siguientes ingresos se expresan en moneda nacional por mes, excepto
+\code{py11h} y \code{py12h}, que se expresan en moneda nacional por hora.
+\itemize{
+\item \code{py00}. Ingreso total.
+\item \code{py10}. Ingreso total por fuentes laborales.
+\item \code{py11}. Ingreso por trabajo asalariado.
+\item \code{py12}. Ingreso por trabajo no asalariado.
+\item \code{py20}. Ingreso total por fuentes no laborales.
+\item \code{py21}. Ingreso por jubilaciones y pensiones privadas.
+\item \code{py22}. Ingreso por jubilación.
+\item \code{py23}. Ingreso por pensión privada.
+\item \code{py24}. Ingreso por desempleo.
+\item \code{py25}. Ingreso por otras ayudas.
+\item \code{py11h}. Ingreso horario por trabajo asalariado.
+\item \code{py12h}. Ingreso horario por trabajo no asalariado.
+}
 
-\code{pl40a/b} reutilizan \code{\link[=calc_informalidad]{calc_informalidad()}} con \code{PL040A}, \code{PY030G} y \code{PY035G};
-\code{pl41} reutiliza \code{\link[=calc_calidad]{calc_calidad()}} con \code{pl40a}, \code{pl12a} y \code{pomj}. Conservan las
-reglas transversales, incluido devolver \code{NA} para todo el vector si algún
-insumo requerido está completamente perdido. Las contribuciones faltantes no
-se convierten en cero ni se trasladan automáticamente advertencias nacionales
-transversales. La pérdida de detalle ocupacional puede limitar también \code{pl41}.
+Para cada uno se construye una variante con sufijo \code{ppa}, expresada en
+dólares de paridad de poder adquisitivo (PPA) por mes o por hora, según
+corresponda. Para más detalles sobre las unidades PPA, ver \link{tabla_ppa}.
+}
 
-Los ingresos \code{py00}, \code{py10}, \code{py11}, \code{py12}, \code{py20}, \code{py21}, \code{py22}, \code{py23},
-\code{py24} y \code{py25} siguen las definiciones de \code{\link[=calcular_personas]{calcular_personas()}}. Se expresan
-en moneda nacional por mes, convirtiendo los importes netos anuales en euros
-mediante \code{PX010 / 12}. Se conservan los ingresos negativos y los faltantes se
-propagan en las sumas. Si falta una columna de ingresos netos o \code{PX010}, las
-variables que la requieren quedan como \code{NA}, sin impedir los otros cálculos.
+\subsection{Auxiliares}{
+\itemize{
+\item \code{ppa_factor}. Factor de conversión de moneda nacional a PPA.
+\item \code{ppa_factor_us}. Factor de conversión de dólares estadounidenses a PPA.
+\item \code{maa}. Meses de actividad principal asalariada en el período de referencia
+de ingresos.
+\item \code{man}. Meses de actividad principal no asalariada en ese período,
+incluidos trabajadores familiares.
+\item \code{haa}. Horas anuales aproximadas de trabajo asalariado.
+\item \code{han}. Horas anuales aproximadas de trabajo no asalariado.
+\item \code{toc}. Tipo de contrato: escrito o verbal.
+\item \code{pomj}. Permanencia del trabajo principal: permanente o temporal.
+}
+}
 
-\code{maa} y \code{man} cuentan los meses con actividad principal asalariada (códigos
-1/2) y no asalariada (3/4, incluidos trabajadores familiares) desde
-\code{PL211A}–\code{PL211L}, mediante \code{\link[=calcular_meses_actividad]{calcular_meses_actividad()}}. No equivalen a meses
-de cobro comprobado. Requieren doce códigos entre 1 y 11; un mes ausente,
-código desconocido o flag mensual disponible negativa deja ambos conteos
-como \code{NA}. Las flags positivas, incluidas imputaciones de Eurostat, son
-aceptadas; flags ausentes o con \code{NA} no invalidan un código mensual válido.
+\subsection{Disponibilidad y valores faltantes}{
 
-\code{haa} y \code{han} aproximan las horas anuales como meses de actividad por horas
-semanales actuales (\code{PL060}) por 4,2. Se calculan sólo para ocupados actuales
-con ingreso correspondiente distinto de cero, meses positivos y horas
-semanales positivas. No reconstruyen las horas históricas de cada empleo.
-\code{py11h} y \code{py12h} dividen el ingreso neto anual convertido a moneda nacional
-por esas horas; conservan cero cuando el ingreso es cero. A diferencia del
-cálculo transversal, horas semanales no positivas dejan las horas anuales
-como \code{NA} y no generan un ingreso horario infinito por división por cero.
-Los ingresos horarios no se mensualizan ni se convierten nuevamente a moneda
-nacional.
+El conjunto de variables armonizadas es siempre el mismo, se proporcionen
+o no R y D. El conjunto completo de columnas puede variar porque se conservan
+los insumos originales y los añadidos como \code{NA} durante la estandarización.
 
-\code{ppa_factor} y \code{ppa_factor_us} se incorporan desde \link{tabla_ppa} por país y año
-de encuesta, reemplazando factores homónimos preexistentes. Para los diez
-ingresos mensuales y los dos horarios se crean variantes con sufijo \code{ppa},
-mediante \code{ingreso / ppa_factor * ppa_factor_us}, como en
-\code{\link[=calcular_personas]{calcular_personas()}}. Se expresan en dólares PPA mensuales o por hora,
-respectivamente. La tabla interna cubre 2016–2025; sin coincidencia de país
-y año, los factores y variantes PPA quedan como \code{NA}, sin extrapolación.
+Si no están disponibles los insumos necesarios ni una fuente alternativa,
+las variables dependientes quedan como \code{NA}. Cuando la ausencia afecta a
+todo el conjunto, pueden quedar completamente perdidas. Los faltantes se
+propagan en las sumas de ingresos, sin reemplazarlos por cero.
 
-En Italia, \code{PY120N} se establece en cero por observación cuando su flag
-\code{PY120N_F} vale -4, indicando su integración en otros componentes. Esta regla
-contable se aplica independientemente de \code{.imputar}. Sin la flag se conserva
-el valor publicado. No se revierten agrupaciones ni perturbaciones publicadas.
+Algunas edades tienen fuentes alternativas. Las variantes laborales C
+conservan los valores disponibles de A o B según la actividad de cada
+observación. La informalidad y el empleo de calidad quedan completamente
+perdidos si algún insumo requerido está completamente perdido, incluso
+cuando hay información parcial en otros insumos.
+}
 
-Los insumos \code{RB062}, \code{RB063}, \code{RB064}, \code{RB065} y \code{RB066}
-se copian como \code{pi06a}, \code{pi06b}, \code{pi06c}, \code{pi06d} y \code{pi06e}, para paneles de
-dos a seis años, respectivamente. \code{DB075} y \code{DB076} se copian como \code{pi08a}
-(grupo de rotación) y \code{pi08b} (número de encuesta). No se elige un ponderador
-automáticamente. Las siete variables armonizadas están siempre presentes;
-los insumos ausentes se completan con \code{NA} durante la estandarización.
+\subsection{Ingresos horarios aproximados}{
 
-Los cruces con \code{.R} incluyen país, año y persona; con \code{.D}, país, año y hogar
-actual, que puede cambiar entre olas. Cada clave debe identificar una única
-fila en el auxiliar. Sin coincidencia, las variables traspasadas quedan como
-\code{NA}. Si se suministra un auxiliar, sus valores reemplazan los insumos
-correspondientes de \code{.P}; si no se suministra, se conservan los insumos ya
-incorporados en \code{.P}. No se balancea el panel ni se crean observaciones.
+Las horas anuales se aproximan multiplicando los meses de actividad principal
+correspondiente por las horas habitualmente trabajadas por semana y por 4,2.
+Los meses de actividad no equivalen a meses de cobro comprobado. Las horas
+semanales son las actuales: no se reconstruyen las horas históricas de cada
+empleo durante el período de referencia de ingresos.
 
-Los insumos y ponderadores longitudinales requieren un tratamiento propio:
-no debe suponerse la disponibilidad de las variables transversales ni elegirse
-automáticamente un ponderador, cuya duración de seguimiento debe considerarse.
-Las agrupaciones, supresiones y perturbaciones documentadas por Eurostat no
-se tratarán automáticamente como inconsistencias imputables. La imputación
-prevista utilizará únicamente información dentro de cada ola.
+La aproximación se aplica sólo a ocupados actuales con ingreso correspondiente
+distinto de cero, meses de actividad positivos y horas semanales positivas.
+El ingreso horario divide el ingreso anual en moneda nacional por esas horas.
+Si el ingreso es cero, el horario queda en cero aunque falten meses u horas;
+si el ingreso es distinto de cero y faltan horas válidas, queda como \code{NA}.
+}
 
-Quedan pendientes el traspaso de otras variables desde \code{.D} y \code{.R}, la imputación,
-la selección mediante \code{.expandir} y el etiquetado mediante \code{.etiquetar}.
-Esta versión conserva todas las columnas originales, salvo
-la transformación contable y el reemplazo de factores PPA indicados, y no agrega atributos
-de armonización, imputación o etiquetado.
-También queda pendiente \code{pd01c}.
+\subsection{Alcance y limitaciones}{
+
+La implementación supone datos desde 2021. Las diferencias nacionales
+revisadas corresponden a ES, IT, DE, PL y PT. No se recupera el detalle
+eliminado por agrupaciones, supresiones o perturbaciones de los datos
+publicados. Esto afecta al nivel educativo en IT y PT y a la clasificación
+ocupacional en PT; puede limitar también el cálculo del empleo de calidad.
+
+No se elige automáticamente un ponderador: debe usarse el adecuado a la
+duración del seguimiento analizado. Se conserva la estructura de entrada,
+sin balancear el panel ni restringirlo a personas con ponderador positivo.
+
+Se conservan los ingresos negativos. Los factores PPA se incorporan por país
+y año de encuesta; la tabla interna cubre 2016–2025. Sin coincidencia, los
+factores y los ingresos PPA quedan como \code{NA}, sin extrapolación.
+}
+
+\subsection{Etapas de armonización}{
+
+La estandarización completa los insumos ausentes, aplica las transformaciones
+nacionales e incorpora desde R ponderadores y demográficos, y desde D región,
+urbanización y metadatos panel. Sus reglas de traspaso y tratamiento de
+insumos se describen en \code{\link[=estandarizar_personas_panel_]{estandarizar_personas_panel_()}}.
+
+El cálculo construye las variables de los bloques anteriores y convierte
+los ingresos a unidades mensuales, horarias y PPA. Las reglas específicas se
+describen en \code{\link[=calcular_personas_panel_]{calcular_personas_panel_()}}.
+
+Quedan pendientes la imputación dentro de cada ola, la selección de columnas
+mediante \code{.expandir}, el etiquetado mediante \code{.etiquetar} y la definición de
+\code{pd01c}. Las tres flags todavía no modifican el resultado.
+}
 }
 \seealso{
+\code{\link[=estandarizar_personas_panel_]{estandarizar_personas_panel_()}}, \code{\link[=calcular_personas_panel_]{calcular_personas_panel_()}},
 \code{\link[=expandir_hogares_panel]{expandir_hogares_panel()}}
 }

@@ -2,32 +2,70 @@
 #' Estandariza el conjunto P longitudinal de la EU-SILC (interna)
 #'
 #' @description
-#' Núcleo interno de estandarización de [expandir_personas_panel()]. Completa
-#' los insumos ausentes con `NA`, aplica las transformaciones nacionales e
-#' incorpora variables desde R y D longitudinales. Supone observaciones de
-#' 2021 en adelante y no agrega atributos de armonización.
+#' Prepara el conjunto P longitudinal para la armonización: completa insumos
+#' ausentes, incorpora variables desde R y D y aplica transformaciones
+#' nacionales. Supone observaciones de 2021 en adelante. Es una función interna.
 #'
-#' @param .P `data.frame` o `tibble`. Conjunto P longitudinal en formato largo.
-#' @param .D `data.frame` o `tibble`, o `NULL`. Conjunto D longitudinal.
-#' @param .R `data.frame` o `tibble`, o `NULL`. Conjunto R longitudinal.
+#' @param .P `data.frame` o `tibble`. Conjunto P longitudinal en formato largo,
+#'   con una fila por persona y año.
+#' @param .D `data.frame` o `tibble`, o `NULL` (por defecto). Conjunto D
+#'   longitudinal del mismo país y de los años correspondientes.
+#' @param .R `data.frame` o `tibble`, o `NULL` (por defecto). Conjunto R
+#'   longitudinal del mismo país y de los años correspondientes.
 #'
 #' @returns Conjunto P estandarizado, con las filas y el orden originales.
-#'   Conserva los insumos añadidos como `NA` y construye `maa` y `man`.
+#'   Conserva los insumos añadidos como `NA` e incluye los auxiliares `maa` y
+#'   `man`. No agrega atributos de armonización.
 #'
 #' @details
-#' Los cruces incluyen año y país, además de persona para R y hogar actual
-#' para D. Cada clave debe identificar una única fila en el auxiliar. Si se
-#' suministra un auxiliar, sus valores reemplazan los insumos correspondientes
-#' de P; si no, se conservan los ya incorporados. Sin coincidencia quedan `NA`.
-#' No se balancea el panel ni se crean observaciones.
+#' ## Disponibilidad de insumos
 #'
-#' En Italia, `PY120N` se establece en cero cuando `PY120N_F` vale -4.
-#' Esta regla contable no depende de la imputación. Sin la flag se conserva
-#' el valor publicado. No se revierten agrupaciones ni perturbaciones.
+#' Se completan con `NA` las columnas de insumo opcionales ausentes, de modo
+#' que los cálculos posteriores puedan propagar los faltantes. Los insumos de
+#' identificación `PB010`, `PB020`, `PB030`, `PX030` y `PB150` deben estar
+#' presentes en P. La función no balancea el panel ni crea observaciones.
 #'
-#' `maa` y `man` se calculan con [calcular_meses_actividad()] antes de la
-#' futura imputación. Para las reglas y limitaciones de los insumos, ver
-#' [expandir_personas_panel()].
+#' ## Traspaso desde R y D
+#'
+#' Desde R se incorporan `RB062`–`RB066` (ponderadores longitudinales),
+#' `RB080`, `RB081`, `RB082`, `RX010` y `RX020` (nacimiento y edades), y
+#' `RB280` y `RB290` (país de nacimiento y ciudadanía).
+#'
+#' Desde D se incorporan `DB040` (región), `DB100` (urbanización),
+#' `DB075` (grupo de rotación) y `DB076` (número de encuesta).
+#'
+#' El cruce con R utiliza año, país y persona: `PB010/PB020/PB030` en P y
+#' `RB010/RB020/RB030` en R. El cruce con D utiliza año, país y hogar actual:
+#' `PB010/PB020/PX030` en P y `DB010/DB020/DB030` en D. El hogar puede cambiar
+#' entre olas. Cada clave debe identificar una única fila en el auxiliar;
+#' claves duplicadas que coinciden con P producen un error.
+#'
+#' Si se suministra un auxiliar, sus valores reemplazan los insumos
+#' correspondientes de P, incluso si están ausentes o no hay coincidencia.
+#' En esos casos quedan como `NA`. Sin el auxiliar se conservan los insumos
+#' ya incorporados en P y se completan los ausentes.
+#'
+#' ## Transformaciones nacionales
+#'
+#' En Italia, `PY120N` se establece en cero por observación cuando
+#' `PY120N_F` vale -4, porque el importe se integra en otros componentes.
+#' Es una regla contable independiente de la imputación. Si la flag no está
+#' disponible o no indica esa situación, se conserva el valor publicado.
+#' No se revierten agrupaciones ni perturbaciones.
+#'
+#' ## Auxiliares mensuales de actividad
+#'
+#' `maa` cuenta meses de actividad principal asalariada (códigos 1/2), y
+#' `man`, no asalariada (3/4, incluidos trabajadores familiares), desde
+#' `PL211A`–`PL211L`. No describen meses de cobro comprobado.
+#'
+#' Se requieren doce códigos entre 1 y 11. Un mes ausente, código desconocido
+#' o flag mensual disponible negativa deja ambos conteos como `NA`. Las flags
+#' positivas, incluidas imputaciones de Eurostat, se aceptan; las flags ausentes
+#' o con `NA` no invalidan un código mensual válido. Los conteos se reconstruyen
+#' desde el calendario, reemplazando auxiliares homónimos preexistentes.
+#'
+#' @seealso [expandir_personas_panel()], [calcular_personas_panel_()]
 estandarizar_personas_panel_ <- function(.P, .D = NULL, .R = NULL) {
   # Estandarización de los conjuntos -----------------------------------------
   insumos_r <- list(

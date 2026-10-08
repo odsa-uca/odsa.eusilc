@@ -11,29 +11,93 @@ calcular_personas_panel_(.P)
 por \code{\link[=estandarizar_personas_panel_]{estandarizar_personas_panel_()}}, incluidos los auxiliares \code{maa} y \code{man}.}
 }
 \value{
-Conjunto P con todas las columnas de entrada y las variables
-armonizadas, conservando las filas y su orden. Reemplaza factores PPA
-homónimos y variables armonizadas preexistentes.
+Conjunto P con las columnas de entrada y las variables armonizadas,
+conservando las filas y su orden. Reemplaza factores PPA homónimos y
+variables armonizadas preexistentes. No selecciona ni etiqueta columnas.
 }
 \description{
-Núcleo interno de cálculo de \code{\link[=expandir_personas_panel]{expandir_personas_panel()}}. Incorpora los
-factores PPA, recodifica mediante tablas y construye variables de
-identificación, demográficas, laborales e ingresos. Supone observaciones
-de 2021 en adelante.
+Construye variables armonizadas de identificación, demográficas, laborales
+e ingresos a partir del conjunto P longitudinal estandarizado. Incorpora
+factores PPA y aplica las recodificaciones y conversiones de ingresos.
+Supone observaciones de 2021 en adelante. Es una función interna.
 }
 \details{
-Conserva las reglas nacionales y las limitaciones de detalle publicadas.
-En PT, el código ocupacional 14 agrupa 11–14: \code{pl12a/b} quedan como \code{NA},
-antes de construir las variantes C y el empleo de calidad. Los códigos
-militares 1, 2 y 3 representan 01, 02 y 03 y pertenecen al grupo principal 0.
-\code{\link[=calc_informalidad]{calc_informalidad()}} y \code{\link[=calc_calidad]{calc_calidad()}} conservan sus reglas transversales.
+El catálogo de variables y sus unidades se presenta en
+\code{\link[=expandir_personas_panel]{expandir_personas_panel()}}.
+\subsection{Recodificaciones y reglas nacionales}{
 
-Los ingresos anuales netos se convierten a moneda nacional mensual con
-\code{PX010 / 12}. Los horarios se calculan desde los importes anuales con
-\code{PX010}, antes de mensualizar. Las variantes PPA se obtienen con
-\code{ingreso / ppa_factor * ppa_factor_us}; sin factores disponibles quedan
-como \code{NA}. Se conservan ingresos negativos y se propagan los faltantes.
+La urbanización, el nivel educativo, la condición de actividad y las
+calificaciones ocupacionales se recodifican mediante tablas. Los códigos
+desconocidos quedan como \code{NA} en las clasificaciones derivadas.
 
-Para las definiciones y limitaciones de cada variable, ver
-\code{\link[=expandir_personas_panel]{expandir_personas_panel()}}. \code{pd01c} permanece pendiente.
+El nivel educativo conserva la pérdida de detalle publicada: IT agrupa
+niveles secundarios en el código 300 y PT niveles inferiores en 200.
+
+Para ES, IT, DE, PL y PT se interpretan códigos ocupacionales ISCO-08 de dos
+dígitos. Los códigos militares 1, 2 y 3 representan 01, 02 y 03 y pertenecen
+al grupo principal 0. No se infiere precisión por la magnitud del valor ni
+se extiende a DE la agrupación a un dígito de entregas anteriores a 2021.
+
+En PT, el código 14 agrupa las ocupaciones 11–14: se conserva como ocupación,
+su grupo principal es 1, la calificación queda como \code{NA} por ambigüedad y la
+calificación profesional conserva la categoría común 2. La restricción se
+aplica antes de construir las variantes C y el empleo de calidad.
+}
+
+\subsection{Edades y variantes laborales}{
+
+Para la edad de entrevista se prioriza \code{RB082} sobre \code{RX010}, sin
+reconstrucción mediante fechas. Para la edad al final del período de
+referencia de ingresos se priorizan \code{RB081}, \code{RX020} y \code{PX020}. Si faltan,
+se usa el año de encuesta menos el nacimiento (primero \code{RB080}, luego
+\code{PB140}) menos uno: en ES, IT y PL, y en PT sólo si el nacimiento es
+posterior al año de encuesta menos 80. Esta alternativa no se aplica en
+DE ni en otros países. Las restricciones no afectan las edades difundidas.
+
+Las variantes laborales C seleccionan A para ocupados y B para no ocupados
+por observación. Si falta la condición de actividad, C queda como \code{NA}.
+No se pierde un valor conocido porque la otra variante esté completamente
+ausente. El nacimiento y la ciudadanía distinguen LOC (categoría 1) de
+EU/OTH (categoría 2); otros códigos quedan como \code{NA}.
+}
+
+\subsection{Informalidad y calidad del empleo}{
+
+Se conservan las definiciones transversales basadas en categoría ocupacional
+y contribuciones a la seguridad social y a pensiones privadas. Las
+contribuciones faltantes no se reemplazan por cero.
+
+La calidad del empleo combina informalidad, calificación de la ocupación y
+permanencia del trabajo principal. Si alguno de los insumos requeridos está
+completamente perdido, la variable correspondiente queda como \code{NA} para
+todo el conjunto. La pérdida de detalle ocupacional puede limitarla también.
+}
+
+\subsection{Conversión de ingresos}{
+
+Primero se incorporan los factores PPA por país y año de encuesta,
+reemplazando los factores homónimos de entrada. No se usan factores de otro
+año ni se extrapolan los faltantes; para su definición ver \link{tabla_ppa}.
+
+Los ingresos se construyen desde importes netos anuales en euros. Se
+conservan valores negativos y los faltantes se propagan en las sumas.
+Las horas anuales se aproximan mediante meses de actividad principal por
+horas semanales actuales por 4,2, para ocupados actuales con ingreso distinto
+de cero, meses positivos y horas semanales positivas.
+
+Antes de mensualizar, los ingresos horarios se calculan como ingreso anual
+por \code{PX010} dividido por las horas anuales aproximadas. Se conserva cero
+cuando el ingreso es cero, aunque falten meses, horas o el factor de moneda.
+Un ingreso anual faltante produce un horario \code{NA}.
+
+Los diez ingresos mensuales se convierten con \code{PX010 / 12}; los horarios
+no se mensualizan ni se convierten nuevamente a moneda nacional. Finalmente,
+las doce variantes PPA se construyen con
+\code{ingreso / ppa_factor * ppa_factor_us}, en dólares PPA por mes o por hora.
+Si falta algún factor, las variantes PPA quedan como \code{NA}, incluso para
+ingresos iguales a cero.
+}
+}
+\seealso{
+\code{\link[=expandir_personas_panel]{expandir_personas_panel()}}, \code{\link[=estandarizar_personas_panel_]{estandarizar_personas_panel_()}}
 }

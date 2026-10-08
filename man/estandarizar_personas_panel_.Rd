@@ -7,34 +7,77 @@
 estandarizar_personas_panel_(.P, .D = NULL, .R = NULL)
 }
 \arguments{
-\item{.P}{\code{data.frame} o \code{tibble}. Conjunto P longitudinal en formato largo.}
+\item{.P}{\code{data.frame} o \code{tibble}. Conjunto P longitudinal en formato largo,
+con una fila por persona y año.}
 
-\item{.D}{\code{data.frame} o \code{tibble}, o \code{NULL}. Conjunto D longitudinal.}
+\item{.D}{\code{data.frame} o \code{tibble}, o \code{NULL} (por defecto). Conjunto D
+longitudinal del mismo país y de los años correspondientes.}
 
-\item{.R}{\code{data.frame} o \code{tibble}, o \code{NULL}. Conjunto R longitudinal.}
+\item{.R}{\code{data.frame} o \code{tibble}, o \code{NULL} (por defecto). Conjunto R
+longitudinal del mismo país y de los años correspondientes.}
 }
 \value{
 Conjunto P estandarizado, con las filas y el orden originales.
-Conserva los insumos añadidos como \code{NA} y construye \code{maa} y \code{man}.
+Conserva los insumos añadidos como \code{NA} e incluye los auxiliares \code{maa} y
+\code{man}. No agrega atributos de armonización.
 }
 \description{
-Núcleo interno de estandarización de \code{\link[=expandir_personas_panel]{expandir_personas_panel()}}. Completa
-los insumos ausentes con \code{NA}, aplica las transformaciones nacionales e
-incorpora variables desde R y D longitudinales. Supone observaciones de
-2021 en adelante y no agrega atributos de armonización.
+Prepara el conjunto P longitudinal para la armonización: completa insumos
+ausentes, incorpora variables desde R y D y aplica transformaciones
+nacionales. Supone observaciones de 2021 en adelante. Es una función interna.
 }
 \details{
-Los cruces incluyen año y país, además de persona para R y hogar actual
-para D. Cada clave debe identificar una única fila en el auxiliar. Si se
-suministra un auxiliar, sus valores reemplazan los insumos correspondientes
-de P; si no, se conservan los ya incorporados. Sin coincidencia quedan \code{NA}.
-No se balancea el panel ni se crean observaciones.
+\subsection{Disponibilidad de insumos}{
 
-En Italia, \code{PY120N} se establece en cero cuando \code{PY120N_F} vale -4.
-Esta regla contable no depende de la imputación. Sin la flag se conserva
-el valor publicado. No se revierten agrupaciones ni perturbaciones.
+Se completan con \code{NA} las columnas de insumo opcionales ausentes, de modo
+que los cálculos posteriores puedan propagar los faltantes. Los insumos de
+identificación \code{PB010}, \code{PB020}, \code{PB030}, \code{PX030} y \code{PB150} deben estar
+presentes en P. La función no balancea el panel ni crea observaciones.
+}
 
-\code{maa} y \code{man} se calculan con \code{\link[=calcular_meses_actividad]{calcular_meses_actividad()}} antes de la
-futura imputación. Para las reglas y limitaciones de los insumos, ver
-\code{\link[=expandir_personas_panel]{expandir_personas_panel()}}.
+\subsection{Traspaso desde R y D}{
+
+Desde R se incorporan \code{RB062}–\code{RB066} (ponderadores longitudinales),
+\code{RB080}, \code{RB081}, \code{RB082}, \code{RX010} y \code{RX020} (nacimiento y edades), y
+\code{RB280} y \code{RB290} (país de nacimiento y ciudadanía).
+
+Desde D se incorporan \code{DB040} (región), \code{DB100} (urbanización),
+\code{DB075} (grupo de rotación) y \code{DB076} (número de encuesta).
+
+El cruce con R utiliza año, país y persona: \code{PB010/PB020/PB030} en P y
+\code{RB010/RB020/RB030} en R. El cruce con D utiliza año, país y hogar actual:
+\code{PB010/PB020/PX030} en P y \code{DB010/DB020/DB030} en D. El hogar puede cambiar
+entre olas. Cada clave debe identificar una única fila en el auxiliar;
+claves duplicadas que coinciden con P producen un error.
+
+Si se suministra un auxiliar, sus valores reemplazan los insumos
+correspondientes de P, incluso si están ausentes o no hay coincidencia.
+En esos casos quedan como \code{NA}. Sin el auxiliar se conservan los insumos
+ya incorporados en P y se completan los ausentes.
+}
+
+\subsection{Transformaciones nacionales}{
+
+En Italia, \code{PY120N} se establece en cero por observación cuando
+\code{PY120N_F} vale -4, porque el importe se integra en otros componentes.
+Es una regla contable independiente de la imputación. Si la flag no está
+disponible o no indica esa situación, se conserva el valor publicado.
+No se revierten agrupaciones ni perturbaciones.
+}
+
+\subsection{Auxiliares mensuales de actividad}{
+
+\code{maa} cuenta meses de actividad principal asalariada (códigos 1/2), y
+\code{man}, no asalariada (3/4, incluidos trabajadores familiares), desde
+\code{PL211A}–\code{PL211L}. No describen meses de cobro comprobado.
+
+Se requieren doce códigos entre 1 y 11. Un mes ausente, código desconocido
+o flag mensual disponible negativa deja ambos conteos como \code{NA}. Las flags
+positivas, incluidas imputaciones de Eurostat, se aceptan; las flags ausentes
+o con \code{NA} no invalidan un código mensual válido. Los conteos se reconstruyen
+desde el calendario, reemplazando auxiliares homónimos preexistentes.
+}
+}
+\seealso{
+\code{\link[=expandir_personas_panel]{expandir_personas_panel()}}, \code{\link[=calcular_personas_panel_]{calcular_personas_panel_()}}
 }
