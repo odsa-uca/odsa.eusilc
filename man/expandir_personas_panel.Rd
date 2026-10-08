@@ -36,7 +36,7 @@ variables y sus valores? Pendiente de implementación.}
 \value{
 \code{data.frame} o \code{tibble} con las variables originales y las variables
 armonizadas. Conserva las filas y su orden, incluidos paneles desbalanceados.
-Los ponderadores y metadatos panel se renombran y quedan como \code{NA} cuando
+Los ponderadores y metadatos panel se copian y quedan como \code{NA} cuando
 sus insumos no están disponibles.
 }
 \description{
@@ -47,6 +47,11 @@ metadatos panel desde D cuando se suministran.
 Las flags todavía no tienen efecto.
 }
 \details{
+La estandarización y el traspaso de variables se realizan mediante
+\code{\link[=estandarizar_personas_panel_]{estandarizar_personas_panel_()}}, y la construcción y transformación
+mediante \code{\link[=calcular_personas_panel_]{calcular_personas_panel_()}}. Se conservan también los insumos
+ausentes que la estandarización añade como \code{NA}.
+
 Se construyen \code{pi01}, \code{pi02}, \code{pi04}, \code{pi05} y \code{pd02} desde \code{PB010}, \code{PB020},
 \code{PX030}, \code{PB030} y \code{PB150}, respectivamente. Estos insumos deben estar presentes.
 
