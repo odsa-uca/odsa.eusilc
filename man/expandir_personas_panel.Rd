@@ -71,6 +71,28 @@ y queda como \code{NA} si falta la actividad. \code{toc} distingue contrato escr
 desde \code{PL141}. Todas estas variables armonizadas se construyen aunque falten
 sus insumos, completados con \code{NA} durante la estandarización.
 
+\code{pl10a/b} conservan la ocupación publicada en \code{PL051A/B}; \code{pl11a/b}
+identifican el grupo principal ISCO y \code{pl12a/b} y \code{pl13a/b} recodifican
+calificación y calificación profesional mediante \code{tabla_isco}. Las variantes
+C seleccionan A para ocupados y B para no ocupados por observación, sin perder
+valores conocidos porque la otra fuente esté completamente ausente.
+
+Para ES, IT, DE, PL y PT, las reglas longitudinales de las entregas L21–L25
+se interpretan con códigos ISCO de dos dígitos: 1, 2 y 3 representan las
+ocupaciones militares 01, 02 y 03 (grupo principal 0). No se infiere precisión
+por la magnitud del valor ni se extiende a DE la agrupación a un dígito de
+entregas anteriores a 2021. En PT, el código 14 agrupa las ocupaciones 11–14:
+se conserva en \verb{pl10*}, el grupo es 1, \verb{pl12*} queda como \code{NA} por ambigüedad
+y \verb{pl13*} conserva la categoría común 2. No se recupera el detalle eliminado.
+Los códigos desconocidos quedan como \code{NA} en las clasificaciones derivadas.
+
+\code{pl40a/b} reutilizan \code{\link[=calc_informalidad]{calc_informalidad()}} con \code{PL040A}, \code{PY030G} y \code{PY035G};
+\code{pl41} reutiliza \code{\link[=calc_calidad]{calc_calidad()}} con \code{pl40a}, \code{pl12a} y \code{pomj}. Conservan las
+reglas transversales, incluido devolver \code{NA} para todo el vector si algún
+insumo requerido está completamente perdido. Las contribuciones faltantes no
+se convierten en cero ni se trasladan automáticamente advertencias nacionales
+transversales. La pérdida de detalle ocupacional puede limitar también \code{pl41}.
+
 Los ingresos \code{py00}, \code{py10}, \code{py11}, \code{py12}, \code{py20}, \code{py21}, \code{py22}, \code{py23},
 \code{py24} y \code{py25} siguen las definiciones de \code{\link[=calcular_personas]{calcular_personas()}}. Se expresan
 en moneda nacional por mes, convirtiendo los importes netos anuales en euros
@@ -109,8 +131,7 @@ la selección mediante \code{.expandir}, el etiquetado mediante \code{.etiquetar
 variantes PPA. Esta versión conserva todas las columnas originales, salvo
 la transformación contable indicada, y no agrega atributos
 de armonización, imputación o etiquetado.
-También quedan pendientes \code{pd01c}, ocupación ISCO, calificación, informalidad,
-calidad del empleo, meses trabajados, horas e ingresos horarios.
+También quedan pendientes \code{pd01c}, meses trabajados, horas e ingresos horarios.
 }
 \seealso{
 \code{\link[=expandir_hogares_panel]{expandir_hogares_panel()}}

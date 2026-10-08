@@ -52,6 +52,28 @@
 #' desde `PL141`. Todas estas variables armonizadas se construyen aunque falten
 #' sus insumos, completados con `NA` durante la estandarización.
 #'
+#' `pl10a/b` conservan la ocupación publicada en `PL051A/B`; `pl11a/b`
+#' identifican el grupo principal ISCO y `pl12a/b` y `pl13a/b` recodifican
+#' calificación y calificación profesional mediante `tabla_isco`. Las variantes
+#' C seleccionan A para ocupados y B para no ocupados por observación, sin perder
+#' valores conocidos porque la otra fuente esté completamente ausente.
+#'
+#' Para ES, IT, DE, PL y PT, las reglas longitudinales de las entregas L21–L25
+#' se interpretan con códigos ISCO de dos dígitos: 1, 2 y 3 representan las
+#' ocupaciones militares 01, 02 y 03 (grupo principal 0). No se infiere precisión
+#' por la magnitud del valor ni se extiende a DE la agrupación a un dígito de
+#' entregas anteriores a 2021. En PT, el código 14 agrupa las ocupaciones 11–14:
+#' se conserva en `pl10*`, el grupo es 1, `pl12*` queda como `NA` por ambigüedad
+#' y `pl13*` conserva la categoría común 2. No se recupera el detalle eliminado.
+#' Los códigos desconocidos quedan como `NA` en las clasificaciones derivadas.
+#'
+#' `pl40a/b` reutilizan [calc_informalidad()] con `PL040A`, `PY030G` y `PY035G`;
+#' `pl41` reutiliza [calc_calidad()] con `pl40a`, `pl12a` y `pomj`. Conservan las
+#' reglas transversales, incluido devolver `NA` para todo el vector si algún
+#' insumo requerido está completamente perdido. Las contribuciones faltantes no
+#' se convierten en cero ni se trasladan automáticamente advertencias nacionales
+#' transversales. La pérdida de detalle ocupacional puede limitar también `pl41`.
+#'
 #' Los ingresos `py00`, `py10`, `py11`, `py12`, `py20`, `py21`, `py22`, `py23`,
 #' `py24` y `py25` siguen las definiciones de [calcular_personas()]. Se expresan
 #' en moneda nacional por mes, convirtiendo los importes netos anuales en euros
@@ -90,8 +112,7 @@
 #' variantes PPA. Esta versión conserva todas las columnas originales, salvo
 #' la transformación contable indicada, y no agrega atributos
 #' de armonización, imputación o etiquetado.
-#' También quedan pendientes `pd01c`, ocupación ISCO, calificación, informalidad,
-#' calidad del empleo, meses trabajados, horas e ingresos horarios.
+#' También quedan pendientes `pd01c`, meses trabajados, horas e ingresos horarios.
 #'
 #' @seealso [expandir_hogares_panel()]
 #' @export
@@ -160,6 +181,10 @@ expandir_personas_panel <- function(
     "PL032",
     "PL040A",
     "PL040B",
+    "PL051A",
+    "PL051B",
+    "PY030G",
+    "PY035G",
     "PL141"
   )
   insumos_ausentes <- setdiff(insumos, names(.P))
@@ -282,6 +307,66 @@ expandir_personas_panel <- function(
       PL032 != 1 ~ pl02b,
       .default = NA_real_
     ),
+    pl10a = PL051A,
+    pl10b = PL051B,
+    pl10c = dplyr::case_when(
+      PL032 == 1 ~ pl10a,
+      PL032 != 1 ~ pl10b,
+      .default = NA_real_
+    ),
+    pl11a = dplyr::if_else(
+      PL051A %in% tabla_isco$PL051,
+      PL051A %/% 10,
+      NA_real_
+    ),
+    pl11b = dplyr::if_else(
+      PL051B %in% tabla_isco$PL051,
+      PL051B %/% 10,
+      NA_real_
+    ),
+    pl11c = dplyr::case_when(
+      PL032 == 1 ~ pl11a,
+      PL032 != 1 ~ pl11b,
+      .default = NA_real_
+    ),
+    pl12a = dplyr::recode_values(
+      PL051A,
+      from = tabla_isco$PL051,
+      to = tabla_isco$pl12,
+      default = NA_integer_
+    ),
+    pl12b = dplyr::recode_values(
+      PL051B,
+      from = tabla_isco$PL051,
+      to = tabla_isco$pl12,
+      default = NA_integer_
+    ),
+    pl12a = dplyr::if_else(PB020 == "PT" & PL051A == 14, NA_real_, pl12a),
+    pl12b = dplyr::if_else(PB020 == "PT" & PL051B == 14, NA_real_, pl12b),
+    pl12c = dplyr::case_when(
+      PL032 == 1 ~ pl12a,
+      PL032 != 1 ~ pl12b,
+      .default = NA_real_
+    ),
+    pl13a = dplyr::recode_values(
+      PL051A,
+      from = tabla_isco$PL051,
+      to = tabla_isco$pl13,
+      default = NA_integer_
+    ),
+    pl13b = dplyr::recode_values(
+      PL051B,
+      from = tabla_isco$PL051,
+      to = tabla_isco$pl13,
+      default = NA_integer_
+    ),
+    pl13c = dplyr::case_when(
+      PL032 == 1 ~ pl13a,
+      PL032 != 1 ~ pl13b,
+      .default = NA_real_
+    ),
+    pl40a = calc_informalidad(PL040A, PY030G, PY035G, "a"),
+    pl40b = calc_informalidad(PL040A, PY030G, PY035G, "b"),
     toc = dplyr::case_when(
       PL141 %in% c(11, 21) ~ 1L,
       PL141 %in% c(12, 22) ~ 2L,
@@ -292,6 +377,7 @@ expandir_personas_panel <- function(
       PL141 %in% c(11, 12) ~ 2L,
       .default = NA_integer_
     ),
+    pl41 = calc_calidad(pl40a, pl12a, pomj),
     # Bloque Y --------------------------------------------------------------
     py00 = PY010N +
       PY050N +
