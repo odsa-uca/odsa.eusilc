@@ -89,7 +89,7 @@ informar_pais_no_probado <- function(.periodo) {
   if (!(.periodo$pais %in% paises_revisados)) {
     cli::cli_h1("Ojo!")
     cli::cli_bullets(c(
-      "!" = "Las diferencias específicas de {(.periodo$pais)} no han sido revisadas!",
+      "!" = "Las diferencias especificas de {(.periodo$pais)} no han sido revisadas!",
       "i" = "Por ahora se han revisado {paises_revisados}",
       "i" = "Revisa las SILC Disclosure Control Rules de {(.periodo$anio)} para ver las diferencias especificas de {(.periodo$pais)}"
     ))

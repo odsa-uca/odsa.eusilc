@@ -167,34 +167,9 @@ expandir_hogares_panel <- function(
   .etiquetar = TRUE
 ) {
   # Estandarización de los conjuntos -----------------------------------------
-  insumos_h <- c(
-    "HY040N",
-    "HY050N",
-    "HY060N",
-    "HY070N",
-    "HY080N",
-    "HY090N",
-    "HY110N",
-    "HX010",
-    "HX040"
-  )
-  for (variable in setdiff(insumos_h, names(.H))) {
-    .H[[variable]] <- rep(NA_real_, nrow(.H))
-  }
-  insumos_d <- list(
-    DB095 = NA_real_,
-    DB040 = NA_character_,
-    DB100 = NA_integer_
-  )
-  if (is.null(.D)) {
-    for (variable in setdiff(names(insumos_d), names(.H))) {
-      .H[[variable]] <- rep(insumos_d[[variable]], nrow(.H))
-    }
-  } else {
-    for (variable in setdiff(names(insumos_d), names(.D))) {
-      .D[[variable]] <- rep(insumos_d[[variable]], nrow(.D))
-    }
-  }
+  .H <- estandarizar_hogares_panel_(.H, .P, .D)
+  
+  # Agregación de la información personal ------------------------------------
   ingresos_personas <- c(
     "py00",
     "py10",
@@ -210,24 +185,7 @@ expandir_hogares_panel <- function(
   for (variable in setdiff(ingresos_personas, names(.P))) {
     .P[[variable]] <- rep(NA_real_, nrow(.P))
   }
-
-  # Traspaso de variables desde D --------------------------------------------
-  if (!is.null(.D)) {
-    .H <- dplyr::left_join(
-      x = dplyr::select(.H, -dplyr::any_of(names(insumos_d))),
-      y = dplyr::select(
-        .D,
-        DB010,
-        DB020,
-        DB030,
-        dplyr::all_of(names(insumos_d))
-      ),
-      by = dplyr::join_by(HB010 == DB010, HB020 == DB020, HB030 == DB030),
-      relationship = "many-to-one"
-    )
-  }
-
-  # Agregación de la información personal ------------------------------------
+  
   personas <- dplyr::select(
     .P,
     pi01,
@@ -270,75 +228,7 @@ expandir_hogares_panel <- function(
   }
 
   # Construcción de nuevas variables y recodificación -------------------------
-  .H <- dplyr::mutate(
-    .H,
-    # Bloque I --------------------------------------------------------------
-    hi01 = HB010,
-    hi02 = HB020,
-    hi03 = DB040,
-    hi04 = HB030,
-    hi06 = DB095,
-    hi07 = dplyr::recode_values(
-      DB100,
-      from = tabla_pi07$DB100,
-      to = tabla_pi07$pi07,
-      default = NA_integer_
-    ),
-    # Bloque D --------------------------------------------------------------
-    hd01 = HX040,
-    # Bloque Y --------------------------------------------------------------
-    hy00 = py00 +
-      (HY040N + HY050N + HY060N + HY070N + HY080N + HY090N + HY110N) *
-        HX010 /
-        12,
-    hy20 = py20 +
-      (HY040N + HY050N + HY060N + HY070N + HY080N + HY090N + HY110N) *
-        HX010 /
-        12,
-    hy21 = (HY040N + HY080N + HY090N + HY110N) * HX010 / 12,
-    hy22 = (HY040N + HY090N) * HX010 / 12,
-    hy23 = (HY080N + HY110N) * HX010 / 12,
-    hy24 = py21 + py24 + py25 + (HY050N + HY060N + HY070N) * HX010 / 12,
-    hy25 = py24 + py25 + (HY050N + HY060N + HY070N) * HX010 / 12,
-    hy26 = (HY050N + HY060N + HY070N) * HX010 / 12
-  )
-
-  # Ingresos per cápita y en unidades de PPA ----------------------------------
-  ingresos <- c(
-    ingresos_personas,
-    "hy00",
-    "hy20",
-    "hy21",
-    "hy22",
-    "hy23",
-    "hy24",
-    "hy25",
-    "hy26"
-  )
-  .H <- dplyr::left_join(
-    x = dplyr::select(.H, -dplyr::any_of(c("ppa_factor", "ppa_factor_us"))),
-    y = tabla_ppa_,
-    by = dplyr::join_by(HB010 == PB010, HB020 == PB020),
-    relationship = "many-to-one"
-  )
-  .H <- dplyr::mutate(
-    .H,
-    dplyr::across(
-      dplyr::all_of(ingresos),
-      \(y) dplyr::if_else(!is.na(hd01) & hd01 > 0, y / hd01, NA_real_),
-      .names = "{.col}pc"
-    ),
-    dplyr::across(
-      dplyr::all_of(ingresos),
-      \(y) y / ppa_factor * ppa_factor_us,
-      .names = "{.col}ppa"
-    ),
-    dplyr::across(
-      dplyr::all_of(paste0(ingresos, "pc")),
-      \(y) y / ppa_factor * ppa_factor_us,
-      .names = "{.col}ppa"
-    )
-  )
+  .H <- calcular_hogares_panel_(.H)
 
   # Selección y ordenamiento de variables ------------------------------------
   if (!.expandir) {
