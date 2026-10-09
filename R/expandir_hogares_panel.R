@@ -341,11 +341,15 @@ expandir_hogares_panel <- function(
   )
 
   # Selección y ordenamiento de variables ------------------------------------
-  # Pendiente: conservar columnas originales según .expandir.
+  if (!.expandir) {
+    .H <- dplyr::select(.H, dplyr::any_of(names(etiquetas_$H$variables)))
+  } else {
+    .H <- dplyr::relocate(.H, dplyr::any_of(names(etiquetas_$H$variables)))
+  }
 
   # Etiquetado de variables y valores ----------------------------------------
   if (.etiquetar) {
-    # Pendiente: aplicar las etiquetas correspondientes al panel.
+    .H <- etiquetar_eusilc_(.H, .base = "H")
   }
 
   # Devolución del conjunto panel --------------------------------------------

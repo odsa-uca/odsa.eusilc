@@ -193,11 +193,15 @@ expandir_personas_panel <- function(
   .P <- calcular_personas_panel_(.P)
 
   # Selección y ordenamiento de variables ------------------------------------
-  # Pendiente: conservar columnas originales según .expandir.
+  if (!.expandir) {
+    .P <- dplyr::select(.P, dplyr::any_of(names(etiquetas_$P$variables)))
+  } else {
+    .P <- dplyr::relocate(.P, dplyr::any_of(names(etiquetas_$P$variables)))
+  }
 
   # Etiquetado de variables y valores ----------------------------------------
   if (.etiquetar) {
-    # Pendiente: aplicar las etiquetas correspondientes al panel.
+    .P <- etiquetar_eusilc_(.P, .base = "P")
   }
 
   # Devolución del conjunto panel --------------------------------------------
