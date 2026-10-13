@@ -3,6 +3,9 @@
 #'
 #' @param .datos `data.frame` o `tibble`. Conjunto de datos EU-SILC expandido o estandarizado.
 #'
+#' @details La revisión documental es parcial. La ausencia de advertencias
+#'   registradas no garantiza la ausencia de particularidades.
+#'
 #' @returns `tibble`. Conjunto de datos con información sobre las advertencias.
 #' @export
 ver_advertencias <- function(.datos) {
@@ -26,8 +29,11 @@ ver_advertencias <- function(.datos) {
   return(advertencias)
 }
 
-# ============================================================================
+# ----------------------------------------------------------------------------
 #' Obtiene las advertencias correspondientes a un país, año y tipo de base
+#'
+#' La revisión documental es parcial y pueden existir particularidades no
+#' registradas, incluso cuando no se encuentran advertencias aplicables.
 #'
 #' @param .base `character`. Tipo de base, 'P' o 'H'.
 #' @param .anio `numeric`. Año de la encuesta.
@@ -52,22 +58,21 @@ obtener_advertencias <- function(.base, .anio, .pais) {
       " " = "Para mas detalle, se puede usar `ver_advertencias(base)`."
     ))
   } else {
-    cobertura <- dplyr::filter(
-      tabla_cobertura,
-      anio_desde <= .anio & anio_hasta >= .anio,
-      pais == .pais
+    cli::cli_alert_warning(
+      "No hay advertencias documentadas para la base {(.base)} de {(.pais)} en {(.anio)}."
     )
-
-    if (nrow(cobertura) == 3 && all(cobertura$estado == "revisado")) {
-      cli::cli_alert_success(
-        "No hay advertencias documentadas para {(.pais)} en {(.anio)}."
-      )
-    } else {
-      cli::cli_alert_warning(
-        "No hay una revision documental completa para {(.pais)} en {(.anio)}."
-      )
-    }
   }
+
+  if (!(.pais %in% tabla_advertencias$pais)) {
+    cli::cli_bullets(c(
+      "!" = "No hay registros para {(.pais)} en la tabla de advertencias.",
+      "i" = "Consulta las SILC Disclosure Control Rules de {(.anio)} para conocer las diferencias específicas de {(.pais)}."
+    ))
+  }
+
+  cli::cli_alert_info(
+    "La revisión documental es parcial; pueden existir particularidades no registradas."
+  )
 
   return(advertencias)
 }

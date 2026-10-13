@@ -79,25 +79,6 @@ chequear_concordancia <- function(
 }
 
 # ----------------------------------------------------------------------------
-#' Informa si el pais validado no fue probado con el paquete
-#'
-#' @param .periodo Lista con anio y pais validos.
-#'
-#' @returns NULL, invisiblemente.
-informar_pais_no_probado <- function(.periodo) {
-  paises_revisados <- unique(tabla_cobertura$pais)
-  if (!(.periodo$pais %in% paises_revisados)) {
-    cli::cli_h1("Ojo!")
-    cli::cli_bullets(c(
-      "!" = "Las diferencias específicas de {(.periodo$pais)} no han sido revisadas!",
-      "i" = "Por ahora se han revisado {paises_revisados}",
-      "i" = "Revisa las SILC Disclosure Control Rules de {(.periodo$anio)} para ver las diferencias especificas de {(.periodo$pais)}"
-    ))
-  }
-
-  invisible(NULL)
-}
-# ----------------------------------------------------------------------------
 #' Chequea que los conjuntos P, D y R sean adecuados
 #'
 #' @param .P Argumento .P
@@ -111,7 +92,7 @@ chequear_bases_personas <- function(.P, .D, .R) {
   rlang::check_data_frame(.R, allow_null = TRUE, class = "no_data_frame")
 
   referencia <- obtener_periodo_base(.P, c("PB010", "PB020"))
-  
+
   if (!is.null(.D)) {
     periodo_d <- obtener_periodo_base(.D, c("DB010", "DB020"))
     chequear_concordancia(referencia, periodo_d, ".P", ".D", "d")
@@ -120,8 +101,6 @@ chequear_bases_personas <- function(.P, .D, .R) {
     periodo_r <- obtener_periodo_base(.R, c("RB010", "RB020"))
     chequear_concordancia(referencia, periodo_r, ".P", ".R", "r")
   }
-  
-  informar_pais_no_probado(referencia)
 
   invisible(NULL)
 }
@@ -175,7 +154,7 @@ chequear_bases_hogares <- function(.H, .P, .D) {
     } else if (!identical(attr(.P, "base", exact = TRUE), "P")) {
       cli::cli_abort(".P debe ser una base P.", class = "no_p")
     }
-    
+
     periodo_p <- obtener_periodo_base(.P, c("pi01", "pi02"))
     chequear_concordancia(referencia, periodo_p, ".H", ".P", "p")
   }
@@ -183,8 +162,6 @@ chequear_bases_hogares <- function(.H, .P, .D) {
     periodo_d <- obtener_periodo_base(.D, c("DB010", "DB020"))
     chequear_concordancia(referencia, periodo_d, ".H", ".D", "d")
   }
-  
-  informar_pais_no_probado(referencia)
 
   invisible(NULL)
 }

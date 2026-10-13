@@ -34,5 +34,7 @@ tabla_advertencias
 \description{
 Contiene perdidas de informacion, problemas de la UDB y diferencias de
 comparabilidad que afectan variables utilizadas por el paquete.
+La revisión documental es parcial; la ausencia de registros no garantiza
+la ausencia de particularidades.
 }
 \keyword{datasets}

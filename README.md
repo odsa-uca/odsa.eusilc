@@ -199,11 +199,11 @@ potencialmente relevante:
   construyen `expandir_personas` y `expandir_hogares`.
 - `tabla_advertencias`. Pérdidas de información, problemas UDB y
   diferencias de comparabilidad documentadas para las variables que usa el paquete.
-- `tabla_cobertura`. Países y años incluidos en la revisión
-  documental de las advertencias.
 
 Las advertencias correspondientes a una base de un año y país específicos pueden
-consultares con la función `ver_advertencias(base)`.
+consultarse con la función `ver_advertencias(base)`. La revisión documental es
+parcial; la ausencia de advertencias registradas no garantiza la ausencia de
+particularidades.
 
 # Ejemplo de uso
 

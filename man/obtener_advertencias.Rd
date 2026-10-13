@@ -17,5 +17,6 @@ obtener_advertencias(.base, .anio, .pais)
 \code{tibble}. Advertencias por variable para el país, año y base.
 }
 \description{
-Obtiene las advertencias correspondientes a un país, año y tipo de base
+La revisión documental es parcial y pueden existir particularidades no
+registradas, incluso cuando no se encuentran advertencias aplicables.
 }

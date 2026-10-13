@@ -15,7 +15,6 @@ tabla_pl20 <- read_xlsx("data-raw/xlsx/tabla_pl20.xlsx")
 tabla_pl21 <- read_xlsx("data-raw/xlsx/tabla_pl21.xlsx")
 tabla_ppa <- read_xlsx("data-raw/xlsx/tabla_ppa.xlsx")
 tabla_advertencias <- read_xlsx("data-raw/xlsx/tabla_advertencias.xlsx")
-tabla_cobertura <- read_xlsx("data-raw/xlsx/tabla_cobertura.xlsx")
 
 # Funciones ----------------------------------------------------------------
 transformar_tabla_ppa <- function(.tabla_ppa) {
@@ -67,7 +66,6 @@ tabla_advertencias <- transformar_advertencias(tabla_advertencias)
 usethis::use_data(etiquetas, overwrite = TRUE)
 usethis::use_data(tabla_ppa, overwrite = TRUE)
 usethis::use_data(tabla_advertencias, overwrite = TRUE)
-usethis::use_data(tabla_cobertura, overwrite = TRUE)
 usethis::use_data(
   etiquetas_,
   tabla_ppa_,
