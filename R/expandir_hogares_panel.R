@@ -16,15 +16,11 @@
 #' @param .imputar `TRUE` o `FALSE` (por defecto). ¿Imputar valores faltantes o
 #'   inconsistentes dentro de cada ola? Todavía no tiene efecto.
 #' @param .expandir `TRUE` o `FALSE` (por defecto). ¿Conservar las columnas
-#'   originales en el resultado? Todavía no tiene efecto: se conservan siempre.
+#'   originales en el resultado?
 #' @param .etiquetar `TRUE` (por defecto) o `FALSE`. ¿Aplicar etiquetas a las
-#'   variables y sus valores? Todavía no tiene efecto.
+#'   variables y sus valores?
 #'
-#' @returns `data.frame` o `tibble` con las variables armonizadas, las columnas
-#'   originales y los insumos añadidos durante la estandarización. Conserva las
-#'   filas y su orden, incluidos paneles desbalanceados. Reemplaza agregados,
-#'   factores PPA y variables armonizadas homónimos preexistentes. No agrega
-#'   atributos de armonización, imputación o etiquetado.
+#' @returns `data.frame` o `tibble` con las variables armonizadas.
 #'
 #' @details
 #' A continuación se listan las variables construidas según bloque.
@@ -45,7 +41,7 @@
 #' ## (Y) Ingresos
 #'
 #' Todos los ingresos se expresan en moneda nacional por mes. Los `py*` son
-#' sumas de los ingresos de las personas cubiertas por P, no promedios.
+#' sumas de los ingresos de las personas cubiertas por P.
 #'
 #' - `py00`. Ingreso total de las personas.
 #' - `py10`. Ingreso personal por fuentes laborales.
@@ -97,8 +93,9 @@
 #' ## Disponibilidad y valores faltantes
 #'
 #' El conjunto de variables armonizadas es siempre el mismo, se proporcione
-#' o no D. El conjunto completo de columnas puede variar porque se conservan
-#' los insumos originales y los añadidos como `NA` durante la estandarización.
+#' o no D. Con `.expandir = TRUE`, el conjunto completo de columnas puede variar
+#' porque se conservan los insumos originales y los añadidos como `NA` durante
+#' la estandarización.
 #' Los identificadores `HB010`, `HB020`, `HB030` en H y `pi01`, `pi02`, `pi04`
 #' en P deben estar presentes.
 #'
@@ -109,14 +106,7 @@
 #' como `NA`, no como cero. No se reconstruyen componentes ausentes desde un
 #' total oficial ni se sustituye `hy00` por el ingreso disponible `HY020`.
 #'
-#' ## Traspaso y cobertura de personas
-#'
-#' Desde D se incorporan `DB095`, `DB040` y `DB100` por país, año y hogar:
-#' `HB010/HB020/HB030` en H y `DB010/DB020/DB030` en D. Cada clave debe
-#' identificar una única fila en D. Si se suministra D, sus valores reemplazan
-#' los insumos correspondientes de H, incluso cuando faltan o no hay
-#' coincidencia; en esos casos quedan como `NA`. Sin D, se conservan los
-#' insumos ya incorporados en H y se completan los ausentes.
+#' ## Cobertura de personas
 #'
 #' P se agrega por `pi01`, `pi02` y `pi04`, y luego se incorpora a H por país,
 #' año y hogar. El hogar actual de una persona puede cambiar entre olas. No se
@@ -125,21 +115,7 @@
 #' corresponden a las personas disponibles y no acreditan cobertura total.
 #' `hd01` procede del tamaño publicado, no del número de filas de P.
 #'
-#' ## Conversión de ingresos
-#'
-#' Los componentes netos propios de H, publicados en euros anuales, se
-#' convierten con `HX010 / 12` antes de sumarlos a los ingresos personales.
-#' P ya está en moneda nacional mensual y no se convierte nuevamente. Se
-#' conservan ingresos negativos y no se imputan componentes faltantes.
-#'
-#' Las variantes per cápita dividen el ingreso por `hd01` sólo cuando el tamaño
-#' es positivo y está disponible; en otro caso quedan como `NA`. Las variantes
-#' PPA usan `ingreso / ppa_factor * ppa_factor_us`. Los factores se incorporan
-#' por país y año de encuesta, reemplazando factores homónimos preexistentes.
-#' La tabla interna cubre 2016–2025; sin coincidencia, factores y variantes PPA
-#' quedan como `NA`, sin extrapolación.
-#'
-#' ## Alcance y etapas pendientes
+#' ## Alcance y limitaciones
 #'
 #' La implementación supone datos desde 2021, en continuidad con personas
 #' panel y los países revisados ES, IT, DE, PL y PT. Se conserva el detalle
@@ -151,12 +127,31 @@
 #' `hi06` conserva el peso longitudinal de D; no usa el ponderador transversal
 #' `DB090`. No se balancea el panel ni se crean observaciones.
 #'
-#' Quedan pendientes la tipología del hogar, las variables sectoriales, la
-#' imputación dentro de cada ola, la selección mediante `.expandir` y el
-#' etiquetado mediante `.etiquetar`. Las tres flags todavía no modifican el
-#' resultado.
+#' ## Etapas de armonización
 #'
-#' @seealso [expandir_personas_panel()]
+#' La estandarización completa los insumos ausentes e incorpora desde D
+#' ponderación, región y urbanización. Sus reglas de preparación y traspaso
+#' se describen en [estandarizar_hogares_panel_()].
+#'
+#' La expansión agrega los ingresos personales y los conteos de perceptores
+#' por país, año y hogar actual, y los incorpora a H. El cálculo construye las
+#' variables del hogar y las variantes de ingresos per cápita y PPA. Las
+#' recodificaciones y conversiones se describen en [calcular_hogares_panel_()].
+#'
+#' Con `.expandir = FALSE` se seleccionan las columnas presentes contempladas
+#' en el catálogo de [etiquetas] para H. Con `.expandir = TRUE` se conservan
+#' todas las columnas y se colocan primero las contempladas en ese catálogo.
+#' La selección no crea variables pendientes de construcción; si alguna ya
+#' estaba en H y figura en el catálogo, puede conservarse en el resultado.
+#'
+#' Con `.etiquetar = TRUE` se asignan etiquetas a las variables y sus valores
+#' según [etiquetas]. El etiquetado no modifica los códigos de las categorías.
+#'
+#' Quedan pendientes la tipología del hogar, las variables sectoriales y la
+#' imputación dentro de cada ola. La flag `.imputar` todavía no tiene efecto.
+#'
+#' @seealso [estandarizar_hogares_panel_()], [calcular_hogares_panel_()],
+#'   [expandir_personas_panel()]
 #' @export
 expandir_hogares_panel <- function(
   .H,

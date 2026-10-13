@@ -16,14 +16,15 @@
 #' @param .imputar `TRUE` o `FALSE` (por defecto). ¿Imputar valores faltantes o
 #'   inconsistentes dentro de cada ola? Todavía no tiene efecto.
 #' @param .expandir `TRUE` o `FALSE` (por defecto). ¿Conservar las columnas
-#'   originales en el resultado? Todavía no tiene efecto: se conservan siempre.
+#'   originales en el resultado?
 #' @param .etiquetar `TRUE` (por defecto) o `FALSE`. ¿Aplicar etiquetas a las
-#'   variables y sus valores? Todavía no tiene efecto.
+#'   variables y sus valores?
 #'
-#' @returns `data.frame` o `tibble` con las variables armonizadas, las columnas
-#'   originales y los insumos añadidos durante la estandarización. Conserva las
-#'   filas y su orden, incluidos paneles desbalanceados. No agrega atributos de
-#'   armonización, imputación o etiquetado.
+#' @returns `data.frame` o `tibble` con las variables armonizadas. Con
+#'   `.expandir = TRUE` conserva también las columnas originales y los insumos
+#'   añadidos durante la estandarización. Conserva las filas y su orden,
+#'   incluidos paneles desbalanceados. Con `.etiquetar = TRUE` asigna etiquetas
+#'   a las variables y sus valores.
 #'
 #' @details
 #' A continuación se listan las variables construidas según bloque.
@@ -111,8 +112,9 @@
 #' ## Disponibilidad y valores faltantes
 #'
 #' El conjunto de variables armonizadas es siempre el mismo, se proporcionen
-#' o no R y D. El conjunto completo de columnas puede variar porque se conservan
-#' los insumos originales y los añadidos como `NA` durante la estandarización.
+#' o no R y D. Con `.expandir = TRUE`, el conjunto completo de columnas puede
+#' variar porque se conservan los insumos originales y los añadidos como `NA`
+#' durante la estandarización.
 #'
 #' Si no están disponibles los insumos necesarios ni una fuente alternativa,
 #' las variables dependientes quedan como `NA`. Cuando la ausencia afecta a
@@ -166,9 +168,16 @@
 #' los ingresos a unidades mensuales, horarias y PPA. Las reglas específicas se
 #' describen en [calcular_personas_panel_()].
 #'
-#' Quedan pendientes la imputación dentro de cada ola, la selección de columnas
-#' mediante `.expandir`, el etiquetado mediante `.etiquetar` y la definición de
-#' `pd01c`. Las tres flags todavía no modifican el resultado.
+#' Con `.expandir = FALSE` se seleccionan las columnas presentes contempladas
+#' en el catálogo de [etiquetas] para P. Con `.expandir = TRUE` se conservan
+#' todas las columnas y se colocan primero las contempladas en ese catálogo.
+#' La selección no crea variables pendientes de construcción; si alguna ya
+#' estaba en P y figura en el catálogo, puede conservarse en el resultado.
+#' Con `.etiquetar = TRUE` se asignan etiquetas a las variables y sus valores
+#' según [etiquetas], sin modificar los códigos de las categorías.
+#'
+#' Quedan pendientes la imputación dentro de cada ola y la definición de
+#' `pd01c`. La flag `.imputar` todavía no tiene efecto.
 #'
 #' @seealso [estandarizar_personas_panel_()], [calcular_personas_panel_()],
 #'   [expandir_hogares_panel()]

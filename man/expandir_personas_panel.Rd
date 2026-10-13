@@ -27,16 +27,17 @@ longitudinal del mismo país y de los años correspondientes.}
 inconsistentes dentro de cada ola? Todavía no tiene efecto.}
 
 \item{.expandir}{\code{TRUE} o \code{FALSE} (por defecto). ¿Conservar las columnas
-originales en el resultado? Todavía no tiene efecto: se conservan siempre.}
+originales en el resultado?}
 
 \item{.etiquetar}{\code{TRUE} (por defecto) o \code{FALSE}. ¿Aplicar etiquetas a las
-variables y sus valores? Todavía no tiene efecto.}
+variables y sus valores?}
 }
 \value{
-\code{data.frame} o \code{tibble} con las variables armonizadas, las columnas
-originales y los insumos añadidos durante la estandarización. Conserva las
-filas y su orden, incluidos paneles desbalanceados. No agrega atributos de
-armonización, imputación o etiquetado.
+\code{data.frame} o \code{tibble} con las variables armonizadas. Con
+\code{.expandir = TRUE} conserva también las columnas originales y los insumos
+añadidos durante la estandarización. Conserva las filas y su orden,
+incluidos paneles desbalanceados. Con \code{.etiquetar = TRUE} asigna etiquetas
+a las variables y sus valores.
 }
 \description{
 Construye variables de identificación, demográficas, laborales e ingresos del
@@ -139,8 +140,9 @@ incluidos trabajadores familiares.
 \subsection{Disponibilidad y valores faltantes}{
 
 El conjunto de variables armonizadas es siempre el mismo, se proporcionen
-o no R y D. El conjunto completo de columnas puede variar porque se conservan
-los insumos originales y los añadidos como \code{NA} durante la estandarización.
+o no R y D. Con \code{.expandir = TRUE}, el conjunto completo de columnas puede
+variar porque se conservan los insumos originales y los añadidos como \code{NA}
+durante la estandarización.
 
 Si no están disponibles los insumos necesarios ni una fuente alternativa,
 las variables dependientes quedan como \code{NA}. Cuando la ausencia afecta a
@@ -197,9 +199,16 @@ El cálculo construye las variables de los bloques anteriores y convierte
 los ingresos a unidades mensuales, horarias y PPA. Las reglas específicas se
 describen en \code{\link[=calcular_personas_panel_]{calcular_personas_panel_()}}.
 
-Quedan pendientes la imputación dentro de cada ola, la selección de columnas
-mediante \code{.expandir}, el etiquetado mediante \code{.etiquetar} y la definición de
-\code{pd01c}. Las tres flags todavía no modifican el resultado.
+Con \code{.expandir = FALSE} se seleccionan las columnas presentes contempladas
+en el catálogo de \link{etiquetas} para P. Con \code{.expandir = TRUE} se conservan
+todas las columnas y se colocan primero las contempladas en ese catálogo.
+La selección no crea variables pendientes de construcción; si alguna ya
+estaba en P y figura en el catálogo, puede conservarse en el resultado.
+Con \code{.etiquetar = TRUE} se asignan etiquetas a las variables y sus valores
+según \link{etiquetas}, sin modificar los códigos de las categorías.
+
+Quedan pendientes la imputación dentro de cada ola y la definición de
+\code{pd01c}. La flag \code{.imputar} todavía no tiene efecto.
 }
 }
 \seealso{

@@ -7,12 +7,65 @@
 calcular_hogares_panel_(.H)
 }
 \arguments{
-\item{.H}{\code{data.frame} o \code{tibble}. Conjunto H longitudinal de la EU-SICL
-estandarizado por \code{\link[=estandarizar_hogares_panel_]{estandarizar_hogares_panel_()}}.}
+\item{.H}{\code{data.frame} o \code{tibble}. Conjunto H longitudinal de la EU-SILC
+estandarizado por \code{\link[=estandarizar_hogares_panel_]{estandarizar_hogares_panel_()}}, con las sumas de ingresos
+personales incorporadas por \code{\link[=expandir_hogares_panel]{expandir_hogares_panel()}}. La estandarización
+por sí sola no prepara esos agregados.}
 }
 \value{
-Conjunto H con las variables originales y las armonizadas.
+\code{data.frame} o \code{tibble} con las columnas de entrada y las variables
+armonizadas, conservando las filas y su orden. Reemplaza factores PPA
+homónimos y variables armonizadas preexistentes. Conserva los conteos de
+perceptores incorporados previamente. No selecciona ni etiqueta columnas.
 }
 \description{
-Construye variables del conjunto H longitudinal de la EU-SILC (interna)
+Construye variables armonizadas de identificación, tamaño e ingresos del
+hogar a partir del conjunto H longitudinal estandarizado y de los agregados
+personales ya incorporados. Recodifica la urbanización e incorpora factores
+PPA para construir variantes de ingresos per cápita y PPA. Supone
+observaciones de 2021 en adelante. Es una función interna.
+}
+\details{
+El catálogo de variables y sus unidades se presenta en
+\code{\link[=expandir_hogares_panel]{expandir_hogares_panel()}}.
+\subsection{Identificación, tamaño y urbanización}{
+
+La identificación y el tamaño del hogar se construyen desde los insumos
+publicados. El tamaño procede de H, no del número de personas disponibles
+en P. El ponderador es longitudinal, no transversal. La urbanización se
+recodifica mediante una tabla; los códigos desconocidos quedan como \code{NA}.
+Se conserva el detalle regional publicado, sin reconstruir supresiones.
+}
+
+\subsection{Construcción y conversión de ingresos}{
+
+Los componentes netos propios de H, publicados en euros anuales, se
+convierten a moneda nacional por mes con \code{HX010 / 12}. Se combinan con las
+sumas personales según la fuente de ingreso. Los ingresos personales ya
+están en moneda nacional mensual y no se convierten nuevamente.
+
+Se conservan ingresos negativos y los faltantes se propagan en las sumas,
+sin reemplazarlos por cero. No se reconstruyen componentes desde un total
+oficial ni se sustituye el ingreso total construido por el ingreso
+disponible publicado.
+}
+
+\subsection{Ingresos per cápita y PPA}{
+
+Las variantes per cápita dividen el ingreso por \code{hd01} sólo cuando el tamaño
+es positivo y está disponible; en otro caso quedan como \code{NA}.
+
+Los factores PPA se incorporan por país y año de encuesta, reemplazando
+factores homónimos preexistentes. La tabla interna cubre 2016–2025; sin
+coincidencia, los factores quedan como \code{NA}, sin extrapolación. Para su
+definición, ver \link{tabla_ppa}.
+
+Las variantes PPA se calculan con \code{ingreso / ppa_factor * ppa_factor_us},
+tanto para los ingresos mensuales como para los per cápita. Se expresan en
+dólares PPA por mes y por persona y mes, respectivamente. Si falta algún
+factor, las variantes PPA quedan como \code{NA}, incluso para ingresos cero.
+}
+}
+\seealso{
+\code{\link[=expandir_hogares_panel]{expandir_hogares_panel()}}, \code{\link[=estandarizar_hogares_panel_]{estandarizar_hogares_panel_()}}
 }
