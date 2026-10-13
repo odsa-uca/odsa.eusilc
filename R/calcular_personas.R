@@ -165,14 +165,14 @@ calcular_personas <- function(.P, .expandir = FALSE) {
 #'
 #' @returns `tibble`. Conjunto de datos P de la EU-SILC estandarizado con variables armonizadas.
 calcular_personas_ <- function(.P) {
-  # PPA --------------------------------------
+  # Factores de conversión a PPA ---------------------------------------------
   .P <- dplyr::left_join(
     x = .P,
     y = tabla_ppa_,
     by = dplyr::join_by(PB010, PB020)
   )
 
-  # Lookup -----------------------------------
+  # Recodificación mediante tablas -------------------------------------------
   .P <- dplyr::mutate(
     .P,
     pi07 = dplyr::recode_values(
@@ -243,7 +243,7 @@ calcular_personas_ <- function(.P) {
     )
   )
 
-  # Núcleo -----------------------------------
+  # Construcción de indicadores ----------------------------------------------
   .P <- dplyr::mutate(
     .data = .P,
     # Bloque I -----------------------
@@ -254,12 +254,31 @@ calcular_personas_ <- function(.P) {
     pi05 = PB030,
     pi06 = PB040,
     # Bloque D -----------------------
-    pd01a = RB082,
-    pd01b = dplyr::if_else(!is.na(RB081), RB081, PB010 - RB080 - 1),
+    pd01a = dplyr::coalesce(RB082, RX010),
+    pd01b = dplyr::coalesce(
+      RB081,
+      RX020,
+      PX020,
+      dplyr::case_when(
+        PB020 %in%
+          c("ES", "IT", "PL") |
+          (PB020 == "PT" & dplyr::coalesce(RB080, PB140) > PB010 - 80) ~
+          PB010 - dplyr::coalesce(RB080, PB140) - 1,
+        .default = NA_real_
+      )
+    ),
     pd01c = PB010 - agrupar_nac(PB010, RB080) - 1,
     pd02 = PB150,
-    pd04 = dplyr::if_else(RB280 == "LOC", 1, 2),
-    pd05 = dplyr::if_else(RB290 == "LOC", 1, 2),
+    pd04 = dplyr::case_when(
+      RB280 == "LOC" ~ 1L,
+      RB280 %in% c("EU", "OTH") ~ 2L,
+      .default = NA_integer_
+    ),
+    pd05 = dplyr::case_when(
+      RB290 == "LOC" ~ 1L,
+      RB290 %in% c("EU", "OTH") ~ 2L,
+      .default = NA_integer_
+    ),
     pd06 = NA_integer_,
     # Bloque L -----------------------
     pl02a = PL040A,
@@ -304,29 +323,44 @@ calcular_personas_ <- function(.P) {
     py24 = PY090N,
     py25 = PY110N + PY120N + PY130N + PY140N,
     haa = dplyr::if_else(
-      pl01 == 1 & py11 != 0 & maa != 0,
+      pl01 == 1 & py11 != 0 & maa > 0 & PL060 > 0,
       maa * PL060 * 4.2,
       NA_real_
     ),
     han = dplyr::if_else(
-      pl01 == 1 & py12 != 0 & man != 0,
+      pl01 == 1 & py12 != 0 & man > 0 & PL060 > 0,
       man * PL060 * 4.2,
       NA_real_
     ),
-    py11h = dplyr::if_else(py11 != 0, (py11 * PX010) / haa, 0),
-    py12h = dplyr::if_else(py12 != 0, (py12 * PX010) / han, 0),
     .keep = "all"
   )
 
-  # Ingresos mensuales y ppa -----------------
+  # Ingresos horarios, mensuales y PPA ---------------------------------------
+  ingresos <- c(
+    "py00",
+    "py10",
+    "py11",
+    "py12",
+    "py13",
+    "py14",
+    "py15",
+    "py20",
+    "py21",
+    "py22",
+    "py23",
+    "py24",
+    "py25"
+  )
   .P <- dplyr::mutate(
     .data = .P,
+    py11h = dplyr::if_else(py11 != 0, (py11 * PX010) / haa, 0),
+    py12h = dplyr::if_else(py12 != 0, (py12 * PX010) / han, 0),
     dplyr::across(
-      py00:py25,
+      dplyr::all_of(ingresos),
       \(y) (y * PX010) / 12
     ),
     dplyr::across(
-      c(py00:py25, py11h, py12h),
+      dplyr::all_of(c(ingresos, "py11h", "py12h")),
       \(y) y / ppa_factor * ppa_factor_us,
       .names = "{.col}ppa"
     ),

@@ -63,8 +63,10 @@ queda como \code{NA}.
 
 Si el conjunto de datos corresponde al año 2021 o posterior, entonces:
 \itemize{
-\item Edad al momento de la entrevista, país de nacimiento y ciudadanía están en
-el conjunto R y quedan como \code{NA} si este no se proporciona.
+\item Los insumos de edad, país de nacimiento y ciudadanía se incorporan desde
+R. Sin R se conservan los ya presentes en P y se completan los ausentes
+con \code{NA}. Las edades se construyen en \code{\link[=calcular_personas]{calcular_personas()}} con los
+insumos disponibles en orden de prioridad.
 \item El tamaño del establecimiento y el sector público privado están disponibles
 sólo en los años en los que se relevó el módulo \emph{LMH} y quedan como \code{NA}
 los años en los que no.
@@ -72,13 +74,21 @@ los años en los que no.
 en una única variable.
 }
 
-Cualquiera sea el año, si no se proporciona el conjunto D, entonces la
-región de residencia queda como \code{NA}. Además, si el país es Italia, entonces
-la variable PY120N (\emph{sickness benefits}) queda en cero dado que el monto se
-incluye en otras variables.
+Cualquiera sea el año, sin D se conservan DB040 y DB100 si ya están en P y
+se completan las columnas ausentes con \code{NA}. Si se proporciona D, sus
+valores reemplazan esas columnas, incluso cuando faltan o no hay
+coincidencia. Lo mismo se aplica a los insumos de R desde 2021.
+Además, en Italia PY120N (\emph{sickness benefits}) queda en cero cuando todos
+los valores de PY120N_F son -4, dado que el monto se incluye en otras
+variables. Una flag ausente o indeterminada no activa ese ajuste.
 
 La función modifica los conjuntos de datos de forma tal que tengan las mismas
 variables (potencialmente con \code{NA}) con los nombres y categorías con las que
 aparecen luego de 2021. Esto simplifica el trabajo de las funciones
 \code{\link[=imputar_personas]{imputar_personas()}} y \code{\link[=calcular_personas]{calcular_personas()}}.
+
+Se completan también los insumos opcionales de imputación y sus flags
+originales. Esto no modifica los criterios de imputación. Los auxiliares
+\code{maa} y \code{man} se construyen en este paso y pueden imputarse antes del
+cálculo de indicadores; el cálculo conserva sus valores imputados.
 }
