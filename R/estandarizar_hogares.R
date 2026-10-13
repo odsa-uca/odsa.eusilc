@@ -1,10 +1,13 @@
+# ----------------------------------------------------------------------------
 #' Estandariza el conjunto H de la EU-SILC para el proceso de armonización
 #'
 #' @description
 #' Aplica transformaciones sobre las variables del conjunto H según el año, el
 #' país y si se proveyó el conjunto D. El conjunto final tiene las variables
 #' necesarias para aplicar [calcular_hogares()]. Las variables que no están
-#' disponibles quedan como `NA`.
+#' disponibles quedan como `NA`. Sin D se conservan sus variables ya
+#' incorporadas en H. Si se proporciona D, sus valores las reemplazan,
+#' incluso cuando faltan columnas opcionales o no hay coincidencia.
 #'
 #' @param .H `data.frame`o `tibble`. Conjunto de datos H de la EU-SILC
 #' @param .D `data.frame`o `tibble`. Conjunto de datos D de la EU-SILC
@@ -35,7 +38,7 @@ estandarizar_hogares <- function(.H, .D = NULL) {
   return(.H)
 }
 
-# ============================================================================
+# ----------------------------------------------------------------------------
 #' Estandariza el conjunto H de la EU-SILC para el proceso de armonización
 #'
 #' @description
@@ -51,21 +54,49 @@ estandarizar_hogares <- function(.H, .D = NULL) {
 #'
 #' @returns `tibble`. Conjunto de datos H de la EU-SILC estandarizado
 estandarizar_hogares_ <- function(.H, .D, .anio, .pais) {
+  insumos_h <- c(
+    "HY040N",
+    "HY050N",
+    "HY060N",
+    "HY070N",
+    "HY080N",
+    "HY090N",
+    "HY110N",
+    "HX040"
+  )
+  for (variable in setdiff(insumos_h, names(.H))) {
+    .H[[variable]] <- rep(NA_real_, nrow(.H))
+  }
+  insumos_d <- list(
+    DB040 = NA_character_,
+    DB090 = NA_real_,
+    DB100 = NA_integer_
+  )
+  if (is.null(.D)) {
+    for (variable in setdiff(names(insumos_d), names(.H))) {
+      .H[[variable]] <- rep(insumos_d[[variable]], nrow(.H))
+    }
+  } else {
+    for (variable in setdiff(names(insumos_d), names(.D))) {
+      .D[[variable]] <- rep(insumos_d[[variable]], nrow(.D))
+    }
+  }
+
+  # Traspaso de variables desde D --------------------------------------------
   if (!is.null(.D)) {
     .H <- dplyr::left_join(
-      x = .H,
-      y = dplyr::select(.D, DB010, DB020, DB030, DB040, DB090, DB100),
+      x = dplyr::select(.H, -dplyr::any_of(names(insumos_d))),
+      y = dplyr::select(
+        .D,
+        DB010,
+        DB020,
+        DB030,
+        dplyr::all_of(names(insumos_d))
+      ),
       by = dplyr::join_by(HB010 == DB010, HB020 == DB020, HB030 == DB030)
     )
-  } else {
-    .H <- dplyr::mutate(
-      .H,
-      DB040 = NA_integer_,
-      DB090 = NA_real_,
-      DB100 = NA_integer_
-    )
   }
-  
+
   if (.pais == "DE" & .anio < 2021 & all(is.na(.H$DB100))) {
     .H <- dplyr::mutate(.H, DB100 = NA_integer_)
   }

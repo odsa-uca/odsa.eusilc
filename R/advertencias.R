@@ -7,7 +7,7 @@
 #' @export
 ver_advertencias <- function(.datos) {
   rlang::check_data_frame(.datos, class = "no_data_frame")
-  
+
   advertencias <- attr(.datos, "advertencias", exact = TRUE)
 
   if (is.null(advertencias)) {
@@ -85,14 +85,15 @@ informar_insumos_personas <- function(.P, .D, .R, .anio) {
   if (is.null(.D)) {
     cli::cli_bullets(c(
       "!" = "No se proporciono el conjunto D.",
-      " " = "Se pierden pi03 y pi07."
+      " " = "Se conservan DB040 y DB100 si ya estan en P; las columnas ausentes quedan como NA."
     ))
   }
 
   if (.anio >= 2021 && is.null(.R)) {
     cli::cli_bullets(c(
       "!" = "No se proporciono el conjunto R.",
-      " " = "Se pierden pd01a, pd04 y pd05."
+      " " = "Se conservan los insumos de R ya incorporados en P; las columnas ausentes quedan como NA.",
+      "i" = "Las edades usan los insumos disponibles en orden de prioridad; la reconstruccion desde el nacimiento depende del pais."
     ))
   }
 
@@ -109,7 +110,7 @@ informar_insumos_hogares <- function(.D) {
   if (is.null(.D)) {
     cli::cli_bullets(c(
       "!" = "No se proporciono el conjunto D.",
-      " " = "Se pierden hi06 y hi07."
+      " " = "Se conservan DB040, DB090 y DB100 si ya estan en H; las columnas ausentes quedan como NA."
     ))
   }
 }

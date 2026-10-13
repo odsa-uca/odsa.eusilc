@@ -105,7 +105,7 @@ calcular_hogares <- function(.H, .P, .expandir = FALSE) {
     class = "no_expandida"
   )
   rlang::check_bool(.expandir, class = "no_logical")
-  
+
   chequear_columnas(.H, "HB030")
   chequear_columnas(.P, "pi04")
 
@@ -155,14 +155,14 @@ calcular_hogares <- function(.H, .P, .expandir = FALSE) {
 #'
 #' @returns `tibble`. Conjunto H de la EU-SILC estandarizado con variables armonizadas
 calcular_hogares_ <- function(.H) {
-  # PPA --------------------------------------
+  # Factores de conversión a PPA ---------------------------------------------
   .H <- dplyr::left_join(
     x = .H,
     y = tabla_ppa_,
     by = dplyr::join_by(HB010 == PB010, HB020 == PB020)
   )
 
-  # Lookup -----------------------------------
+  # Recodificación mediante tablas -------------------------------------------
   .H <- dplyr::mutate(
     .H,
     hi07 = dplyr::recode_values(
@@ -173,12 +173,13 @@ calcular_hogares_ <- function(.H) {
     )
   )
 
-  # Núcleo -----------------------------------
+  # Construcción de indicadores ----------------------------------------------
   .H <- .H |>
     dplyr::mutate(
       # Bloque I -----------------------
       hi01 = HB010,
       hi02 = HB020,
+      hi03 = DB040,
       hi04 = HB030,
       hi06 = DB090,
       # Bloque D -----------------------
@@ -197,18 +198,47 @@ calcular_hogares_ <- function(.H) {
       hy24 = py21 + py24 + py25 + (HY050N + HY060N + HY070N) / 12,
       hy25 = py24 + py25 + (HY050N + HY060N + HY070N) / 12,
       hy26 = (HY050N + HY060N + HY070N) / 12,
-      dplyr::across(
-        .cols = c(py00:py25, hy00:hy26),
-        .fns = \(y) y / hd01,
-        .names = "{.col}pc"
-      ),
-      dplyr::across(
-        .cols = c(py00:py25, hy00:hy26),
-        .fns = \(y) y / ppa_factor * ppa_factor_us,
-        .names = "{.col}ppa"
-      ),
       .keep = "all"
     )
+
+  # Ingresos por persona y PPA -----------------------------------------------
+  ingresos <- c(
+    "py00",
+    "py10",
+    "py11",
+    "py12",
+    "py13",
+    "py14",
+    "py15",
+    "py20",
+    "py21",
+    "py22",
+    "py23",
+    "py24",
+    "py25",
+    "hy00",
+    "hy20",
+    "hy21",
+    "hy22",
+    "hy23",
+    "hy24",
+    "hy25",
+    "hy26"
+  )
+  .H <- dplyr::mutate(
+    .H,
+    dplyr::across(
+      .cols = dplyr::all_of(ingresos),
+      .fns = \(y) y / hd01,
+      .names = "{.col}pc"
+    ),
+    dplyr::across(
+      .cols = dplyr::all_of(ingresos),
+      .fns = \(y) y / ppa_factor * ppa_factor_us,
+      .names = "{.col}ppa"
+    ),
+    .keep = "all"
+  )
 
   # ------------------------------------------
   return(.H)
@@ -225,10 +255,29 @@ calcular_hogares_ <- function(.H) {
 #'
 #' @returns `tibble`. Conjunto de datos con ingresos individuales agregados a nivel hogar y número de perceptores
 agregar_personas <- function(.personas) {
+  ingresos <- c(
+    "py00",
+    "py10",
+    "py11",
+    "py12",
+    "py13",
+    "py14",
+    "py15",
+    "py20",
+    "py21",
+    "py22",
+    "py23",
+    "py24",
+    "py25"
+  )
   personas <- .personas |>
-    dplyr::select(pi01, pi02, pi04, py00:py25) |>
+    dplyr::select(pi01, pi02, pi04, dplyr::all_of(ingresos)) |>
     dplyr::mutate(
-      dplyr::across(py00:py25, \(y) as.integer(y != 0), .names = "x{.col}")
+      dplyr::across(
+        dplyr::all_of(ingresos),
+        \(y) as.integer(y != 0),
+        .names = "x{.col}"
+      )
     ) |>
     collapse::collap(
       by = ~ pi01 + pi02 + pi04,

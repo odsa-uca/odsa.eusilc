@@ -18,5 +18,7 @@ estandarizar_hogares(.H, .D = NULL)
 Aplica transformaciones sobre las variables del conjunto H según el año, el
 país y si se proveyó el conjunto D. El conjunto final tiene las variables
 necesarias para aplicar \code{\link[=calcular_hogares]{calcular_hogares()}}. Las variables que no están
-disponibles quedan como \code{NA}.
+disponibles quedan como \code{NA}. Sin D se conservan sus variables ya
+incorporadas en H. Si se proporciona D, sus valores las reemplazan,
+incluso cuando faltan columnas opcionales o no hay coincidencia.
 }
