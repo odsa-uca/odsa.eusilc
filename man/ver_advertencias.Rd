@@ -15,3 +15,7 @@ ver_advertencias(.datos)
 \description{
 Muestra las advertencias correspondientes al país, año y tipo de base suministrada
 }
+\details{
+La revisión documental es parcial. La ausencia de advertencias
+registradas no garantiza la ausencia de particularidades.
+}

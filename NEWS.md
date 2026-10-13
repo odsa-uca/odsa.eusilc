@@ -4,9 +4,9 @@
 - Se modifican algunas etiquetas de las variables `pl20a/b/c`.
 - Se cambia la recodificación `PE041 -> pd03`; el nivel 4 ISCED pasa a
 "secundario completo" y los niveles 5 a 8 de ISCED a "terciario incompleto o más".
-- Se incorporan `tabla_advertencias`, que indica advertencias por país, rango
-  de años y variable, y `tabla_cobertura`, que especifica el estado de la
-  revisión documental para cada país y rango de años.
+- Se incorpora `tabla_advertencias`, que indica advertencias por país, rango
+  de años y variable. La revisión documental se considera parcial y los avisos
+  se centralizan en la consulta de advertencias.
 - Se incorpora la función `ver_advertencias`, que permite revisar las
   advertencias correspondientes a un determinado conjunto de datos que se
   encontraron en `tabla_advertencias`.
