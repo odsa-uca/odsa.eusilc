@@ -38,7 +38,8 @@ variables y sus valores?}
 \description{
 Construye variables de identificación, tamaño, ingresos y perceptores del
 conjunto H longitudinal de la EU-SILC, suponiendo observaciones de 2021 en
-adelante. Incorpora ponderador, región y urbanización desde D, y agrega los
+adelante. Incorpora ponderador, región, urbanización y metadatos panel
+desde D, y agrega los
 ingresos de las personas cubiertas por P por país, año y hogar actual.
 }
 \details{
@@ -51,6 +52,9 @@ A continuación se listan las variables construidas según bloque.
 \item \code{hi04}. Identificador del hogar.
 \item \code{hi06}. Ponderador longitudinal del hogar (\code{DB095}).
 \item \code{hi07}. Urbanización.
+\item \code{hi08a}. Grupo de rotación.
+\item \code{hi08b}. Número de encuesta dentro del panel.
+\item \code{hi08c}. Cantidad de años presentes del grupo de rotación.
 }
 }
 
@@ -161,7 +165,7 @@ para determinados hogares. No se reconstruyen hogares suprimidos.
 \subsection{Etapas de armonización}{
 
 La estandarización completa los insumos ausentes e incorpora desde D
-ponderación, región y urbanización. Sus reglas de preparación y traspaso
+ponderación, región, urbanización y metadatos panel. Sus reglas de preparación y traspaso
 se describen en \code{\link[=estandarizar_hogares_panel_]{estandarizar_hogares_panel_()}}.
 
 La expansión agrega los ingresos personales y los conteos de perceptores

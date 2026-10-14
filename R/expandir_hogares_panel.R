@@ -4,8 +4,9 @@
 #' @description
 #' Construye variables de identificación, tamaño, ingresos y perceptores del
 #' conjunto H longitudinal de la EU-SILC, suponiendo observaciones de 2021 en
-#' adelante. Incorpora ponderador, región y urbanización desde D, y agrega los
-#' ingresos de las personas cubiertas por P por país, año y hogar actual.
+#' adelante. Incorpora ponderador, región, urbanización y metadatos panel
+#' desde D, y agrega los ingresos de las personas cubiertas por P por país,
+#' año y hogar actual.
 #'
 #' @param .H `data.frame` o `tibble`. Conjunto H longitudinal en formato largo,
 #'   de un único país, con una fila por hogar y año.
@@ -33,6 +34,9 @@
 #' - `hi04`. Identificador del hogar.
 #' - `hi06`. Ponderador longitudinal del hogar (`DB095`).
 #' - `hi07`. Urbanización.
+#' - `hi08a`. Grupo de rotación.
+#' - `hi08b`. Número de encuesta dentro del panel.
+#' - `hi08c`. Cantidad de años presentes del grupo de rotación.
 #'
 #' ## (D) Demográficos
 #'
@@ -95,9 +99,8 @@
 #' El conjunto de variables armonizadas es siempre el mismo, se proporcione
 #' o no D. Con `.expandir = TRUE`, el conjunto completo de columnas puede variar
 #' porque se conservan los insumos originales y los añadidos como `NA` durante
-#' la estandarización.
-#' Los identificadores `HB010`, `HB020`, `HB030` en H y `pi01`, `pi02`, `pi04`
-#' en P deben estar presentes.
+#' la estandarización. Los identificadores `HB010`, `HB020`, `HB030` en H y
+#' `pi01`, `pi02`, `pi04` en P deben estar presentes.
 #'
 #' Las columnas de insumo opcionales ausentes se completan con `NA`. Los
 #' faltantes se propagan en las sumas y conteos: un ingreso personal faltante
@@ -122,7 +125,7 @@
 #' regional y de urbanización publicado, sin equiparar niveles regionales
 #' nacionales ni recuperar categorías agrupadas o suprimidas. Por ejemplo,
 #' DE agrupa categorías de urbanización en algunas entregas y suprime región
-#' para determinados hogares. No se reconstruyen hogares suprimidos.
+#' para determinados hogares.
 #'
 #' `hi06` conserva el peso longitudinal de D; no usa el ponderador transversal
 #' `DB090`. No se balancea el panel ni se crean observaciones.
@@ -130,25 +133,23 @@
 #' ## Etapas de armonización
 #'
 #' La estandarización completa los insumos ausentes e incorpora desde D
-#' ponderación, región y urbanización. Sus reglas de preparación y traspaso
-#' se describen en [estandarizar_hogares_panel_()].
+#' ponderación, región, urbanización y metadatos panel. Sus reglas de
+#' preparación y traspaso se describen en [estandarizar_hogares_panel_()].
 #'
 #' La expansión agrega los ingresos personales y los conteos de perceptores
 #' por país, año y hogar actual, y los incorpora a H. El cálculo construye las
 #' variables del hogar y las variantes de ingresos per cápita y PPA. Las
 #' recodificaciones y conversiones se describen en [calcular_hogares_panel_()].
+#' 
+#' ## Pendientes
 #'
-#' Con `.expandir = FALSE` se seleccionan las columnas presentes contempladas
-#' en el catálogo de [etiquetas] para H. Con `.expandir = TRUE` se conservan
-#' todas las columnas y se colocan primero las contempladas en ese catálogo.
-#' La selección no crea variables pendientes de construcción; si alguna ya
-#' estaba en H y figura en el catálogo, puede conservarse en el resultado.
-#'
-#' Con `.etiquetar = TRUE` se asignan etiquetas a las variables y sus valores
-#' según [etiquetas]. El etiquetado no modifica los códigos de las categorías.
-#'
-#' Quedan pendientes la tipología del hogar, las variables sectoriales y la
-#' imputación dentro de cada ola. La flag `.imputar` todavía no tiene efecto.
+#' - Definir la tipología de hogares.
+#' - Construir las variables sectoriales.
+#' - Implementar la imputación dentro de cada ola.
+#' - Transformar correctamente los ponderadores `hi06`. Tal como están ahora
+#'   suman un total de población dado dentro de cada año. Esto hace que las
+#'   observaciones de años más lejanos en el tiempo pesen más, lo cual puede
+#'   no ser deseable.
 #'
 #' @seealso [estandarizar_hogares_panel_()], [calcular_hogares_panel_()],
 #'   [expandir_personas_panel()]
@@ -163,13 +164,16 @@ expandir_hogares_panel <- function(
 ) {
   # Estandarización de los conjuntos -----------------------------------------
   .H <- estandarizar_hogares_panel_(.H, .P, .D)
-  
+
   # Agregación de la información personal ------------------------------------
   ingresos_personas <- c(
     "py00",
     "py10",
     "py11",
     "py12",
+    "py13",
+    "py14",
+    "py15",
     "py20",
     "py21",
     "py22",
@@ -180,7 +184,7 @@ expandir_hogares_panel <- function(
   for (variable in setdiff(ingresos_personas, names(.P))) {
     .P[[variable]] <- rep(NA_real_, nrow(.P))
   }
-  
+
   personas <- dplyr::select(
     .P,
     pi01,

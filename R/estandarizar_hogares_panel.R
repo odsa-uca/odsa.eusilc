@@ -31,7 +31,8 @@
 #'
 #' ## Traspaso desde D
 #'
-#' D proporciona ponderación longitudinal, región y urbanización. El cruce
+#' D proporciona ponderación longitudinal, región, urbanización, grupo de
+#' rotación (`DB075`) y número de encuesta dentro del panel (`DB076`). El cruce
 #' utiliza año, país y hogar: `HB010/HB020/HB030` en H y `DB010/DB020/DB030`
 #' en D. Cada clave coincidente debe identificar una única fila en D; las
 #' coincidencias múltiples producen un error.
@@ -67,7 +68,9 @@ estandarizar_hogares_panel_ <- function(.H, .P, .D = NULL) {
   insumos_d <- list(
     DB095 = NA_real_,
     DB040 = NA_character_,
-    DB100 = NA_integer_
+    DB100 = NA_integer_,
+    DB075 = NA_integer_,
+    DB076 = NA_integer_
   )
   if (is.null(.D)) {
     for (variable in setdiff(names(insumos_d), names(.H))) {
@@ -94,6 +97,6 @@ estandarizar_hogares_panel_ <- function(.H, .P, .D = NULL) {
       relationship = "many-to-one"
     )
   }
-  
+
   return(.H)
 }

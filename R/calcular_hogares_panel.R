@@ -22,6 +22,15 @@
 #' El catálogo de variables y sus unidades se presenta en
 #' [expandir_hogares_panel()].
 #'
+#' ## Metadatos panel
+#'
+#' `hi08a` identifica el grupo de rotación y `hi08b` el número de encuesta
+#' dentro del panel. `hi08c` cuenta los años distintos presentes en H por país
+#' y grupo de rotación, con el mismo valor para todos los hogares del grupo,
+#' aunque tengan menos años observados. Describe la cobertura disponible de
+#' una única entrega longitudinal, no su duración futura prevista. Los años
+#' faltantes no se cuentan; sin grupo o sin años disponibles, queda como `NA`.
+#'
 #' ## Identificación, tamaño y urbanización
 #'
 #' La identificación y el tamaño del hogar se construyen desde los insumos
@@ -73,6 +82,8 @@ calcular_hogares_panel_ <- function(.H) {
       to = tabla_pi07$pi07,
       default = NA_integer_
     ),
+    hi08a = DB075,
+    hi08b = DB076,
     # Bloque D --------------------------------------------------------------
     hd01 = HX040,
     # Bloque Y --------------------------------------------------------------
@@ -137,6 +148,15 @@ calcular_hogares_panel_ <- function(.H) {
       .names = "{.col}ppa"
     )
   )
-  
+
+  # Longitud del grupo de rotación -------------------------------------------
+  longitudes_panel <- .H |>
+    dplyr::distinct(hi02, hi08a, hi01) |>
+    dplyr::filter(!is.na(hi08a), !is.na(hi01)) |>
+    dplyr::count(hi02, hi08a, name = "hi08c")
+  .H <- .H |>
+    dplyr::select(-dplyr::any_of("hi08c")) |>
+    dplyr::left_join(longitudes_panel, by = dplyr::join_by(hi02, hi08a))
+
   return(.H)
 }

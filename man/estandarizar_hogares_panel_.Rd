@@ -41,7 +41,8 @@ presentes en H. No se imputan valores ni se balancea el panel.
 
 \subsection{Traspaso desde D}{
 
-D proporciona ponderación longitudinal, región y urbanización. El cruce
+D proporciona ponderación longitudinal, región, urbanización, grupo de
+rotación (\code{DB075}) y número de encuesta dentro del panel (\code{DB076}). El cruce
 utiliza año, país y hogar: \code{HB010/HB020/HB030} en H y \code{DB010/DB020/DB030}
 en D. Cada clave coincidente debe identificar una única fila en D; las
 coincidencias múltiples producen un error.

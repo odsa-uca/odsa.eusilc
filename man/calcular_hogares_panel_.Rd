@@ -28,6 +28,16 @@ observaciones de 2021 en adelante. Es una función interna.
 \details{
 El catálogo de variables y sus unidades se presenta en
 \code{\link[=expandir_hogares_panel]{expandir_hogares_panel()}}.
+\subsection{Metadatos panel}{
+
+\code{hi08a} identifica el grupo de rotación y \code{hi08b} el número de encuesta
+dentro del panel. \code{hi08c} cuenta los años distintos presentes en H por país
+y grupo de rotación, con el mismo valor para todos los hogares del grupo,
+aunque tengan menos años observados. Describe la cobertura disponible de
+una única entrega longitudinal, no su duración futura prevista. Los años
+faltantes no se cuentan; sin grupo o sin años disponibles, queda como \code{NA}.
+}
+
 \subsection{Identificación, tamaño y urbanización}{
 
 La identificación y el tamaño del hogar se construyen desde los insumos
