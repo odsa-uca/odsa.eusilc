@@ -62,6 +62,7 @@ A continuación se listan las variables construidas según bloque.
 \item \code{pi07}. Urbanización.
 \item \code{pi08a}. Grupo de rotación.
 \item \code{pi08b}. Número de encuesta dentro del panel.
+\item \code{pi08c}. Cantidad de años presentes del grupo de rotación.
 }
 }
 

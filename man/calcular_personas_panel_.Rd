@@ -24,6 +24,14 @@ Supone observaciones de 2021 en adelante. Es una función interna.
 \details{
 El catálogo de variables y sus unidades se presenta en
 \code{\link[=expandir_personas_panel]{expandir_personas_panel()}}.
+\subsection{Longitud del grupo de rotación}{
+
+\code{pi08c} cuenta los años distintos presentes en P para cada combinación de
+país y grupo de rotación (\code{pi02} y \code{pi08a}). Se asigna el mismo valor a todas
+las observaciones del grupo, aunque una persona tenga menos años observados.
+No depende de los números de ola de \code{pi08b}.
+}
+
 \subsection{Recodificaciones y reglas nacionales}{
 
 La urbanización, el nivel educativo, la condición de actividad y las

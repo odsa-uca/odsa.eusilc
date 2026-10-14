@@ -44,6 +44,7 @@
 #' - `pi07`. Urbanización.
 #' - `pi08a`. Grupo de rotación.
 #' - `pi08b`. Número de encuesta dentro del panel.
+#' - `pi08c`. Cantidad de años presentes del grupo de rotación.
 #'
 #' ## (D) Demográficos
 #'

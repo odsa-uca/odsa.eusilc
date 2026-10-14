@@ -18,6 +18,13 @@
 #' El catálogo de variables y sus unidades se presenta en
 #' [expandir_personas_panel()].
 #'
+#' ## Longitud del grupo de rotación
+#'
+#' `pi08c` cuenta los años distintos presentes en P para cada combinación de
+#' país y grupo de rotación (`pi02` y `pi08a`). Se asigna el mismo valor a todas
+#' las observaciones del grupo, aunque una persona tenga menos años observados.
+#' No depende de los números de ola de `pi08b`.
+#'
 #' ## Recodificaciones y reglas nacionales
 #'
 #' La urbanización, el nivel educativo, la condición de actividad y las
@@ -300,6 +307,15 @@ calcular_personas_panel_ <- function(.P) {
       .names = "{.col}ppa"
     )
   )
+
+  # Longitud del grupo de rotación -------------------------------------------
+  longitudes_panel <- .P |>
+    dplyr::distinct(pi02, pi08a, pi01) |>
+    dplyr::filter(!is.na(pi08a), !is.na(pi01)) |>
+    dplyr::count(pi02, pi08a, name = "pi08c")
+  .P <- .P |>
+    dplyr::select(-dplyr::any_of("pi08c")) |>
+    dplyr::left_join(longitudes_panel, by = dplyr::join_by(pi02, pi08a))
 
   return(.P)
 }
