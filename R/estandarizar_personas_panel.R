@@ -177,13 +177,95 @@ estandarizar_personas_panel_ <- function(.P, .D = NULL, .R = NULL) {
       relationship = "many-to-one"
     )
   }
-  
+
   # Variables auxiliares para la imputación -----------------------------------
   .P <- dplyr::mutate(
     .P,
     maa = calcular_meses_actividad(.P, c(1, 2)),
     man = calcular_meses_actividad(.P, c(3, 4))
   )
+
+  return(.P)
+}
+
+# ----------------------------------------------------------------------------
+#' Copia ponderadores longitudinales entre años de una persona (interna)
+#'
+#' @description
+#' Completa ponderadores longitudinales faltantes en las observaciones de
+#' trayectorias completas del conjunto P. Es una función interna.
+#'
+#' @param .P `data.frame` o `tibble`. Conjunto P longitudinal estandarizado,
+#'   de una única entrega, con una fila por país, persona y año y las columnas
+#'   `PB010`, `PB020`, `PB030` y `RB062`–`RB066`.
+#'
+#' @returns Conjunto P con los ponderadores completados, conservando todas
+#'   las filas, su orden y las demás columnas. No agrega columnas auxiliares.
+#'   Si el conjunto está vacío, lo devuelve sin cambios.
+#'
+#' @details
+#' Los conjuntos de datos panel difundidos por EUROSTAT tienen valores no nulos
+#' en los ponderadores longitudinales únicamente en el año más reciente de
+#' observación de cada caso. Para poder usar los datos en formato long, es
+#' necesario que todas las observaciones de cada caso tengan valores no nulos
+#' de los ponderadores que le corresponden según la cantidad de años que llevan
+#' en la encuesta.
+#' 
+#' El año final `t` es el máximo `PB010` de P, común a todas las personas.
+#' Cada persona se identifica por país y persona (`PB020` y `PB030`), aunque
+#' cambie de hogar. Se copia su ponderador registrado en `t` sólo si está
+#' presente en P en todos los años consecutivos de la ventana correspondiente:
+#'
+#' - `RB062`: `t-1` a `t`.
+#' - `RB063`: `t-2` a `t`.
+#' - `RB064`: `t-3` a `t`.
+#' - `RB065`: `t-4` a `t`.
+#' - `RB066`: `t-5` a `t`.
+#'
+#' Sólo se completan valores `NA` dentro de la ventana. Se conservan los
+#' valores existentes, incluidos ceros; un ponderador cero en `t` también se
+#' copia. Si falta el ponderador final o algún año de la trayectoria en P,
+#' no se completan valores. La presencia en R no sustituye la presencia en P.
+#' No se balancea el panel ni se restringe a personas con ponderador positivo.
+#' Recortar los años de entrada puede cambiar el año final y la elegibilidad.
+#'
+#' [expandir_personas_panel()] aplica esta copia automáticamente, antes de
+#' calcular `pi06a`–`pi06e` e independientemente de `.imputar`. Con
+#' `.expandir = TRUE`, las series RB y pi reflejan los valores completados.
+#'
+#' @seealso [expandir_personas_panel()], [estandarizar_personas_panel_()]
+copiar_ponderadores_personas_ <- function(.P) {
+  if (nrow(.P) > 0L) {
+    anio_final <- max(.P$PB010)
+
+    ponderadores_finales <- .P |>
+      dplyr::filter(PB010 == anio_final) |>
+      dplyr::select(PB020, PB030, dplyr::all_of(paste0("RB06", 2:6))) |>
+      dplyr::mutate(indice_final = dplyr::row_number())
+    indices <- .P |>
+      dplyr::select(PB020, PB030) |>
+      dplyr::left_join(
+        dplyr::select(ponderadores_finales, PB020, PB030, indice_final),
+        by = dplyr::join_by(PB020, PB030)
+      ) |>
+      dplyr::pull(indice_final)
+
+    for (duracion in 2:6) {
+      variable <- paste0("RB06", duracion)
+      anios_ventana <- seq.int(anio_final - duracion + 1L, anio_final)
+      en_ventana <- .P$PB010 %in% anios_ventana
+      conteos <- tabulate(
+        indices[en_ventana],
+        nbins = nrow(ponderadores_finales)
+      )
+      filas_destino <- which(
+        en_ventana & conteos[indices] == duracion & is.na(.P[[variable]])
+      )
+
+      .P[[variable]][filas_destino] <-
+        ponderadores_finales[[variable]][indices[filas_destino]]
+    }
+  }
 
   return(.P)
 }

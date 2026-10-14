@@ -195,6 +195,9 @@ nacionales e incorpora desde R ponderadores y demográficos, y desde D región,
 urbanización y metadatos panel. Sus reglas de traspaso y tratamiento de
 insumos se describen en \code{\link[=estandarizar_personas_panel_]{estandarizar_personas_panel_()}}.
 
+Se copian los ponderadores longitudinales mediante
+\code{\link[=copiar_ponderadores_personas_]{copiar_ponderadores_personas_()}}, donde se describe el procedimiento.
+
 El cálculo construye las variables de los bloques anteriores y convierte
 los ingresos a unidades mensuales, horarias y PPA. Las reglas específicas se
 describen en \code{\link[=calcular_personas_panel_]{calcular_personas_panel_()}}.

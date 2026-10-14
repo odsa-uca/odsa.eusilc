@@ -164,6 +164,9 @@
 #' urbanización y metadatos panel. Sus reglas de traspaso y tratamiento de
 #' insumos se describen en [estandarizar_personas_panel_()].
 #'
+#' Se copian los ponderadores longitudinales mediante
+#' [copiar_ponderadores_personas_()], donde se describe el procedimiento.
+#'
 #' El cálculo construye las variables de los bloques anteriores y convierte
 #' los ingresos a unidades mensuales, horarias y PPA. Las reglas específicas se
 #' describen en [calcular_personas_panel_()].
@@ -192,6 +195,9 @@ expandir_personas_panel <- function(
 ) {
   # Estandarización de los conjuntos -----------------------------------------
   .P <- estandarizar_personas_panel_(.P, .D = .D, .R = .R)
+
+  # Copia de ponderadores longitudinales -------------------------------------
+  .P <- copiar_ponderadores_personas_(.P)
 
   # Imputación dentro de cada ola --------------------------------------------
   if (.imputar) {
